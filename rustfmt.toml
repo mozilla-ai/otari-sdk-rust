@@ -1,0 +1,20 @@
+# Rust formatting configuration
+# https://rust-lang.github.io/rustfmt/
+
+# Use the 2021 edition defaults
+edition = "2021"
+
+# Maximum line width
+max_width = 100
+
+# Use field init shorthand
+use_field_init_shorthand = true
+
+# Use try shorthand
+use_try_shorthand = true
+
+# Reorder imports alphabetically
+reorder_imports = true
+
+# Newline style (native to the platform)
+newline_style = "Auto"

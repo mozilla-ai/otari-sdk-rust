@@ -1,0 +1,113 @@
+[package]
+name = "any-llm"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+description = "A unified Rust SDK for multiple LLM providers - switch between OpenAI, Anthropic, and more without changing your code"
+license = "Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/mozilla-ai/any-llm-rust"
+homepage = "https://github.com/mozilla-ai/any-llm-rust"
+documentation = "https://docs.rs/any-llm"
+keywords = ["llm", "openai", "anthropic", "ai", "claude"]
+categories = ["api-bindings", "asynchronous", "web-programming"]
+authors = ["Mozilla AI <any-llm@mozilla.ai>"]
+
+[features]
+default = ["openai", "anthropic"]
+openai = ["dep:async-openai"]
+anthropic = []
+
+[dependencies]
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+futures = "0.3"
+async-trait = "0.1"
+
+# Provider SDKs (optional)
+async-openai = { version = "0.27", optional = true }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# HTTP client (for providers without native SDK)
+reqwest = { version = "0.12", features = ["json", "stream"] }
+reqwest-eventsource = "0.6"
+
+# Error handling
+thiserror = "2"
+
+# Async streams
+async-stream = "0.3"
+tokio-stream = "0.1"
+pin-project-lite = "0.2"
+
+# Logging
+tracing = "0.1"
+
+# Base64 for image handling
+base64 = "0.22"
+
+[dev-dependencies]
+tokio-test = "0.4"
+pretty_assertions = "1"
+wiremock = "0.6"
+dotenvy = "0.15"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+# Lint groups with explicit priorities
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+# Allow certain patterns that are acceptable
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+# These are too noisy for this codebase
+use_self = "allow"
+doc_markdown = "allow"
+missing_const_for_fn = "allow"
+redundant_pub_crate = "allow"
+option_if_let_else = "allow"
+significant_drop_tightening = "allow"
+future_not_send = "allow"
+match_wildcard_for_single_variants = "allow"
+derive_partial_eq_without_eq = "allow"
+struct_excessive_bools = "allow"
+too_many_lines = "allow"
+similar_names = "allow"
+items_after_statements = "allow"
+ref_option = "allow"
+return_self_not_must_use = "allow"
+redundant_closure_for_method_calls = "allow"
+should_implement_trait = "allow"
+unnecessary_wraps = "allow"
+or_fun_call = "allow"
+match_same_arms = "allow"
+useless_vec = "allow"
+needless_pass_by_value = "allow"
+uninlined_format_args = "allow"
+default_trait_access = "allow"
+redundant_else = "allow"
+derivable_impls = "allow"
+manual_let_else = "allow"
+cognitive_complexity = "allow"
+cast_possible_truncation = "allow"
+assigning_clones = "allow"
+map_unwrap_or = "allow"
+single_match_else = "allow"
+if_not_else = "allow"
+match_bool = "allow"
+unnecessary_cast = "allow"
+cast_lossless = "allow"
+needless_continue = "allow"
+redundant_closure = "allow"
