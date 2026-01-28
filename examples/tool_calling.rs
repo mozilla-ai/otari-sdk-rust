@@ -7,7 +7,7 @@
 //! export OPENAI_API_KEY="your-key-here"
 //! ```
 
-use any_llm::{completion, CompletionOptions, Message, Tool, ToolChoice};
+use any_llm::{completion, providers::OpenAI, CompletionOptions, Message, Tool, ToolChoice};
 use serde_json::json;
 
 #[tokio::main]
@@ -39,7 +39,7 @@ async fn main() -> any_llm::Result<()> {
 
     println!("Asking about weather with tool calling...\n");
 
-    let response = completion("openai:gpt-4o-mini", messages, options).await?;
+    let response = completion::<OpenAI>("gpt-4o-mini", messages, options).await?;
 
     // Check if the model wants to call a tool
     if let Some(tool_calls) = &response.choices[0].message.tool_calls {

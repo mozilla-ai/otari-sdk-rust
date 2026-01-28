@@ -24,15 +24,20 @@ const ANTHROPIC_VERSION: &str = "2023-06-01";
 const DEFAULT_API_BASE: &str = "https://api.anthropic.com";
 
 /// Anthropic provider using the Messages API.
-pub struct AnthropicProvider {
+pub struct Anthropic {
     client: Client,
     api_key: String,
     api_base: String,
 }
 
-impl AnthropicProvider {
+#[async_trait]
+impl Provider for Anthropic {
+    const NAME: &'static str = "anthropic";
+    const ENV_VAR: &'static str = "ANTHROPIC_API_KEY";
+    const DOCS_URL: &'static str = "https://docs.anthropic.com/en/home";
+
     /// Create a new Anthropic provider.
-    pub fn new(config: ProviderConfig) -> Result<Self> {
+    fn from_config(config: ProviderConfig) -> Result<Self> {
         let api_key = config
             .api_key
             .or_else(|| std::env::var("ANTHROPIC_API_KEY").ok())
@@ -51,10 +56,7 @@ impl AnthropicProvider {
             api_base,
         })
     }
-}
 
-#[async_trait]
-impl Provider for AnthropicProvider {
     fn name(&self) -> &'static str {
         "anthropic"
     }

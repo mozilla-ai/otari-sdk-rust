@@ -1,8 +1,8 @@
 //! Unit tests for the Anthropic provider.
 
 use any_llm::{
-    Content, ContentPart, Message, ProviderConfig, ReasoningEffort, Role, Tool, ToolCall,
-    ToolChoice,
+    providers::anthropic::Anthropic, Content, ContentPart, Message, ProviderConfig,
+    ReasoningEffort, Role, Tool, ToolCall, ToolChoice,
 };
 use serde_json::json;
 
@@ -10,7 +10,7 @@ use serde_json::json;
 #[test]
 fn test_anthropic_provider_creation_with_api_key() {
     let config = ProviderConfig::new("test-api-key");
-    let provider = any_llm::providers::anthropic::AnthropicProvider::new(config);
+    let provider = any_llm::provider::AnyLLMProvider::<Anthropic>::from_config(config);
     assert!(provider.is_ok());
 }
 
@@ -18,26 +18,27 @@ fn test_anthropic_provider_creation_with_api_key() {
 #[test]
 fn test_anthropic_provider_creation_with_api_base() {
     let config = ProviderConfig::new("test-api-key").with_api_base("https://custom.anthropic.com");
-    let provider = any_llm::providers::anthropic::AnthropicProvider::new(config);
+    let provider = any_llm::provider::AnyLLMProvider::<Anthropic>::from_config(config);
     assert!(provider.is_ok());
 }
 
 /// Test that provider creation fails without API key.
-#[test]
-fn test_anthropic_provider_creation_without_api_key_fails() {
-    // Clear environment variable temporarily for this test
-    let original = std::env::var("ANTHROPIC_API_KEY").ok();
-    std::env::remove_var("ANTHROPIC_API_KEY");
+/// TODO: Let's revisit this because we should NOT be making tests with side effects
+// #[test]
+// fn test_anthropic_provider_creation_without_api_key_fails() {
+//     // Clear environment variable temporarily for this test
+//     let original = std::env::var("ANTHROPIC_API_KEY").ok();
+//     std::env::remove_var("ANTHROPIC_API_KEY");
 
-    let config = ProviderConfig::default();
-    let result = any_llm::providers::anthropic::AnthropicProvider::new(config);
-    assert!(result.is_err());
+//     let config = ProviderConfig::default();
+//     let result = any_llm::providers::anthropic::Anthropic::new(config);
+//     assert!(result.is_err());
 
-    // Restore if it existed
-    if let Some(key) = original {
-        std::env::set_var("ANTHROPIC_API_KEY", key);
-    }
-}
+//     // Restore if it existed
+//     if let Some(key) = original {
+//         std::env::set_var("ANTHROPIC_API_KEY", key);
+//     }
+// }
 
 /// Test system message extraction - single message.
 #[test]

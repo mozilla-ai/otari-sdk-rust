@@ -7,7 +7,7 @@
 //! export OPENAI_API_KEY="your-key-here"
 //! ```
 
-use any_llm::{completion, CompletionOptions, Message};
+use any_llm::{completion, providers::OpenAI, CompletionOptions, Message};
 
 #[tokio::main]
 async fn main() -> any_llm::Result<()> {
@@ -20,8 +20,8 @@ async fn main() -> any_llm::Result<()> {
     // Make completion request
     println!("Sending request to OpenAI...\n");
 
-    let response = completion(
-        "openai:gpt-4o-mini",
+    let response = completion::<OpenAI>(
+        "gpt-4o-mini",
         messages,
         CompletionOptions::default().max_tokens(100),
     )

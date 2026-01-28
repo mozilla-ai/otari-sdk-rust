@@ -15,13 +15,17 @@ mod stream;
 mod tool;
 
 /// OpenAI provider using the async-openai SDK.
-pub struct OpenAIProvider {
+pub struct OpenAI {
     client: Client<OpenAIConfig>,
 }
 
-impl OpenAIProvider {
-    /// Create a new OpenAI provider.
-    pub fn new(config: ProviderConfig) -> Result<Self> {
+#[async_trait]
+impl Provider for OpenAI {
+    const NAME: &'static str = "openai";
+    const ENV_VAR: &'static str = "OPENAI_API_KEY";
+    const DOCS_URL: &'static str = "https://platform.openai.com/docs/api-reference";
+
+    fn from_config(config: ProviderConfig) -> Result<Self> {
         let api_key = config
             .api_key
             .or_else(|| std::env::var("OPENAI_API_KEY").ok())
@@ -40,10 +44,7 @@ impl OpenAIProvider {
             client: Client::with_config(openai_config),
         })
     }
-}
 
-#[async_trait]
-impl Provider for OpenAIProvider {
     fn name(&self) -> &'static str {
         "openai"
     }

@@ -12,6 +12,23 @@ use crate::types::{ChatCompletion, ChatCompletionChunk, CompletionParams};
 pub type CompletionStream =
     Pin<Box<dyn Stream<Item = Result<ChatCompletionChunk>> + Send + 'static>>;
 
+#[derive(Debug)]
+pub struct AnyLLMProvider<P: Provider>(P);
+
+impl<P: Provider> AnyLLMProvider<P> {
+    pub fn from_config(config: ProviderConfig) -> Result<Self> {
+        P::from_config(config).map(Self)
+    }
+
+    pub async fn completion(&self, params: CompletionParams) -> Result<ChatCompletion> {
+        self.0.completion(params).await
+    }
+
+    pub async fn completion_stream(&self, params: CompletionParams) -> Result<CompletionStream> {
+        self.0.completion_stream(params).await
+    }
+}
+
 /// Supported LLM providers.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum LLMProvider {
@@ -103,7 +120,11 @@ impl ProviderConfig {
 ///
 /// Implement this trait to add support for a new LLM provider.
 #[async_trait]
-pub trait Provider: Send + Sync {
+pub trait Provider: Sized + Send + Sync {
+    const NAME: &'static str;
+    const ENV_VAR: &'static str;
+    const DOCS_URL: &'static str;
+
     /// Get the provider name.
     fn name(&self) -> &'static str;
 
@@ -132,23 +153,11 @@ pub trait Provider: Send + Sync {
         false
     }
 
+    fn from_config(config: ProviderConfig) -> Result<Self>;
+
     /// Create a chat completion.
     async fn completion(&self, params: CompletionParams) -> Result<ChatCompletion>;
 
     /// Create a streaming chat completion.
     async fn completion_stream(&self, params: CompletionParams) -> Result<CompletionStream>;
-}
-
-/// Create a provider instance.
-pub fn create_provider(provider: LLMProvider, config: ProviderConfig) -> Result<Box<dyn Provider>> {
-    match provider {
-        LLMProvider::OpenAI => {
-            let p = crate::providers::openai::OpenAIProvider::new(config)?;
-            Ok(Box::new(p))
-        }
-        LLMProvider::Anthropic => {
-            let p = crate::providers::anthropic::AnthropicProvider::new(config)?;
-            Ok(Box::new(p))
-        }
-    }
 }

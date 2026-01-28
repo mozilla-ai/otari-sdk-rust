@@ -1,13 +1,16 @@
 //! Unit tests for the OpenAI provider.
 
-use any_llm::{Content, ContentPart, Message, ProviderConfig, Role, Tool, ToolCall, ToolChoice};
+use any_llm::{
+    provider::AnyLLMProvider, providers::OpenAI, Content, ContentPart, Message, ProviderConfig,
+    Role, Tool, ToolCall, ToolChoice,
+};
 use serde_json::json;
 
 /// Test that we can create an OpenAI provider with config.
 #[test]
 fn test_openai_provider_creation_with_api_key() {
     let config = ProviderConfig::new("test-api-key");
-    let provider = any_llm::providers::openai::OpenAIProvider::new(config);
+    let provider = AnyLLMProvider::<OpenAI>::from_config(config);
     assert!(provider.is_ok());
 }
 
@@ -15,7 +18,7 @@ fn test_openai_provider_creation_with_api_key() {
 #[test]
 fn test_openai_provider_creation_with_api_base() {
     let config = ProviderConfig::new("test-api-key").with_api_base("https://custom.openai.com/v1");
-    let provider = any_llm::providers::openai::OpenAIProvider::new(config);
+    let provider = AnyLLMProvider::<OpenAI>::from_config(config);
     assert!(provider.is_ok());
 }
 
@@ -27,8 +30,8 @@ fn test_openai_provider_creation_without_api_key_fails() {
     std::env::remove_var("OPENAI_API_KEY");
 
     let config = ProviderConfig::default();
-    let result = any_llm::providers::openai::OpenAIProvider::new(config);
-    assert!(result.is_err());
+    let provider = AnyLLMProvider::<OpenAI>::from_config(config);
+    assert!(provider.is_err());
 
     // Restore if it existed
     if let Some(key) = original {

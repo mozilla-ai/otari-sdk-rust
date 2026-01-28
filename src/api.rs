@@ -3,11 +3,12 @@
 //! This module provides simple, stateless functions for making LLM calls.
 //! For more control or connection reuse, use the `Provider` trait directly.
 
-use crate::error::{AnyLLMError, Result};
-use crate::provider::{create_provider, CompletionStream, LLMProvider, ProviderConfig};
+use crate::error::Result;
+use crate::provider::{AnyLLMProvider, CompletionStream, ProviderConfig};
 use crate::types::{
     ChatCompletion, CompletionParams, Message, ReasoningEffort, StopSequence, Tool, ToolChoice,
 };
+use crate::Provider;
 use serde_json::Value;
 
 /// Options for completion requests.
@@ -127,54 +128,54 @@ impl From<CompletionOptions> for ProviderConfig {
     }
 }
 
-/// Parse a model string in the format "provider:model" or "provider/model".
-///
-/// # Examples
-///
-/// ```
-/// use any_llm::parse_model_string;
-///
-/// let (provider, model) = parse_model_string("openai:gpt-4o-mini").unwrap();
-/// assert_eq!(model, "gpt-4o-mini");
-///
-/// let (provider, model) = parse_model_string("anthropic:claude-3-5-sonnet-latest").unwrap();
-/// assert_eq!(model, "claude-3-5-sonnet-latest");
-/// ```
-pub fn parse_model_string(model: &str) -> Result<(LLMProvider, String)> {
-    // Try colon first, then slash
-    let separator = if model.contains(':') { ':' } else { '/' };
-    let parts: Vec<&str> = model.splitn(2, separator).collect();
+// /// Parse a model string in the format "provider:model" or "provider/model".
+// ///
+// /// # Examples
+// ///
+// /// ```
+// /// use any_llm::parse_model_string;
+// ///
+// /// let (provider, model) = parse_model_string("openai:gpt-4o-mini").unwrap();
+// /// assert_eq!(model, "gpt-4o-mini");
+// ///
+// /// let (provider, model) = parse_model_string("anthropic:claude-3-5-sonnet-latest").unwrap();
+// /// assert_eq!(model, "claude-3-5-sonnet-latest");
+// /// ```
+// pub fn parse_model_string(model: &str) -> Result<(LLMProvider, String)> {
+//     // Try colon first, then slash
+//     let separator = if model.contains(':') { ':' } else { '/' };
+//     let parts: Vec<&str> = model.splitn(2, separator).collect();
 
-    if parts.len() != 2 {
-        return Err(AnyLLMError::InvalidRequest {
-            message: format!(
-                "Invalid model format: '{}'. Use 'provider:model' (e.g., 'openai:gpt-4o-mini')",
-                model
-            ),
-            provider: "unknown".to_string(),
-        });
-    }
+//     if parts.len() != 2 {
+//         return Err(AnyLLMError::InvalidRequest {
+//             message: format!(
+//                 "Invalid model format: '{}'. Use 'provider:model' (e.g., 'openai:gpt-4o-mini')",
+//                 model
+//             ),
+//             provider: "unknown".to_string(),
+//         });
+//     }
 
-    let provider_str = parts[0];
-    let model_id = parts[1];
+//     let provider_str = parts[0];
+//     let model_id = parts[1];
 
-    if provider_str.is_empty() {
-        return Err(AnyLLMError::InvalidRequest {
-            message: format!("Empty provider in model string: '{}'", model),
-            provider: "unknown".to_string(),
-        });
-    }
+//     if provider_str.is_empty() {
+//         return Err(AnyLLMError::InvalidRequest {
+//             message: format!("Empty provider in model string: '{}'", model),
+//             provider: "unknown".to_string(),
+//         });
+//     }
 
-    if model_id.is_empty() {
-        return Err(AnyLLMError::InvalidRequest {
-            message: format!("Empty model ID in model string: '{}'", model),
-            provider: provider_str.to_string(),
-        });
-    }
+//     if model_id.is_empty() {
+//         return Err(AnyLLMError::InvalidRequest {
+//             message: format!("Empty model ID in model string: '{}'", model),
+//             provider: provider_str.to_string(),
+//         });
+//     }
 
-    let provider = LLMProvider::from_str(provider_str)?;
-    Ok((provider, model_id.to_string()))
-}
+//     let provider = LLMProvider::from_str(provider_str)?;
+//     Ok((provider, model_id.to_string()))
+// }
 
 /// Create a chat completion.
 ///
@@ -187,7 +188,7 @@ pub fn parse_model_string(model: &str) -> Result<(LLMProvider, String)> {
 /// # Examples
 ///
 /// ```rust,no_run
-/// use any_llm::{completion, Message, CompletionOptions};
+/// use any_llm::{completion, Message, CompletionOptions, providers::OpenAI};
 ///
 /// #[tokio::main]
 /// async fn main() -> any_llm::Result<()> {
@@ -196,8 +197,8 @@ pub fn parse_model_string(model: &str) -> Result<(LLMProvider, String)> {
 ///         Message::user("What is the capital of France?"),
 ///     ];
 ///
-///     let response = completion(
-///         "openai:gpt-4o-mini",
+///     let response = completion::<OpenAI>(
+///         "gpt-4o-mini",
 ///         messages,
 ///         CompletionOptions::default(),
 ///     ).await?;
@@ -206,13 +207,13 @@ pub fn parse_model_string(model: &str) -> Result<(LLMProvider, String)> {
 ///     Ok(())
 /// }
 /// ```
-pub async fn completion(
+pub async fn completion<P: Provider>(
     model: &str,
     messages: Vec<Message>,
     options: CompletionOptions,
 ) -> Result<ChatCompletion> {
-    let (provider_type, model_id) = parse_model_string(model)?;
-    let provider = create_provider(provider_type, options.clone().into())?;
+    let model_id = model.to_string();
+    let provider = AnyLLMProvider::<P>::from_config(options.clone().into())?;
 
     let params = CompletionParams {
         model_id,
@@ -251,15 +252,15 @@ pub async fn completion(
 /// # Examples
 ///
 /// ```rust,no_run
-/// use any_llm::{completion_stream, Message, CompletionOptions};
+/// use any_llm::{completion_stream, Message, CompletionOptions, providers::anthropic::Anthropic};
 /// use futures::StreamExt;
 ///
 /// #[tokio::main]
 /// async fn main() -> any_llm::Result<()> {
 ///     let messages = vec![Message::user("Tell me a story")];
 ///
-///     let mut stream = completion_stream(
-///         "anthropic:claude-3-5-sonnet-latest",
+///     let mut stream = completion_stream::<Anthropic>(
+///         "claude-3-5-sonnet-latest",
 ///         messages,
 ///         CompletionOptions::default(),
 ///     ).await?;
@@ -273,13 +274,13 @@ pub async fn completion(
 ///     Ok(())
 /// }
 /// ```
-pub async fn completion_stream(
+pub async fn completion_stream<P: Provider>(
     model: &str,
     messages: Vec<Message>,
     options: CompletionOptions,
 ) -> Result<CompletionStream> {
-    let (provider_type, model_id) = parse_model_string(model)?;
-    let provider = create_provider(provider_type, options.clone().into())?;
+    let model_id = model.to_string();
+    let provider = AnyLLMProvider::<P>::from_config(options.clone().into())?;
 
     let params = CompletionParams {
         model_id,
@@ -310,56 +311,6 @@ pub async fn completion_stream(
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_parse_model_string_colon() {
-        let (provider, model) = parse_model_string("openai:gpt-4o-mini").unwrap();
-        assert_eq!(provider, LLMProvider::OpenAI);
-        assert_eq!(model, "gpt-4o-mini");
-    }
-
-    #[test]
-    fn test_parse_model_string_slash() {
-        let (provider, model) = parse_model_string("anthropic/claude-3-5-sonnet-latest").unwrap();
-        assert_eq!(provider, LLMProvider::Anthropic);
-        assert_eq!(model, "claude-3-5-sonnet-latest");
-    }
-
-    #[test]
-    fn test_parse_model_string_with_slashes_in_model() {
-        let (provider, model) = parse_model_string("openai:ft:gpt-4o:org:custom:id").unwrap();
-        assert_eq!(provider, LLMProvider::OpenAI);
-        assert_eq!(model, "ft:gpt-4o:org:custom:id");
-    }
-
-    #[test]
-    fn test_parse_model_string_no_separator() {
-        let result = parse_model_string("gpt-4o-mini");
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn test_parse_model_string_empty_provider() {
-        let result = parse_model_string(":gpt-4o-mini");
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn test_parse_model_string_empty_model() {
-        let result = parse_model_string("openai:");
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn test_parse_model_string_unsupported_provider() {
-        let result = parse_model_string("unsupported:model");
-        assert!(result.is_err());
-        if let Err(AnyLLMError::UnsupportedProvider { provider }) = result {
-            assert_eq!(provider, "unsupported");
-        } else {
-            panic!("Expected UnsupportedProvider error");
-        }
-    }
 
     #[test]
     fn test_completion_options_builder() {

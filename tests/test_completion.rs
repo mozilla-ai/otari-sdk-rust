@@ -1,75 +1,8 @@
 //! Unit tests for core completion functionality.
 
 use any_llm::{
-    parse_model_string, AnyLLMError, CompletionOptions, CompletionParams, LLMProvider, Message,
-    ProviderConfig, Role, ToolChoice,
+    CompletionOptions, CompletionParams, LLMProvider, Message, ProviderConfig, Role, ToolChoice,
 };
-
-#[test]
-fn test_parse_model_string_valid_colon() {
-    let (provider, model) = parse_model_string("openai:gpt-4o-mini").unwrap();
-    assert_eq!(provider, LLMProvider::OpenAI);
-    assert_eq!(model, "gpt-4o-mini");
-}
-
-#[test]
-fn test_parse_model_string_valid_slash() {
-    let (provider, model) = parse_model_string("anthropic/claude-3-5-sonnet-latest").unwrap();
-    assert_eq!(provider, LLMProvider::Anthropic);
-    assert_eq!(model, "claude-3-5-sonnet-latest");
-}
-
-#[test]
-fn test_parse_model_string_with_colons_in_model() {
-    // Fine-tuned models can have colons in their ID
-    let (provider, model) = parse_model_string("openai:ft:gpt-4o:org:custom:id").unwrap();
-    assert_eq!(provider, LLMProvider::OpenAI);
-    assert_eq!(model, "ft:gpt-4o:org:custom:id");
-}
-
-#[test]
-fn test_parse_model_string_invalid_no_separator() {
-    let result = parse_model_string("gpt-4o-mini");
-    assert!(result.is_err());
-    if let Err(AnyLLMError::InvalidRequest { message, .. }) = result {
-        assert!(message.contains("Invalid model format"));
-    } else {
-        panic!("Expected InvalidRequest error");
-    }
-}
-
-#[test]
-fn test_parse_model_string_invalid_empty_provider() {
-    let result = parse_model_string(":gpt-4o-mini");
-    assert!(result.is_err());
-    if let Err(AnyLLMError::InvalidRequest { message, .. }) = result {
-        assert!(message.contains("Empty provider"));
-    } else {
-        panic!("Expected InvalidRequest error for empty provider");
-    }
-}
-
-#[test]
-fn test_parse_model_string_invalid_empty_model() {
-    let result = parse_model_string("openai:");
-    assert!(result.is_err());
-    if let Err(AnyLLMError::InvalidRequest { message, .. }) = result {
-        assert!(message.contains("Empty model ID"));
-    } else {
-        panic!("Expected InvalidRequest error for empty model");
-    }
-}
-
-#[test]
-fn test_parse_model_string_unsupported_provider() {
-    let result = parse_model_string("unsupported:model");
-    assert!(result.is_err());
-    if let Err(AnyLLMError::UnsupportedProvider { provider }) = result {
-        assert_eq!(provider, "unsupported");
-    } else {
-        panic!("Expected UnsupportedProvider error");
-    }
-}
 
 #[test]
 fn test_llm_provider_from_str() {
@@ -180,17 +113,4 @@ fn test_tool_choice_specific_function() {
     let choice = ToolChoice::function("my_function");
     assert_eq!(choice.as_function(), Some("my_function"));
     assert!(choice.as_mode().is_none());
-}
-
-#[test]
-fn test_all_providers_can_be_loaded() {
-    // Test that we can create providers with mock config
-    // Note: This will fail if API key is not provided, which is expected
-    let providers = [LLMProvider::OpenAI, LLMProvider::Anthropic];
-
-    for provider in providers {
-        let config = ProviderConfig::new("test-api-key");
-        let result = any_llm::create_provider(provider, config);
-        assert!(result.is_ok(), "Failed to create provider: {:?}", provider);
-    }
 }
