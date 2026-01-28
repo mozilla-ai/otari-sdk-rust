@@ -1,40 +1,6 @@
 //! Unit tests for core completion functionality.
 
-use any_llm::{
-    CompletionOptions, CompletionParams, LLMProvider, Message, ProviderConfig, Role, ToolChoice,
-};
-
-#[test]
-fn test_llm_provider_from_str() {
-    assert_eq!(
-        LLMProvider::from_str("openai").unwrap(),
-        LLMProvider::OpenAI
-    );
-    assert_eq!(
-        LLMProvider::from_str("OPENAI").unwrap(),
-        LLMProvider::OpenAI
-    );
-    assert_eq!(
-        LLMProvider::from_str("OpenAI").unwrap(),
-        LLMProvider::OpenAI
-    );
-    assert_eq!(
-        LLMProvider::from_str("anthropic").unwrap(),
-        LLMProvider::Anthropic
-    );
-}
-
-#[test]
-fn test_llm_provider_as_str() {
-    assert_eq!(LLMProvider::OpenAI.as_str(), "openai");
-    assert_eq!(LLMProvider::Anthropic.as_str(), "anthropic");
-}
-
-#[test]
-fn test_llm_provider_env_var() {
-    assert_eq!(LLMProvider::OpenAI.env_var(), "OPENAI_API_KEY");
-    assert_eq!(LLMProvider::Anthropic.env_var(), "ANTHROPIC_API_KEY");
-}
+use any_llm::{CompletionOptions, CompletionParams, Message, ProviderConfig, Role, ToolChoice};
 
 #[test]
 fn test_message_creation() {

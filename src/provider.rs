@@ -5,7 +5,7 @@ use std::pin::Pin;
 use async_trait::async_trait;
 use futures::Stream;
 
-use crate::error::{AnyLLMError, Result};
+use crate::error::Result;
 use crate::types::{ChatCompletion, ChatCompletionChunk, CompletionParams};
 
 /// A stream of completion chunks.
@@ -26,58 +26,6 @@ impl<P: Provider> AnyLLMProvider<P> {
 
     pub async fn completion_stream(&self, params: CompletionParams) -> Result<CompletionStream> {
         self.0.completion_stream(params).await
-    }
-}
-
-/// Supported LLM providers.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum LLMProvider {
-    /// OpenAI (GPT models).
-    OpenAI,
-    /// Anthropic (Claude models).
-    Anthropic,
-}
-
-impl LLMProvider {
-    /// Parse a provider from a string.
-    pub fn from_str(s: &str) -> Result<Self> {
-        match s.to_lowercase().as_str() {
-            "openai" => Ok(Self::OpenAI),
-            "anthropic" => Ok(Self::Anthropic),
-            _ => Err(AnyLLMError::UnsupportedProvider {
-                provider: s.to_string(),
-            }),
-        }
-    }
-
-    /// Get the provider name as a string.
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::OpenAI => "openai",
-            Self::Anthropic => "anthropic",
-        }
-    }
-
-    /// Get the environment variable name for the API key.
-    pub fn env_var(&self) -> &'static str {
-        match self {
-            Self::OpenAI => "OPENAI_API_KEY",
-            Self::Anthropic => "ANTHROPIC_API_KEY",
-        }
-    }
-
-    /// Get the documentation URL for the provider.
-    pub fn documentation_url(&self) -> &'static str {
-        match self {
-            Self::OpenAI => "https://platform.openai.com/docs/api-reference",
-            Self::Anthropic => "https://docs.anthropic.com/en/home",
-        }
-    }
-}
-
-impl std::fmt::Display for LLMProvider {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.as_str())
     }
 }
 

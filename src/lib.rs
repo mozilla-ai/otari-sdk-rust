@@ -139,7 +139,7 @@ pub mod types;
 // Re-export main types for convenience
 pub use api::{completion, completion_stream, CompletionOptions};
 pub use error::{AnyLLMError, Result};
-pub use provider::{LLMProvider, Provider, ProviderConfig};
+pub use provider::{Provider, ProviderConfig};
 pub use types::{
     ChatCompletion, ChatCompletionChunk, ChatCompletionMessage, Choice, ChoiceDelta,
     ChunkAccumulator, ChunkChoice, CompletionParams, CompletionUsage, Content, ContentPart,
