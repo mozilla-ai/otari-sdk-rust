@@ -2,7 +2,7 @@
 name = "any-llm"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.75"
+rust-version = "1.82"
 description = "A unified Rust SDK for multiple LLM providers - switch between OpenAI, Anthropic, and more without changing your code"
 license = "Apache-2.0"
 readme = "README.md"
