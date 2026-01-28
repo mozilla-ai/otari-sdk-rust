@@ -1,7 +1,7 @@
 //! High-level API functions for easy LLM access.
 //!
 //! This module provides simple, stateless functions for making LLM calls.
-//! For more control or connection reuse, use the [`Provider`] trait directly.
+//! For more control or connection reuse, use the `Provider` trait directly.
 
 use crate::error::{AnyLLMError, Result};
 use crate::provider::{create_provider, CompletionStream, LLMProvider, ProviderConfig};
