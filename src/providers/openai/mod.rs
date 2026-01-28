@@ -19,10 +19,11 @@ use futures::StreamExt;
 use crate::error::{AnyLLMError, Result};
 use crate::provider::{CompletionStream, Provider, ProviderConfig};
 use crate::types::{
-    ChatCompletion, ChatCompletionChunk, ChatCompletionMessage, Choice, ChoiceDelta, ChunkChoice,
-    CompletionParams, CompletionUsage, Content, ContentPart, Function, FunctionDelta, Message,
-    Reasoning, Role, ToolCall, ToolCallDelta, ToolChoice,
+    ChatCompletion, ChatCompletionChunk, ChoiceDelta, ChunkChoice, CompletionParams,
+    CompletionUsage, Content, ContentPart, FunctionDelta, Message, Role, ToolCallDelta, ToolChoice,
 };
+
+mod response;
 
 /// OpenAI provider using the async-openai SDK.
 pub struct OpenAIProvider {
@@ -188,64 +189,6 @@ impl OpenAIProvider {
                     },
                 },
             ),
-        }
-    }
-
-    /// Convert OpenAI response to our ChatCompletion type.
-    fn convert_response(
-        response: async_openai::types::CreateChatCompletionResponse,
-    ) -> ChatCompletion {
-        let choices = response
-            .choices
-            .into_iter()
-            .map(|choice| {
-                let tool_calls = choice.message.tool_calls.clone().map(|tcs| {
-                    tcs.into_iter()
-                        .map(|tc| ToolCall {
-                            id: tc.id,
-                            tool_type: "function".to_string(),
-                            function: Function {
-                                name: tc.function.name,
-                                arguments: tc.function.arguments,
-                            },
-                        })
-                        .collect()
-                });
-
-                // Handle reasoning from various field names (currently not supported by SDK)
-                let reasoning: Option<Reasoning> = None;
-
-                Choice {
-                    index: choice.index,
-                    message: ChatCompletionMessage {
-                        role: Role::Assistant,
-                        content: choice.message.content,
-                        tool_calls,
-                        reasoning,
-                        refusal: choice.message.refusal,
-                    },
-                    finish_reason: choice
-                        .finish_reason
-                        .map(|r| format!("{:?}", r).to_lowercase()),
-                    logprobs: None,
-                }
-            })
-            .collect();
-
-        let usage = response.usage.map(|u| CompletionUsage {
-            prompt_tokens: u.prompt_tokens,
-            completion_tokens: u.completion_tokens,
-            total_tokens: u.total_tokens,
-        });
-
-        ChatCompletion {
-            id: response.id,
-            object: "chat.completion".to_string(),
-            created: response.created as i64,
-            model: response.model,
-            choices,
-            usage,
-            system_fingerprint: response.system_fingerprint,
         }
     }
 
@@ -417,7 +360,7 @@ impl Provider for OpenAIProvider {
             .await
             .map_err(Self::convert_error)?;
 
-        Ok(Self::convert_response(response))
+        Ok(response.into())
     }
 
     async fn completion_stream(&self, params: CompletionParams) -> Result<CompletionStream> {
