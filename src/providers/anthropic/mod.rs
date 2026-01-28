@@ -1,19 +1,18 @@
 //! Anthropic (Claude) provider implementation.
 
 use async_trait::async_trait;
-use futures::StreamExt;
 use reqwest::Client;
-use reqwest_eventsource::{Event, EventSource};
+use reqwest_eventsource::EventSource;
 
 use crate::error::{AnyLLMError, Result};
 use crate::provider::{CompletionStream, Provider, ProviderConfig};
-use crate::types::{ChatCompletion, ChatCompletionChunk, CompletionParams};
+use crate::types::{ChatCompletion, CompletionParams};
 
 mod models;
 
 use models::request::AnthropicRequest;
 use models::response::AnthropicResponse;
-use models::stream::{AnthropicStream, AnthropicStreamEvent};
+use models::stream::AnthropicStream;
 
 /// Default max tokens for Anthropic (required parameter).
 const DEFAULT_MAX_TOKENS: u32 = 8192;
@@ -111,50 +110,9 @@ impl Provider for AnthropicProvider {
             message: e.to_string(),
         })?;
 
-        // Use scan to track when we should stop, then filter_map to convert events
-        // This properly terminates the stream on StreamEnded or errors
-        let stream = es
-            .map(move |event| {
-                let model = model.clone();
-                match event {
-                    Ok(Event::Message(msg)) => {
-                        // Parse the SSE data
-                        if let Ok(stream_event) =
-                            serde_json::from_str::<AnthropicStreamEvent>(&msg.data)
-                        {
-                            let event = AnthropicStream::new(stream_event, model.clone());
-                            Into::<Option<ChatCompletionChunk>>::into(event)
-                                .map(|chunk| Some(Ok(chunk)))
-                                .unwrap_or(Some(Ok(ChatCompletionChunk::empty(&model))))
-                        } else {
-                            // Skip unparseable events
-                            Some(Ok(ChatCompletionChunk::empty(&model)))
-                        }
-                    }
-                    Ok(Event::Open) => Some(Ok(ChatCompletionChunk::empty(&model))),
-                    Err(reqwest_eventsource::Error::StreamEnded) => {
-                        // Normal stream termination - signal end
-                        None
-                    }
-                    Err(e) => Some(Err(AnyLLMError::Streaming {
-                        provider: "anthropic".to_string(),
-                        message: e.to_string(),
-                    })),
-                }
-            })
-            // Stop the stream when we get None (StreamEnded)
-            .take_while(|item| std::future::ready(item.is_some()))
-            // Unwrap the Option layer
-            .filter_map(|item| std::future::ready(item))
-            // Filter out empty chunks
-            .filter(|result| {
-                std::future::ready(match result {
-                    Ok(chunk) => !chunk.choices.is_empty(),
-                    Err(_) => true,
-                })
-            });
+        let stream = AnthropicStream::new(es, model);
 
-        Ok(Box::pin(stream))
+        stream.try_into()
     }
 }
 
