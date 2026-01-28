@@ -1,0 +1,173 @@
+//! Anthropic (Claude) provider implementation.
+
+use async_trait::async_trait;
+use futures::StreamExt;
+use reqwest::Client;
+use reqwest_eventsource::{Event, EventSource};
+
+use crate::error::{AnyLLMError, Result};
+use crate::provider::{CompletionStream, Provider, ProviderConfig};
+use crate::types::{ChatCompletion, ChatCompletionChunk, CompletionParams};
+
+mod models;
+
+use models::request::AnthropicRequest;
+use models::response::AnthropicResponse;
+use models::stream::{AnthropicStream, AnthropicStreamEvent};
+
+/// Default max tokens for Anthropic (required parameter).
+const DEFAULT_MAX_TOKENS: u32 = 8192;
+
+/// API version for Anthropic.
+const ANTHROPIC_VERSION: &str = "2023-06-01";
+
+/// Default API base URL.
+const DEFAULT_API_BASE: &str = "https://api.anthropic.com";
+
+/// Anthropic provider using the Messages API.
+pub struct AnthropicProvider {
+    client: Client,
+    api_key: String,
+    api_base: String,
+}
+
+impl AnthropicProvider {
+    /// Create a new Anthropic provider.
+    pub fn new(config: ProviderConfig) -> Result<Self> {
+        let api_key = config
+            .api_key
+            .or_else(|| std::env::var("ANTHROPIC_API_KEY").ok())
+            .ok_or_else(|| AnyLLMError::MissingApiKey {
+                provider: "anthropic".to_string(),
+                env_var: "ANTHROPIC_API_KEY".to_string(),
+            })?;
+
+        let api_base = config
+            .api_base
+            .unwrap_or_else(|| DEFAULT_API_BASE.to_string());
+
+        Ok(Self {
+            client: Client::new(),
+            api_key,
+            api_base,
+        })
+    }
+}
+
+#[async_trait]
+impl Provider for AnthropicProvider {
+    fn name(&self) -> &'static str {
+        "anthropic"
+    }
+
+    fn supports_images(&self) -> bool {
+        true
+    }
+
+    fn supports_reasoning(&self) -> bool {
+        true
+    }
+
+    async fn completion(&self, params: CompletionParams) -> Result<ChatCompletion> {
+        let body: AnthropicRequest = params.try_into()?;
+
+        // Make the API call
+        let response = self
+            .client
+            .post(format!("{}/v1/messages", self.api_base))
+            .header("x-api-key", &self.api_key)
+            .header("anthropic-version", ANTHROPIC_VERSION)
+            .header("content-type", "application/json")
+            .json(&body)
+            .send()
+            .await?;
+
+        let status = response.status().as_u16();
+        if status != 200 {
+            let body = response.text().await.unwrap_or_default();
+            return Err(convert_error(status, &body));
+        }
+
+        Ok(response.json::<AnthropicResponse>().await?.into())
+    }
+
+    async fn completion_stream(&self, params: CompletionParams) -> Result<CompletionStream> {
+        let model = params.model_id.clone();
+
+        let body = TryInto::<AnthropicRequest>::try_into(params)?.stream();
+
+        // Create request
+        let request = self
+            .client
+            .post(format!("{}/v1/messages", self.api_base))
+            .header("x-api-key", &self.api_key)
+            .header("anthropic-version", ANTHROPIC_VERSION)
+            .header("content-type", "application/json")
+            .json(&body);
+
+        // Create SSE stream
+        let es = EventSource::new(request).map_err(|e| AnyLLMError::Streaming {
+            provider: "anthropic".to_string(),
+            message: e.to_string(),
+        })?;
+
+        // Use scan to track when we should stop, then filter_map to convert events
+        // This properly terminates the stream on StreamEnded or errors
+        let stream = es
+            .map(move |event| {
+                let model = model.clone();
+                match event {
+                    Ok(Event::Message(msg)) => {
+                        // Parse the SSE data
+                        if let Ok(stream_event) =
+                            serde_json::from_str::<AnthropicStreamEvent>(&msg.data)
+                        {
+                            let event = AnthropicStream::new(stream_event, model.clone());
+                            Into::<Option<ChatCompletionChunk>>::into(event)
+                                .map(|chunk| Some(Ok(chunk)))
+                                .unwrap_or(Some(Ok(ChatCompletionChunk::empty(&model))))
+                        } else {
+                            // Skip unparseable events
+                            Some(Ok(ChatCompletionChunk::empty(&model)))
+                        }
+                    }
+                    Ok(Event::Open) => Some(Ok(ChatCompletionChunk::empty(&model))),
+                    Err(reqwest_eventsource::Error::StreamEnded) => {
+                        // Normal stream termination - signal end
+                        None
+                    }
+                    Err(e) => Some(Err(AnyLLMError::Streaming {
+                        provider: "anthropic".to_string(),
+                        message: e.to_string(),
+                    })),
+                }
+            })
+            // Stop the stream when we get None (StreamEnded)
+            .take_while(|item| std::future::ready(item.is_some()))
+            // Unwrap the Option layer
+            .filter_map(|item| std::future::ready(item))
+            // Filter out empty chunks
+            .filter(|result| {
+                std::future::ready(match result {
+                    Ok(chunk) => !chunk.choices.is_empty(),
+                    Err(_) => true,
+                })
+            });
+
+        Ok(Box::pin(stream))
+    }
+}
+
+/// Convert Anthropic HTTP error to any-llm-rust error type.
+fn convert_error(status: u16, body: &str) -> AnyLLMError {
+    match status {
+        429 => AnyLLMError::rate_limit("anthropic", body),
+        401 => AnyLLMError::authentication("anthropic", body),
+        400 => AnyLLMError::invalid_request("anthropic", body),
+        404 => AnyLLMError::ModelNotFound {
+            provider: "anthropic".to_string(),
+            model: "unknown".to_string(),
+        },
+        _ => AnyLLMError::provider_error("anthropic", format!("Status {}: {}", status, body)),
+    }
+}
