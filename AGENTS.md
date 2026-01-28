@@ -25,7 +25,7 @@
 
 ## Build, Test, and Development Commands
 
-This repo uses `cargo` (Rust 1.82+). For the full command set, see [CONTRIBUTING.md](CONTRIBUTING.md).
+This repo uses `cargo` (Rust 1.83+). For the full command set, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 - Build: `cargo build --all-features`
 - Run all checks: `cargo fmt --check && cargo clippy --all-features -- -D warnings`
