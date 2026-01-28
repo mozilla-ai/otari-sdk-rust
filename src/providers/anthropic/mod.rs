@@ -36,6 +36,9 @@ impl Provider for Anthropic {
     const ENV_VAR: &'static str = "ANTHROPIC_API_KEY";
     const DOCS_URL: &'static str = "https://docs.anthropic.com/en/home";
 
+    const SUPPORTS_IMAGES: bool = true;
+    const SUPPORTS_REASONING: bool = true;
+
     /// Create a new Anthropic provider.
     fn from_config(config: ProviderConfig) -> Result<Self> {
         let api_key = config
@@ -55,18 +58,6 @@ impl Provider for Anthropic {
             api_key,
             api_base,
         })
-    }
-
-    fn name(&self) -> &'static str {
-        "anthropic"
-    }
-
-    fn supports_images(&self) -> bool {
-        true
-    }
-
-    fn supports_reasoning(&self) -> bool {
-        true
     }
 
     async fn completion(&self, params: CompletionParams) -> Result<ChatCompletion> {

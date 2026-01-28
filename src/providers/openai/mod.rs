@@ -25,6 +25,9 @@ impl Provider for OpenAI {
     const ENV_VAR: &'static str = "OPENAI_API_KEY";
     const DOCS_URL: &'static str = "https://platform.openai.com/docs/api-reference";
 
+    const SUPPORTS_IMAGES: bool = true;
+    const SUPPORTS_REASONING: bool = true;
+
     fn from_config(config: ProviderConfig) -> Result<Self> {
         let api_key = config
             .api_key
@@ -43,18 +46,6 @@ impl Provider for OpenAI {
         Ok(Self {
             client: Client::with_config(openai_config),
         })
-    }
-
-    fn name(&self) -> &'static str {
-        "openai"
-    }
-
-    fn supports_images(&self) -> bool {
-        true
-    }
-
-    fn supports_reasoning(&self) -> bool {
-        true // o1, o3 models support reasoning
     }
 
     async fn completion(&self, params: CompletionParams) -> Result<ChatCompletion> {

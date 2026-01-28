@@ -73,33 +73,11 @@ pub trait Provider: Sized + Send + Sync {
     const ENV_VAR: &'static str;
     const DOCS_URL: &'static str;
 
-    /// Get the provider name.
-    fn name(&self) -> &'static str;
-
-    /// Check if the provider supports streaming.
-    fn supports_streaming(&self) -> bool {
-        true
-    }
-
-    /// Check if the provider supports tool/function calling.
-    fn supports_tools(&self) -> bool {
-        true
-    }
-
-    /// Check if the provider supports image inputs.
-    fn supports_images(&self) -> bool {
-        false
-    }
-
-    /// Check if the provider supports extended reasoning/thinking.
-    fn supports_reasoning(&self) -> bool {
-        false
-    }
-
-    /// Check if the provider supports PDF inputs.
-    fn supports_pdf(&self) -> bool {
-        false
-    }
+    const SUPPORTS_STREAMING: bool = true;
+    const SUPPORTS_TOOLS: bool = true;
+    const SUPPORTS_IMAGES: bool = false;
+    const SUPPORTS_REASONING: bool = false;
+    const SUPPORTS_PDF: bool = false;
 
     fn from_config(config: ProviderConfig) -> Result<Self>;
 
