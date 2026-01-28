@@ -11,7 +11,7 @@
 [![Crates.io](https://img.shields.io/crates/v/any-llm.svg)](https://crates.io/crates/any-llm)
 [![Documentation](https://docs.rs/any-llm/badge.svg)](https://docs.rs/any-llm)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Rust](https://img.shields.io/badge/rust-1.75%2B-orange.svg)](https://www.rust-lang.org)
+[![Rust](https://img.shields.io/badge/rust-1.83%2B-orange.svg)](https://www.rust-lang.org)
 
 **Communicate with any LLM provider using a single, unified interface.**
 
@@ -65,7 +65,7 @@ async fn main() -> any_llm::Result<()> {
 
 ### Requirements
 
-- Rust 1.75 or newer
+- Rust 1.83 or newer
 - API keys for your chosen LLM providers
 
 ### Feature Flags

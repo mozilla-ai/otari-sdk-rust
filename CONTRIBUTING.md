@@ -26,7 +26,7 @@ For significant changes, please open an issue **before** starting work:
 
 ### Prerequisites
 
-- **Rust 1.75 or newer** (`rustup update stable`)
+- **Rust 1.83 or newer** (`rustup update stable`)
 - **Git**
 - **API keys** for providers you want to test
 
