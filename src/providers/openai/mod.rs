@@ -29,9 +29,7 @@ impl Provider for OpenAI {
     const SUPPORTS_REASONING: bool = true;
 
     fn from_config(config: ProviderConfig) -> Result<Self> {
-        let api_key = config
-            .api_key
-            .or_else(|| std::env::var("OPENAI_API_KEY").ok())
+        let api_key = Self::api_key(&config)
             .ok_or_else(|| AnyLLMError::MissingApiKey {
                 provider: "openai".to_string(),
                 env_var: "OPENAI_API_KEY".to_string(),

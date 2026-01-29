@@ -79,6 +79,12 @@ pub trait Provider: Sized + Send + Sync {
     const SUPPORTS_REASONING: bool = false;
     const SUPPORTS_PDF: bool = false;
 
+    fn api_key(config: &ProviderConfig) -> Option<String> {
+        config.api_key
+            .clone()
+            .or_else(|| std::env::var(Self::ENV_VAR).ok())
+    }
+
     fn from_config(config: ProviderConfig) -> Result<Self>;
 
     /// Create a chat completion.

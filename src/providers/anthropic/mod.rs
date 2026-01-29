@@ -41,12 +41,10 @@ impl Provider for Anthropic {
 
     /// Create a new Anthropic provider.
     fn from_config(config: ProviderConfig) -> Result<Self> {
-        let api_key = config
-            .api_key
-            .or_else(|| std::env::var("ANTHROPIC_API_KEY").ok())
+        let api_key = Self::api_key(&config)
             .ok_or_else(|| AnyLLMError::MissingApiKey {
-                provider: "anthropic".to_string(),
-                env_var: "ANTHROPIC_API_KEY".to_string(),
+                provider: Self::NAME.to_string(),
+                env_var: Self::ENV_VAR.to_string(),
             })?;
 
         let api_base = config
