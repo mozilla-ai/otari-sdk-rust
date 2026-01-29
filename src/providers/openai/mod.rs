@@ -1,7 +1,6 @@
 //! OpenAI provider implementation.
 
 use async_openai::{config::OpenAIConfig, Client};
-use async_trait::async_trait;
 use futures::StreamExt;
 
 use crate::error::{AnyLLMError, Result};
@@ -19,7 +18,6 @@ pub struct OpenAI {
     client: Client<OpenAIConfig>,
 }
 
-#[async_trait]
 impl Provider for OpenAI {
     const NAME: &'static str = "openai";
     const ENV_VAR: &'static str = "OPENAI_API_KEY";
@@ -45,7 +43,7 @@ impl Provider for OpenAI {
         })
     }
 
-    async fn completion_fn(&self, params: CompletionParams) -> Result<impl Into<ChatCompletion>> {
+    async fn completion_fn(&self, params: CompletionParams) -> Result<ChatCompletion> {
         let request = params.try_into()?;
 
         // Make the API call
@@ -54,7 +52,8 @@ impl Provider for OpenAI {
             .chat()
             .create(request)
             .await
-            .map_err(convert_error)?;
+            .map_err(convert_error)?
+            .into();
 
         Ok(response)
     }

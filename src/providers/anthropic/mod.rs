@@ -1,6 +1,5 @@
 //! Anthropic (Claude) provider implementation.
 
-use async_trait::async_trait;
 use reqwest::Client;
 use reqwest_eventsource::EventSource;
 
@@ -30,7 +29,6 @@ pub struct Anthropic {
     api_base: String,
 }
 
-#[async_trait]
 impl Provider for Anthropic {
     const NAME: &'static str = "anthropic";
     const ENV_VAR: &'static str = "ANTHROPIC_API_KEY";
@@ -57,7 +55,7 @@ impl Provider for Anthropic {
         })
     }
 
-    async fn completion_fn(&self, params: CompletionParams) -> Result<impl Into<ChatCompletion>> {
+    async fn completion_fn(&self, params: CompletionParams) -> Result<ChatCompletion> {
         let body: AnthropicRequest = params.try_into()?;
 
         // Make the API call
@@ -77,7 +75,7 @@ impl Provider for Anthropic {
             return Err(convert_error(status, &body));
         }
 
-        Ok(response.json::<AnthropicResponse>().await?)
+        Ok(response.json::<AnthropicResponse>().await?.into())
     }
 
     async fn completion_stream_fn(&self, params: CompletionParams) -> Result<CompletionStream> {

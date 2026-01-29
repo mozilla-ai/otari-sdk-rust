@@ -13,19 +13,13 @@ keywords = ["llm", "openai", "anthropic", "ai", "claude"]
 categories = ["api-bindings", "asynchronous", "web-programming"]
 authors = ["Mozilla AI <any-llm@mozilla.ai>"]
 
-[features]
-default = ["openai", "anthropic"]
-openai = ["dep:async-openai"]
-anthropic = []
-
 [dependencies]
 # Async runtime
 tokio = { version = "1", features = ["full"] }
 futures = "0.3"
-async-trait = "0.1"
 
 # Provider SDKs (optional)
-async-openai = { version = "0.27", optional = true }
+async-openai = "0.27"
 
 # Serialization
 serde = { version = "1", features = ["derive"] }

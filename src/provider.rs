@@ -2,8 +2,7 @@
 
 use std::pin::Pin;
 
-use async_trait::async_trait;
-use futures::Stream;
+use futures::{Future, Stream};
 
 use crate::{
     error::{AnyLLMError, Result},
@@ -70,7 +69,6 @@ impl ProviderConfig {
 /// Trait for LLM providers.
 ///
 /// Implement this trait to add support for a new LLM provider.
-#[async_trait]
 pub trait Provider: Sized + Send + Sync {
     const NAME: &'static str;
     const ENV_VAR: &'static str;
@@ -130,31 +128,44 @@ pub trait Provider: Sized + Send + Sync {
         Ok(())
     }
 
-    async fn completion_fn(&self, params: CompletionParams) -> Result<impl Into<ChatCompletion>>;
-
-    /// Create a chat completion.
-    async fn completion(&self, params: CompletionParams) -> Result<ChatCompletion> {
-        Self::validate_completion_params(&params)?;
-
-        self.completion_fn(params).await.map(|i| i.into())
-    }
-
-    async fn completion_stream_fn(
+    fn completion_fn(
         &self,
         params: CompletionParams,
-    ) -> Result<impl Into<CompletionStream>>;
+    ) -> impl Future<Output = Result<ChatCompletion>> + Send;
+
+    /// Create a chat completion.
+    fn completion(
+        &self,
+        params: CompletionParams,
+    ) -> impl Future<Output = Result<ChatCompletion>> + Send {
+        async move {
+            Self::validate_completion_params(&params)?;
+
+            self.completion_fn(params).await
+        }
+    }
+
+    fn completion_stream_fn(
+        &self,
+        params: CompletionParams,
+    ) -> impl Future<Output = Result<CompletionStream>> + Send;
 
     /// Create a streaming chat completion.
-    async fn completion_stream(&self, params: CompletionParams) -> Result<CompletionStream> {
-        if !Self::SUPPORTS_STREAMING {
-            return Err(AnyLLMError::provider_error(
-                Self::NAME,
-                "Provider does not support streaming",
-            ));
+    fn completion_stream(
+        &self,
+        params: CompletionParams,
+    ) -> impl Future<Output = Result<CompletionStream>> + Send {
+        async move {
+            if !Self::SUPPORTS_STREAMING {
+                return Err(AnyLLMError::provider_error(
+                    Self::NAME,
+                    "Provider does not support streaming",
+                ));
+            }
+
+            Self::validate_completion_params(&params)?;
+
+            self.completion_stream_fn(params).await
         }
-
-        Self::validate_completion_params(&params)?;
-
-        self.completion_stream_fn(params).await.map(|i| i.into())
     }
 }
