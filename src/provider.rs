@@ -94,10 +94,10 @@ pub trait Provider: Sized + Send + Sync {
     fn validate_completion_params(params: &CompletionParams) -> Result<()> {
         // check tools
         if !Self::SUPPORTS_TOOLS && (params.tools.is_some() || params.tool_choice.is_some()) {
-            return Err(AnyLLMError::Provider {
-                message: "Provider does not support tools".to_string(),
-                provider: Self::NAME.to_string(),
-            });
+            return Err(AnyLLMError::provider_error(
+                Self::NAME,
+                "Provider does not support tools",
+            ));
         }
 
         // check images
@@ -107,10 +107,10 @@ pub trait Provider: Sized + Send + Sync {
                     for part in parts {
                         match part {
                             crate::types::ContentPart::ImageUrl { .. } => {
-                                return Err(AnyLLMError::Provider {
-                                    message: "Provider does not support images".to_string(),
-                                    provider: Self::NAME.to_string(),
-                                })
+                                return Err(AnyLLMError::provider_error(
+                                    Self::NAME,
+                                    "Provider does not support images",
+                                ));
                             }
                             crate::types::ContentPart::Text { .. } => {}
                         }
@@ -121,10 +121,10 @@ pub trait Provider: Sized + Send + Sync {
 
         // validate reasoning effort
         if !Self::SUPPORTS_REASONING && params.reasoning_effort.is_some() {
-            return Err(AnyLLMError::Provider {
-                message: "Provider does not support reasoning".to_string(),
-                provider: Self::NAME.to_string(),
-            });
+            return Err(AnyLLMError::provider_error(
+                Self::NAME.to_string(),
+                "Provider does not support reasoning",
+            ));
         }
 
         Ok(())
@@ -147,10 +147,10 @@ pub trait Provider: Sized + Send + Sync {
     /// Create a streaming chat completion.
     async fn completion_stream(&self, params: CompletionParams) -> Result<CompletionStream> {
         if !Self::SUPPORTS_STREAMING {
-            return Err(AnyLLMError::Provider {
-                message: "Provider does not support streaming".to_string(),
-                provider: Self::NAME.to_string(),
-            });
+            return Err(AnyLLMError::provider_error(
+                Self::NAME,
+                "Provider does not support streaming",
+            ));
         }
 
         Self::validate_completion_params(&params)?;

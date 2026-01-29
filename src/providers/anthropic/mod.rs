@@ -42,8 +42,8 @@ impl Provider for Anthropic {
     /// Create a new Anthropic provider.
     fn from_config(config: ProviderConfig) -> Result<Self> {
         let api_key = Self::api_key(&config).ok_or_else(|| AnyLLMError::MissingApiKey {
-            provider: Self::NAME.to_string(),
-            env_var: Self::ENV_VAR.to_string(),
+            provider: Self::NAME.into(),
+            env_var: Self::ENV_VAR.into(),
         })?;
 
         let api_base = config
@@ -96,8 +96,8 @@ impl Provider for Anthropic {
 
         // Create SSE stream
         let es = EventSource::new(request).map_err(|e| AnyLLMError::Streaming {
-            provider: "anthropic".to_string(),
-            message: e.to_string(),
+            provider: Self::NAME.into(),
+            message: e.to_string().into(),
         })?;
 
         let stream = AnthropicStream::new(es, model);
@@ -109,12 +109,12 @@ impl Provider for Anthropic {
 /// Convert Anthropic HTTP error to any-llm-rust error type.
 fn convert_error(status: u16, body: &str) -> AnyLLMError {
     match status {
-        429 => AnyLLMError::rate_limit("anthropic", body),
-        401 => AnyLLMError::authentication("anthropic", body),
-        400 => AnyLLMError::invalid_request("anthropic", body),
+        429 => AnyLLMError::rate_limit("anthropic", body.to_string()),
+        401 => AnyLLMError::authentication("anthropic", body.to_string()),
+        400 => AnyLLMError::invalid_request("anthropic", body.to_string()),
         404 => AnyLLMError::ModelNotFound {
-            provider: "anthropic".to_string(),
-            model: "unknown".to_string(),
+            provider: "anthropic".into(),
+            model: "unknown".to_string().into(),
         },
         _ => AnyLLMError::provider_error("anthropic", format!("Status {}: {}", status, body)),
     }

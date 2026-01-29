@@ -30,8 +30,8 @@ impl Provider for OpenAI {
 
     fn from_config(config: ProviderConfig) -> Result<Self> {
         let api_key = Self::api_key(&config).ok_or_else(|| AnyLLMError::MissingApiKey {
-            provider: "openai".to_string(),
-            env_var: "OPENAI_API_KEY".to_string(),
+            provider: Self::NAME.into(),
+            env_var: Self::ENV_VAR.into(),
         })?;
 
         let mut openai_config = OpenAIConfig::new().with_api_key(api_key);
@@ -94,8 +94,8 @@ fn convert_error(error: async_openai::error::OpenAIError) -> AnyLLMError {
         AnyLLMError::authentication("openai", message)
     } else if message.contains("not found") || message.contains("404") {
         AnyLLMError::ModelNotFound {
-            provider: "openai".to_string(),
-            model: "unknown".to_string(),
+            provider: "openai".into(),
+            model: "unknown".to_string().into(),
         }
     } else if message.contains("400") || message.contains("bad request") {
         AnyLLMError::invalid_request("openai", message)
