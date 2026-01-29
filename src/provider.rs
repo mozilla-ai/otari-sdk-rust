@@ -102,6 +102,12 @@ pub trait Provider: Sized + Send + Sync {
 
     /// Create a streaming chat completion.
     async fn completion_stream(&self, params: CompletionParams) -> Result<CompletionStream> {
+        if !Self::SUPPORTS_STREAMING {
+            return Err(crate::AnyLLMError::Provider {
+                message: "Provider does not support streaming".to_string(),
+                provider: Self::NAME.to_string(),
+            });
+        }
         self.completion_stream_fn(params).await.map(|i| i.into())
     }
 }
