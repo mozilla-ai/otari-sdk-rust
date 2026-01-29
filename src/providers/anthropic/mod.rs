@@ -41,11 +41,10 @@ impl Provider for Anthropic {
 
     /// Create a new Anthropic provider.
     fn from_config(config: ProviderConfig) -> Result<Self> {
-        let api_key = Self::api_key(&config)
-            .ok_or_else(|| AnyLLMError::MissingApiKey {
-                provider: Self::NAME.to_string(),
-                env_var: Self::ENV_VAR.to_string(),
-            })?;
+        let api_key = Self::api_key(&config).ok_or_else(|| AnyLLMError::MissingApiKey {
+            provider: Self::NAME.to_string(),
+            env_var: Self::ENV_VAR.to_string(),
+        })?;
 
         let api_base = config
             .api_base
@@ -58,7 +57,7 @@ impl Provider for Anthropic {
         })
     }
 
-    async fn completion(&self, params: CompletionParams) -> Result<ChatCompletion> {
+    async fn completion_fn(&self, params: CompletionParams) -> Result<impl Into<ChatCompletion>> {
         let body: AnthropicRequest = params.try_into()?;
 
         // Make the API call
@@ -78,10 +77,10 @@ impl Provider for Anthropic {
             return Err(convert_error(status, &body));
         }
 
-        Ok(response.json::<AnthropicResponse>().await?.into())
+        Ok(response.json::<AnthropicResponse>().await?)
     }
 
-    async fn completion_stream(&self, params: CompletionParams) -> Result<CompletionStream> {
+    async fn completion_stream_fn(&self, params: CompletionParams) -> Result<CompletionStream> {
         let model = params.model_id.clone();
 
         let body = TryInto::<AnthropicRequest>::try_into(params)?.stream();

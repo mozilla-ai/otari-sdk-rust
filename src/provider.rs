@@ -80,16 +80,28 @@ pub trait Provider: Sized + Send + Sync {
     const SUPPORTS_PDF: bool = false;
 
     fn api_key(config: &ProviderConfig) -> Option<String> {
-        config.api_key
+        config
+            .api_key
             .clone()
             .or_else(|| std::env::var(Self::ENV_VAR).ok())
     }
 
     fn from_config(config: ProviderConfig) -> Result<Self>;
 
+    async fn completion_fn(&self, params: CompletionParams) -> Result<impl Into<ChatCompletion>>;
+
     /// Create a chat completion.
-    async fn completion(&self, params: CompletionParams) -> Result<ChatCompletion>;
+    async fn completion(&self, params: CompletionParams) -> Result<ChatCompletion> {
+        self.completion_fn(params).await.map(|i| i.into())
+    }
+
+    async fn completion_stream_fn(
+        &self,
+        params: CompletionParams,
+    ) -> Result<impl Into<CompletionStream>>;
 
     /// Create a streaming chat completion.
-    async fn completion_stream(&self, params: CompletionParams) -> Result<CompletionStream>;
+    async fn completion_stream(&self, params: CompletionParams) -> Result<CompletionStream> {
+        self.completion_stream_fn(params).await.map(|i| i.into())
+    }
 }

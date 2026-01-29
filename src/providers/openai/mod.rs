@@ -29,11 +29,10 @@ impl Provider for OpenAI {
     const SUPPORTS_REASONING: bool = true;
 
     fn from_config(config: ProviderConfig) -> Result<Self> {
-        let api_key = Self::api_key(&config)
-            .ok_or_else(|| AnyLLMError::MissingApiKey {
-                provider: "openai".to_string(),
-                env_var: "OPENAI_API_KEY".to_string(),
-            })?;
+        let api_key = Self::api_key(&config).ok_or_else(|| AnyLLMError::MissingApiKey {
+            provider: "openai".to_string(),
+            env_var: "OPENAI_API_KEY".to_string(),
+        })?;
 
         let mut openai_config = OpenAIConfig::new().with_api_key(api_key);
 
@@ -46,7 +45,7 @@ impl Provider for OpenAI {
         })
     }
 
-    async fn completion(&self, params: CompletionParams) -> Result<ChatCompletion> {
+    async fn completion_fn(&self, params: CompletionParams) -> Result<impl Into<ChatCompletion>> {
         let request = params.try_into()?;
 
         // Make the API call
@@ -57,10 +56,10 @@ impl Provider for OpenAI {
             .await
             .map_err(convert_error)?;
 
-        Ok(response.into())
+        Ok(response)
     }
 
-    async fn completion_stream(&self, params: CompletionParams) -> Result<CompletionStream> {
+    async fn completion_stream_fn(&self, params: CompletionParams) -> Result<CompletionStream> {
         let request = params.try_into()?;
 
         // Create the stream
