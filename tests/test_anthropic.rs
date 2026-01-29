@@ -22,8 +22,8 @@ fn test_anthropic_provider_creation_with_api_base() {
     assert!(provider.is_ok());
 }
 
-/// Test that provider creation fails without API key.
-/// TODO: Let's revisit this because we should NOT be making tests with side effects
+// /// Test that provider creation fails without API key.
+// /// TODO: Let's revisit this because we should NOT be making tests with side effects
 // #[test]
 // fn test_anthropic_provider_creation_without_api_key_fails() {
 //     // Clear environment variable temporarily for this test
