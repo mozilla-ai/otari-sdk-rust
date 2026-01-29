@@ -112,7 +112,7 @@
 //!     .tools(vec![weather_tool])
 //!     .tool_choice(ToolChoice::auto());
 //!
-//! let response = completion::<OpenAI>("openai:gpt-4o-mini", messages, options).await?;
+//! let response = completion::<OpenAI>("gpt-4o-mini", messages, options).await?;
 //!
 //! if let Some(tool_calls) = &response.choices[0].message.tool_calls {
 //!     for call in tool_calls {

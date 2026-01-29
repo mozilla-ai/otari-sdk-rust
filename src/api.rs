@@ -181,7 +181,7 @@ impl From<CompletionOptions> for ProviderConfig {
 ///
 /// # Arguments
 ///
-/// * `model` - Model string in format "provider:model" (e.g., "openai:gpt-4o-mini")
+/// * `model` - Model ID string
 /// * `messages` - The conversation messages
 /// * `options` - Optional configuration (API key, temperature, etc.)
 ///
@@ -245,7 +245,7 @@ pub async fn completion<P: Provider>(
 ///
 /// # Arguments
 ///
-/// * `model` - Model string in format "provider:model" (e.g., "openai:gpt-4o-mini")
+/// * `model` - Model ID string (e.g., "gpt-4o-mini")
 /// * `messages` - The conversation messages
 /// * `options` - Optional configuration (API key, temperature, etc.)
 ///
