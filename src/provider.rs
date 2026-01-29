@@ -5,8 +5,11 @@ use std::pin::Pin;
 use async_trait::async_trait;
 use futures::Stream;
 
-use crate::error::Result;
-use crate::types::{ChatCompletion, ChatCompletionChunk, CompletionParams};
+use crate::{
+    error::{AnyLLMError, Result},
+    types::Content,
+    types::{ChatCompletion, ChatCompletionChunk, CompletionParams},
+};
 
 /// A stream of completion chunks.
 pub type CompletionStream =
@@ -88,10 +91,51 @@ pub trait Provider: Sized + Send + Sync {
 
     fn from_config(config: ProviderConfig) -> Result<Self>;
 
+    fn validate_completion_params(params: &CompletionParams) -> Result<()> {
+        // check tools
+        if !Self::SUPPORTS_TOOLS && (params.tools.is_some() || params.tool_choice.is_some()) {
+            return Err(AnyLLMError::Provider {
+                message: "Provider does not support tools".to_string(),
+                provider: Self::NAME.to_string(),
+            });
+        }
+
+        // check images
+        if !Self::SUPPORTS_IMAGES {
+            for message in &params.messages {
+                if let Some(Content::Parts(parts)) = &message.content {
+                    for part in parts {
+                        match part {
+                            crate::types::ContentPart::ImageUrl { .. } => {
+                                return Err(AnyLLMError::Provider {
+                                    message: "Provider does not support images".to_string(),
+                                    provider: Self::NAME.to_string(),
+                                })
+                            }
+                            crate::types::ContentPart::Text { .. } => {}
+                        }
+                    }
+                }
+            }
+        }
+
+        // validate reasoning effort
+        if !Self::SUPPORTS_REASONING && params.reasoning_effort.is_some() {
+            return Err(AnyLLMError::Provider {
+                message: "Provider does not support reasoning".to_string(),
+                provider: Self::NAME.to_string(),
+            });
+        }
+
+        Ok(())
+    }
+
     async fn completion_fn(&self, params: CompletionParams) -> Result<impl Into<ChatCompletion>>;
 
     /// Create a chat completion.
     async fn completion(&self, params: CompletionParams) -> Result<ChatCompletion> {
+        Self::validate_completion_params(&params)?;
+
         self.completion_fn(params).await.map(|i| i.into())
     }
 
@@ -103,11 +147,14 @@ pub trait Provider: Sized + Send + Sync {
     /// Create a streaming chat completion.
     async fn completion_stream(&self, params: CompletionParams) -> Result<CompletionStream> {
         if !Self::SUPPORTS_STREAMING {
-            return Err(crate::AnyLLMError::Provider {
+            return Err(AnyLLMError::Provider {
                 message: "Provider does not support streaming".to_string(),
                 provider: Self::NAME.to_string(),
             });
         }
+
+        Self::validate_completion_params(&params)?;
+
         self.completion_stream_fn(params).await.map(|i| i.into())
     }
 }
