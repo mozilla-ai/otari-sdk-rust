@@ -85,20 +85,17 @@ fn convert_error(error: async_openai::error::OpenAIError) -> AnyLLMError {
 
     // Try to detect error type from message
     if message.contains("rate limit") || message.contains("429") {
-        AnyLLMError::rate_limit("openai", message)
+        AnyLLMError::rate_limit::<OpenAI>(message)
     } else if message.contains("authentication")
         || message.contains("401")
         || message.contains("invalid api key")
     {
-        AnyLLMError::authentication("openai", message)
+        AnyLLMError::authentication::<OpenAI>(message)
     } else if message.contains("not found") || message.contains("404") {
-        AnyLLMError::ModelNotFound {
-            provider: "openai".into(),
-            model: "unknown".to_string().into(),
-        }
+        AnyLLMError::model_not_found::<OpenAI>("unknown")
     } else if message.contains("400") || message.contains("bad request") {
-        AnyLLMError::invalid_request("openai", message)
+        AnyLLMError::invalid_request::<OpenAI>(message)
     } else {
-        AnyLLMError::provider_error("openai", message)
+        AnyLLMError::provider_error::<OpenAI>(message)
     }
 }

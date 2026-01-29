@@ -107,13 +107,10 @@ impl Provider for Anthropic {
 /// Convert Anthropic HTTP error to any-llm-rust error type.
 fn convert_error(status: u16, body: &str) -> AnyLLMError {
     match status {
-        429 => AnyLLMError::rate_limit("anthropic", body.to_string()),
-        401 => AnyLLMError::authentication("anthropic", body.to_string()),
-        400 => AnyLLMError::invalid_request("anthropic", body.to_string()),
-        404 => AnyLLMError::ModelNotFound {
-            provider: "anthropic".into(),
-            model: "unknown".to_string().into(),
-        },
-        _ => AnyLLMError::provider_error("anthropic", format!("Status {}: {}", status, body)),
+        429 => AnyLLMError::rate_limit::<Anthropic>(body.to_string()),
+        401 => AnyLLMError::authentication::<Anthropic>(body.to_string()),
+        400 => AnyLLMError::invalid_request::<Anthropic>(body.to_string()),
+        404 => AnyLLMError::model_not_found::<Anthropic>("unknown"),
+        _ => AnyLLMError::provider_error::<Anthropic>(format!("Status {}: {}", status, body)),
     }
 }

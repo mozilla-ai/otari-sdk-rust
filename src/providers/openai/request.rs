@@ -5,6 +5,7 @@ use async_openai::types::{
 
 use crate::{
     error::{AnyLLMError, Result},
+    providers::OpenAI,
     types::CompletionParams,
 };
 
@@ -72,6 +73,6 @@ impl TryFrom<CompletionParams> for CreateChatCompletionRequest {
 
         request_builder
             .build()
-            .map_err(|e| AnyLLMError::invalid_request("openai", e.to_string()))
+            .map_err(|e| AnyLLMError::invalid_request::<OpenAI>(e.to_string()))
     }
 }

@@ -193,14 +193,14 @@ fn test_tool_call_parse_arguments() {
 /// Test error conversion patterns.
 #[test]
 fn test_error_messages() {
-    let err = any_llm::AnyLLMError::rate_limit("openai", "Too many requests");
+    let err = any_llm::AnyLLMError::rate_limit::<OpenAI>("Too many requests");
     assert!(err.to_string().contains("Rate limit"));
     assert!(err.to_string().contains("openai"));
 
-    let err = any_llm::AnyLLMError::authentication("openai", "Invalid API key");
+    let err = any_llm::AnyLLMError::authentication::<OpenAI>("Invalid API key");
     assert!(err.to_string().contains("Authentication"));
 
-    let err = any_llm::AnyLLMError::model_not_found("openai", "gpt-5");
+    let err = any_llm::AnyLLMError::model_not_found::<OpenAI>("gpt-5");
     assert!(err.to_string().contains("not found"));
     assert!(err.to_string().contains("gpt-5"));
 }

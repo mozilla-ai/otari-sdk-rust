@@ -4,6 +4,7 @@ use serde::Serialize;
 use serde_json::{json, Value};
 
 use crate::error::{AnyLLMError, Result};
+use crate::providers::Anthropic;
 use crate::types::{
     CompletionParams, Content, ContentPart, Message, ReasoningEffort, Role, ToolChoice,
 };
@@ -38,8 +39,7 @@ impl TryFrom<CompletionParams> for AnthropicRequest {
 
     fn try_from(params: CompletionParams) -> std::result::Result<Self, Self::Error> {
         if params.response_format.is_some() {
-            return Err(AnyLLMError::unsupported_parameter(
-                "anthropic",
+            return Err(AnyLLMError::unsupported_parameter::<Anthropic>(
                 "response_format",
                 "See https://docs.anthropic.com/en/docs/test-and-evaluate/strengthen-guardrails/increase-consistency",
             ));

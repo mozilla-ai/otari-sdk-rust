@@ -249,8 +249,7 @@ fn test_tool_spec_conversion() {
 fn test_response_format_unsupported() {
     // Anthropic doesn't support response_format
     // This would be checked in the completion method
-    let err = any_llm::AnyLLMError::unsupported_parameter(
-        "anthropic",
+    let err = any_llm::AnyLLMError::unsupported_parameter::<Anthropic>(
         "response_format",
         "Use tool calling for structured output",
     );
@@ -262,10 +261,10 @@ fn test_response_format_unsupported() {
 /// Test error messages for Anthropic-specific errors.
 #[test]
 fn test_anthropic_error_messages() {
-    let rate_limit = any_llm::AnyLLMError::rate_limit("anthropic", "Rate limit exceeded");
+    let rate_limit = any_llm::AnyLLMError::rate_limit::<Anthropic>("Rate limit exceeded");
     assert!(rate_limit.to_string().contains("anthropic"));
 
-    let auth = any_llm::AnyLLMError::authentication("anthropic", "Invalid x-api-key");
+    let auth = any_llm::AnyLLMError::authentication::<Anthropic>("Invalid x-api-key");
     assert!(auth.to_string().contains("anthropic"));
     assert!(auth.to_string().contains("Authentication"));
 }

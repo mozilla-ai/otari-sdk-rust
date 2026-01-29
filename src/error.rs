@@ -6,7 +6,7 @@
 use std::borrow::Cow;
 use thiserror::Error;
 
-type ErrorStr = Cow<'static, str>;
+pub type ErrorStr = Cow<'static, str>;
 
 /// The main error type for any-llm operations.
 #[derive(Error, Debug)]
@@ -94,76 +94,3 @@ pub enum AnyLLMError {
 
 /// A specialized Result type for any-llm operations.
 pub type Result<T> = std::result::Result<T, AnyLLMError>;
-
-impl AnyLLMError {
-    /// Create a new rate limit error.
-    pub fn rate_limit(provider: impl Into<ErrorStr>, message: impl Into<ErrorStr>) -> Self {
-        Self::RateLimit {
-            provider: provider.into(),
-            message: message.into(),
-        }
-    }
-
-    /// Create a new authentication error.
-    pub fn authentication(provider: impl Into<ErrorStr>, message: impl Into<ErrorStr>) -> Self {
-        Self::Authentication {
-            provider: provider.into(),
-            message: message.into(),
-        }
-    }
-
-    /// Create a new invalid request error.
-    pub fn invalid_request(provider: impl Into<ErrorStr>, message: impl Into<ErrorStr>) -> Self {
-        Self::InvalidRequest {
-            provider: provider.into(),
-            message: message.into(),
-        }
-    }
-
-    /// Create a new provider error.
-    pub fn provider_error(provider: impl Into<ErrorStr>, message: impl Into<ErrorStr>) -> Self {
-        Self::Provider {
-            provider: provider.into(),
-            message: message.into(),
-        }
-    }
-
-    /// Create a new model not found error.
-    pub fn model_not_found(provider: impl Into<ErrorStr>, model: impl Into<ErrorStr>) -> Self {
-        Self::ModelNotFound {
-            provider: provider.into(),
-            model: model.into(),
-        }
-    }
-
-    /// Create a new unsupported parameter error.
-    pub fn unsupported_parameter(
-        provider: impl Into<ErrorStr>,
-        param: impl Into<ErrorStr>,
-        hint: impl Into<ErrorStr>,
-    ) -> Self {
-        Self::UnsupportedParameter {
-            provider: provider.into(),
-            param: param.into(),
-            hint: hint.into(),
-        }
-    }
-
-    /// Get the provider name associated with this error, if any.
-    pub fn provider(&self) -> Option<&str> {
-        match self {
-            Self::RateLimit { provider, .. }
-            | Self::Authentication { provider, .. }
-            | Self::InvalidRequest { provider, .. }
-            | Self::Provider { provider, .. }
-            | Self::ModelNotFound { provider, .. }
-            | Self::ContextLengthExceeded { provider, .. }
-            | Self::ContentFilter { provider, .. }
-            | Self::MissingApiKey { provider, .. }
-            | Self::UnsupportedProvider { provider, .. }
-            | Self::UnsupportedParameter { provider, .. }
-            | Self::Streaming { provider, .. } => Some(provider),
-            Self::Serialization(_) | Self::Http(_) => None,
-        }
-    }
-}

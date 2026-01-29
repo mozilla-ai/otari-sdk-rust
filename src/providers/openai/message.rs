@@ -8,6 +8,7 @@ use async_openai::types::{
 };
 
 use crate::error::AnyLLMError;
+use crate::providers::OpenAI;
 use crate::types::{Content, ContentPart, Message, Role};
 
 impl TryFrom<Message> for ChatCompletionRequestMessage {
@@ -24,7 +25,7 @@ impl TryFrom<Message> for ChatCompletionRequestMessage {
                 Ok(ChatCompletionRequestSystemMessageArgs::default()
                     .content(content)
                     .build()
-                    .map_err(|e| AnyLLMError::invalid_request("openai", e.to_string()))?
+                    .map_err(|e| AnyLLMError::invalid_request::<OpenAI>(e.to_string()))?
                     .into())
             }
             Role::User => {
@@ -72,7 +73,7 @@ impl TryFrom<Message> for ChatCompletionRequestMessage {
                 Ok(ChatCompletionRequestUserMessageArgs::default()
                     .content(content)
                     .build()
-                    .map_err(|e| AnyLLMError::invalid_request("openai", e.to_string()))?
+                    .map_err(|e| AnyLLMError::invalid_request::<OpenAI>(e.to_string()))?
                     .into())
             }
             Role::Assistant => {
@@ -99,7 +100,7 @@ impl TryFrom<Message> for ChatCompletionRequestMessage {
 
                 Ok(builder
                     .build()
-                    .map_err(|e| AnyLLMError::invalid_request("openai", e.to_string()))?
+                    .map_err(|e| AnyLLMError::invalid_request::<OpenAI>(e.to_string()))?
                     .into())
             }
             Role::Tool => {
@@ -113,7 +114,7 @@ impl TryFrom<Message> for ChatCompletionRequestMessage {
                     .content(content)
                     .tool_call_id(tool_call_id)
                     .build()
-                    .map_err(|e| AnyLLMError::invalid_request("openai", e.to_string()))?
+                    .map_err(|e| AnyLLMError::invalid_request::<OpenAI>(e.to_string()))?
                     .into())
             }
         }
