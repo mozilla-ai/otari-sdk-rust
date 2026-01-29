@@ -22,10 +22,7 @@ impl TryFrom<CompletionParams> for CreateChatCompletionRequest {
 
         // Build request
         let mut request_builder = CreateChatCompletionRequestArgs::default();
-        request_builder
-            .model(&params.model_id)
-            .messages(messages)
-            .stream(true);
+        request_builder.model(&params.model_id).messages(messages);
 
         // Add optional parameters (same as completion)
         if let Some(temperature) = params.temperature {
