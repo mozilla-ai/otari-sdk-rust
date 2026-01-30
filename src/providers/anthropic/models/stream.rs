@@ -51,8 +51,8 @@ impl TryInto<CompletionStream> for AnthropicStream {
                         None
                     }
                     Err(e) => Some(Err(AnyLLMError::Streaming {
-                        provider: "anthropic".to_string(),
-                        message: e.to_string(),
+                        provider: "anthropic".into(),
+                        message: e.to_string().into(),
                     })),
                 }
             })

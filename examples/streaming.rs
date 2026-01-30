@@ -7,7 +7,7 @@
 //! export OPENAI_API_KEY="your-key-here"
 //! ```
 
-use any_llm::{completion_stream, ChunkAccumulator, CompletionOptions, Message};
+use any_llm::{completion_stream, providers::OpenAI, ChunkAccumulator, CompletionOptions, Message};
 use futures::StreamExt;
 use std::io::{self, Write};
 
@@ -19,8 +19,8 @@ async fn main() -> any_llm::Result<()> {
 
     println!("Streaming response from OpenAI...\n");
 
-    let mut stream = completion_stream(
-        "openai:gpt-4o-mini",
+    let mut stream = completion_stream::<OpenAI>(
+        "gpt-4o-mini",
         messages,
         CompletionOptions::default().max_tokens(200),
     )

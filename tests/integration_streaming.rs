@@ -7,7 +7,11 @@
 //! - OPENAI_API_KEY
 //! - ANTHROPIC_API_KEY
 
-use any_llm::{completion_stream, ChunkAccumulator, CompletionOptions, Message};
+use any_llm::{
+    completion_stream,
+    providers::{Anthropic, OpenAI},
+    ChunkAccumulator, CompletionOptions, Message,
+};
 use futures::StreamExt;
 
 #[tokio::test]
@@ -15,8 +19,8 @@ use futures::StreamExt;
 async fn test_openai_streaming() {
     let messages = vec![Message::user("Count from 1 to 5, one number per line.")];
 
-    let result = completion_stream(
-        "openai:gpt-4o-mini",
+    let result = completion_stream::<OpenAI>(
+        "gpt-4o-mini",
         messages,
         CompletionOptions::default().max_tokens(50),
     )
@@ -56,8 +60,8 @@ async fn test_openai_streaming() {
 async fn test_anthropic_streaming() {
     let messages = vec![Message::user("Say 'hello world' and nothing else.")];
 
-    let result = completion_stream(
-        "anthropic:claude-3-5-haiku-latest",
+    let result = completion_stream::<Anthropic>(
+        "claude-3-5-haiku-latest",
         messages,
         CompletionOptions::default().max_tokens(20),
     )
@@ -97,8 +101,8 @@ async fn test_anthropic_streaming() {
 async fn test_streaming_chunk_structure() {
     let messages = vec![Message::user("Hi")];
 
-    let result = completion_stream(
-        "openai:gpt-4o-mini",
+    let result = completion_stream::<OpenAI>(
+        "gpt-4o-mini",
         messages,
         CompletionOptions::default().max_tokens(10),
     )
@@ -140,8 +144,8 @@ async fn test_streaming_chunk_structure() {
 async fn test_chunk_accumulator() {
     let messages = vec![Message::user("Say 'test' exactly.")];
 
-    let result = completion_stream(
-        "openai:gpt-4o-mini",
+    let result = completion_stream::<OpenAI>(
+        "gpt-4o-mini",
         messages,
         CompletionOptions::default().max_tokens(10).temperature(0.0),
     )
@@ -171,8 +175,8 @@ async fn test_chunk_accumulator() {
 async fn test_streaming_early_termination() {
     let messages = vec![Message::user("Write a long story about a dragon.")];
 
-    let result = completion_stream(
-        "openai:gpt-4o-mini",
+    let result = completion_stream::<OpenAI>(
+        "gpt-4o-mini",
         messages,
         CompletionOptions::default().max_tokens(500), // Request many tokens
     )

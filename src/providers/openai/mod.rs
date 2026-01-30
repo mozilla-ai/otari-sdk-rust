@@ -1,7 +1,6 @@
 //! OpenAI provider implementation.
 
 use async_openai::{config::OpenAIConfig, Client};
-use async_trait::async_trait;
 use futures::StreamExt;
 
 use crate::error::{AnyLLMError, Result};
@@ -15,20 +14,23 @@ mod stream;
 mod tool;
 
 /// OpenAI provider using the async-openai SDK.
-pub struct OpenAIProvider {
+pub struct OpenAI {
     client: Client<OpenAIConfig>,
 }
 
-impl OpenAIProvider {
-    /// Create a new OpenAI provider.
-    pub fn new(config: ProviderConfig) -> Result<Self> {
-        let api_key = config
-            .api_key
-            .or_else(|| std::env::var("OPENAI_API_KEY").ok())
-            .ok_or_else(|| AnyLLMError::MissingApiKey {
-                provider: "openai".to_string(),
-                env_var: "OPENAI_API_KEY".to_string(),
-            })?;
+impl Provider for OpenAI {
+    const NAME: &'static str = "openai";
+    const ENV_VAR: &'static str = "OPENAI_API_KEY";
+    const DOCS_URL: &'static str = "https://platform.openai.com/docs/api-reference";
+
+    const SUPPORTS_IMAGES: bool = true;
+    const SUPPORTS_REASONING: bool = true;
+
+    fn from_config(config: ProviderConfig) -> Result<Self> {
+        let api_key = Self::api_key(&config).ok_or_else(|| AnyLLMError::MissingApiKey {
+            provider: Self::NAME.into(),
+            env_var: Self::ENV_VAR.into(),
+        })?;
 
         let mut openai_config = OpenAIConfig::new().with_api_key(api_key);
 
@@ -40,23 +42,8 @@ impl OpenAIProvider {
             client: Client::with_config(openai_config),
         })
     }
-}
 
-#[async_trait]
-impl Provider for OpenAIProvider {
-    fn name(&self) -> &'static str {
-        "openai"
-    }
-
-    fn supports_images(&self) -> bool {
-        true
-    }
-
-    fn supports_reasoning(&self) -> bool {
-        true // o1, o3 models support reasoning
-    }
-
-    async fn completion(&self, params: CompletionParams) -> Result<ChatCompletion> {
+    async fn completion_fn(&self, params: CompletionParams) -> Result<ChatCompletion> {
         let request = params.try_into()?;
 
         // Make the API call
@@ -65,12 +52,13 @@ impl Provider for OpenAIProvider {
             .chat()
             .create(request)
             .await
-            .map_err(convert_error)?;
+            .map_err(convert_error)?
+            .into();
 
-        Ok(response.into())
+        Ok(response)
     }
 
-    async fn completion_stream(&self, params: CompletionParams) -> Result<CompletionStream> {
+    async fn completion_stream_fn(&self, params: CompletionParams) -> Result<CompletionStream> {
         let request = params.try_into()?;
 
         // Create the stream
@@ -97,20 +85,17 @@ fn convert_error(error: async_openai::error::OpenAIError) -> AnyLLMError {
 
     // Try to detect error type from message
     if message.contains("rate limit") || message.contains("429") {
-        AnyLLMError::rate_limit("openai", message)
+        AnyLLMError::rate_limit::<OpenAI>(message)
     } else if message.contains("authentication")
         || message.contains("401")
         || message.contains("invalid api key")
     {
-        AnyLLMError::authentication("openai", message)
+        AnyLLMError::authentication::<OpenAI>(message)
     } else if message.contains("not found") || message.contains("404") {
-        AnyLLMError::ModelNotFound {
-            provider: "openai".to_string(),
-            model: "unknown".to_string(),
-        }
+        AnyLLMError::model_not_found::<OpenAI>("unknown")
     } else if message.contains("400") || message.contains("bad request") {
-        AnyLLMError::invalid_request("openai", message)
+        AnyLLMError::invalid_request::<OpenAI>(message)
     } else {
-        AnyLLMError::provider_error("openai", message)
+        AnyLLMError::provider_error::<OpenAI>(message)
     }
 }

@@ -1,6 +1,5 @@
 //! Anthropic (Claude) provider implementation.
 
-use async_trait::async_trait;
 use reqwest::Client;
 use reqwest_eventsource::EventSource;
 
@@ -24,22 +23,26 @@ const ANTHROPIC_VERSION: &str = "2023-06-01";
 const DEFAULT_API_BASE: &str = "https://api.anthropic.com";
 
 /// Anthropic provider using the Messages API.
-pub struct AnthropicProvider {
+pub struct Anthropic {
     client: Client,
     api_key: String,
     api_base: String,
 }
 
-impl AnthropicProvider {
+impl Provider for Anthropic {
+    const NAME: &'static str = "anthropic";
+    const ENV_VAR: &'static str = "ANTHROPIC_API_KEY";
+    const DOCS_URL: &'static str = "https://docs.anthropic.com/en/home";
+
+    const SUPPORTS_IMAGES: bool = true;
+    const SUPPORTS_REASONING: bool = true;
+
     /// Create a new Anthropic provider.
-    pub fn new(config: ProviderConfig) -> Result<Self> {
-        let api_key = config
-            .api_key
-            .or_else(|| std::env::var("ANTHROPIC_API_KEY").ok())
-            .ok_or_else(|| AnyLLMError::MissingApiKey {
-                provider: "anthropic".to_string(),
-                env_var: "ANTHROPIC_API_KEY".to_string(),
-            })?;
+    fn from_config(config: ProviderConfig) -> Result<Self> {
+        let api_key = Self::api_key(&config).ok_or_else(|| AnyLLMError::MissingApiKey {
+            provider: Self::NAME.into(),
+            env_var: Self::ENV_VAR.into(),
+        })?;
 
         let api_base = config
             .api_base
@@ -51,23 +54,8 @@ impl AnthropicProvider {
             api_base,
         })
     }
-}
 
-#[async_trait]
-impl Provider for AnthropicProvider {
-    fn name(&self) -> &'static str {
-        "anthropic"
-    }
-
-    fn supports_images(&self) -> bool {
-        true
-    }
-
-    fn supports_reasoning(&self) -> bool {
-        true
-    }
-
-    async fn completion(&self, params: CompletionParams) -> Result<ChatCompletion> {
+    async fn completion_fn(&self, params: CompletionParams) -> Result<ChatCompletion> {
         let body: AnthropicRequest = params.try_into()?;
 
         // Make the API call
@@ -90,7 +78,7 @@ impl Provider for AnthropicProvider {
         Ok(response.json::<AnthropicResponse>().await?.into())
     }
 
-    async fn completion_stream(&self, params: CompletionParams) -> Result<CompletionStream> {
+    async fn completion_stream_fn(&self, params: CompletionParams) -> Result<CompletionStream> {
         let model = params.model_id.clone();
 
         let body = TryInto::<AnthropicRequest>::try_into(params)?.stream();
@@ -106,8 +94,8 @@ impl Provider for AnthropicProvider {
 
         // Create SSE stream
         let es = EventSource::new(request).map_err(|e| AnyLLMError::Streaming {
-            provider: "anthropic".to_string(),
-            message: e.to_string(),
+            provider: Self::NAME.into(),
+            message: e.to_string().into(),
         })?;
 
         let stream = AnthropicStream::new(es, model);
@@ -119,13 +107,10 @@ impl Provider for AnthropicProvider {
 /// Convert Anthropic HTTP error to any-llm-rust error type.
 fn convert_error(status: u16, body: &str) -> AnyLLMError {
     match status {
-        429 => AnyLLMError::rate_limit("anthropic", body),
-        401 => AnyLLMError::authentication("anthropic", body),
-        400 => AnyLLMError::invalid_request("anthropic", body),
-        404 => AnyLLMError::ModelNotFound {
-            provider: "anthropic".to_string(),
-            model: "unknown".to_string(),
-        },
-        _ => AnyLLMError::provider_error("anthropic", format!("Status {}: {}", status, body)),
+        429 => AnyLLMError::rate_limit::<Anthropic>(body.to_string()),
+        401 => AnyLLMError::authentication::<Anthropic>(body.to_string()),
+        400 => AnyLLMError::invalid_request::<Anthropic>(body.to_string()),
+        404 => AnyLLMError::model_not_found::<Anthropic>("unknown"),
+        _ => AnyLLMError::provider_error::<Anthropic>(format!("Status {}: {}", status, body)),
     }
 }

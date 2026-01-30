@@ -40,7 +40,7 @@ tokio = { version = "1", features = ["full"] }
 ```
 
 ```rust
-use any_llm::{completion, Message, CompletionOptions};
+use any_llm::{completion, Message, CompletionOptions, providers::OpenAI};
 
 #[tokio::main]
 async fn main() -> any_llm::Result<()> {
@@ -48,8 +48,8 @@ async fn main() -> any_llm::Result<()> {
 
     let messages = vec![Message::user("Hello!")];
 
-    let response = completion(
-        "openai:gpt-4o-mini",
+    let response = completion::<OpenAI>(
+        "gpt-4o-mini",
         messages,
         CompletionOptions::default(),
     ).await?;
@@ -113,15 +113,15 @@ let options = CompletionOptions::with_api_key("your-api-key");
 ### Basic Completion
 
 ```rust
-use any_llm::{completion, Message, CompletionOptions};
+use any_llm::{completion, Message, CompletionOptions, providers::OpenAI};
 
 let messages = vec![
     Message::system("You are a helpful assistant."),
     Message::user("What is the capital of France?"),
 ];
 
-let response = completion(
-    "openai:gpt-4o-mini",
+let response = completion::<OpenAI>(
+    "gpt-4o-mini",
     messages,
     CompletionOptions::default(),
 ).await?;
@@ -131,26 +131,26 @@ println!("{}", response.content().unwrap_or_default());
 
 ### Switching Providers
 
-Simply change the model string:
+Simply change the function generic type:
 
 ```rust
 // OpenAI
-let response = completion("openai:gpt-4o", messages.clone(), options.clone()).await?;
+let response = completion::<OpenAI>("gpt-4o", messages.clone(), options.clone()).await?;
 
 // Anthropic
-let response = completion("anthropic:claude-3-5-sonnet-latest", messages, options).await?;
+let response = completion::<Anthropic>("claude-3-5-sonnet-latest", messages, options).await?;
 ```
 
 ### Streaming
 
 ```rust
-use any_llm::{completion_stream, Message, CompletionOptions, ChunkAccumulator};
+use any_llm::{completion_stream, Message, CompletionOptions, ChunkAccumulator, providers::OpenAI};
 use futures::StreamExt;
 
 let messages = vec![Message::user("Tell me a story")];
 
-let mut stream = completion_stream(
-    "openai:gpt-4o-mini",
+let mut stream = completion_stream::<OpenAI>(
+    "gpt-4o-mini",
     messages,
     CompletionOptions::default(),
 ).await?;
@@ -170,7 +170,7 @@ println!("\nTotal tokens: {:?}", accumulator.usage);
 ### Tool Calling
 
 ```rust
-use any_llm::{completion, Message, CompletionOptions, Tool, ToolChoice};
+use any_llm::{completion, Message, CompletionOptions, Tool, ToolChoice, providers::OpenAI};
 use serde_json::json;
 
 let weather_tool = Tool::function("get_weather", "Get the current weather")
@@ -191,7 +191,7 @@ let options = CompletionOptions::default()
     .tools(vec![weather_tool])
     .tool_choice(ToolChoice::auto());
 
-let response = completion("openai:gpt-4o-mini", messages, options).await?;
+let response = completion::<OpenAI>("gpt-4o-mini", messages, options).await?;
 
 if let Some(tool_calls) = &response.choices[0].message.tool_calls {
     for call in tool_calls {
@@ -204,7 +204,7 @@ if let Some(tool_calls) = &response.choices[0].message.tool_calls {
 ### Extended Thinking (Anthropic)
 
 ```rust
-use any_llm::{completion, Message, CompletionOptions, ReasoningEffort};
+use any_llm::{completion, Message, CompletionOptions, ReasoningEffort, providers::Anthropic};
 
 let messages = vec![Message::user("Solve this step by step: What is 15% of 240?")];
 
@@ -212,8 +212,8 @@ let options = CompletionOptions::default()
     .reasoning_effort(ReasoningEffort::Medium)
     .max_tokens(16000);
 
-let response = completion(
-    "anthropic:claude-sonnet-4-20250514",
+let response = completion::<Anthropic>(
+    "claude-sonnet-4-20250514",
     messages,
     options,
 ).await?;

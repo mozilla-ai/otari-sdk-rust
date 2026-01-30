@@ -23,14 +23,14 @@
 //! ## Quick Start
 //!
 //! ```rust,no_run
-//! use any_llm::{completion, Message, CompletionOptions};
+//! use any_llm::{completion, Message, CompletionOptions, providers::OpenAI};
 //!
 //! #[tokio::main]
 //! async fn main() -> any_llm::Result<()> {
 //!     let messages = vec![Message::user("Hello, how are you?")];
 //!
-//!     let response = completion(
-//!         "openai:gpt-4o-mini",
+//!     let response = completion::<OpenAI>(
+//!         "gpt-4o-mini",
 //!         messages,
 //!         CompletionOptions::default(),
 //!     ).await?;
@@ -45,14 +45,14 @@
 //! Simply change the model string to switch providers:
 //!
 //! ```rust,no_run
-//! # use any_llm::{completion, Message, CompletionOptions};
+//! # use any_llm::{completion, Message, CompletionOptions, providers::{OpenAI, Anthropic}};
 //! # async fn example() -> any_llm::Result<()> {
 //! # let messages = vec![Message::user("Hello")];
 //! // OpenAI
-//! let response = completion("openai:gpt-4o", messages.clone(), CompletionOptions::default()).await?;
+//! let response = completion::<OpenAI>(":gpt-4o", messages.clone(), CompletionOptions::default()).await?;
 //!
 //! // Anthropic
-//! let response = completion("anthropic:claude-3-5-sonnet-latest", messages, CompletionOptions::default()).await?;
+//! let response = completion::<Anthropic>("claude-3-5-sonnet-latest", messages, CompletionOptions::default()).await?;
 //! # Ok(())
 //! # }
 //! ```
@@ -60,14 +60,14 @@
 //! ## Streaming
 //!
 //! ```rust,no_run
-//! use any_llm::{completion_stream, Message, CompletionOptions, ChunkAccumulator};
+//! use any_llm::{completion_stream, Message, CompletionOptions, ChunkAccumulator, providers::OpenAI};
 //! use futures::StreamExt;
 //!
 //! # async fn example() -> any_llm::Result<()> {
 //! let messages = vec![Message::user("Tell me a story")];
 //!
-//! let mut stream = completion_stream(
-//!     "openai:gpt-4o-mini",
+//! let mut stream = completion_stream::<OpenAI>(
+//!     "gpt-4o-mini",
 //!     messages,
 //!     CompletionOptions::default(),
 //! ).await?;
@@ -90,7 +90,7 @@
 //! ## Tool Calling
 //!
 //! ```rust,no_run
-//! use any_llm::{completion, Message, CompletionOptions, Tool, ToolChoice};
+//! use any_llm::{completion, Message, CompletionOptions, Tool, ToolChoice, providers::OpenAI};
 //! use serde_json::json;
 //!
 //! # async fn example() -> any_llm::Result<()> {
@@ -112,7 +112,7 @@
 //!     .tools(vec![weather_tool])
 //!     .tool_choice(ToolChoice::auto());
 //!
-//! let response = completion("openai:gpt-4o-mini", messages, options).await?;
+//! let response = completion::<OpenAI>("gpt-4o-mini", messages, options).await?;
 //!
 //! if let Some(tool_calls) = &response.choices[0].message.tool_calls {
 //!     for call in tool_calls {
@@ -137,9 +137,9 @@ pub mod providers;
 pub mod types;
 
 // Re-export main types for convenience
-pub use api::{completion, completion_stream, parse_model_string, CompletionOptions};
+pub use api::{completion, completion_stream, CompletionOptions};
 pub use error::{AnyLLMError, Result};
-pub use provider::{create_provider, LLMProvider, Provider, ProviderConfig};
+pub use provider::{Provider, ProviderConfig};
 pub use types::{
     ChatCompletion, ChatCompletionChunk, ChatCompletionMessage, Choice, ChoiceDelta,
     ChunkAccumulator, ChunkChoice, CompletionParams, CompletionUsage, Content, ContentPart,

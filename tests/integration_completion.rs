@@ -7,7 +7,11 @@
 //! - OPENAI_API_KEY
 //! - ANTHROPIC_API_KEY
 
-use any_llm::{completion, CompletionOptions, Message};
+use any_llm::{
+    completion,
+    providers::{Anthropic, OpenAI},
+    CompletionOptions, Message,
+};
 
 #[tokio::test]
 #[ignore = "requires OPENAI_API_KEY"]
@@ -17,7 +21,7 @@ async fn test_openai_completion() {
         Message::user("What is 2 + 2? Reply with just the number."),
     ];
 
-    let result = completion("openai:gpt-4o-mini", messages, CompletionOptions::default()).await;
+    let result = completion::<OpenAI>("gpt-4o-mini", messages, CompletionOptions::default()).await;
 
     match result {
         Ok(response) => {
@@ -40,8 +44,8 @@ async fn test_anthropic_completion() {
         "What is the capital of France? Reply with just the city name.",
     )];
 
-    let result = completion(
-        "anthropic:claude-3-5-haiku-latest",
+    let result = completion::<Anthropic>(
+        "claude-3-5-haiku-latest",
         messages,
         CompletionOptions::default().max_tokens(100),
     )
@@ -66,8 +70,8 @@ async fn test_anthropic_completion() {
 async fn test_openai_completion_with_temperature() {
     let messages = vec![Message::user("Say 'hello' and nothing else.")];
 
-    let result = completion(
-        "openai:gpt-4o-mini",
+    let result = completion::<OpenAI>(
+        "gpt-4o-mini",
         messages,
         CompletionOptions::default().temperature(0.0).max_tokens(10),
     )
@@ -83,7 +87,7 @@ async fn test_openai_completion_with_temperature() {
 #[ignore = "requires OPENAI_API_KEY"]
 async fn test_completion_returns_usage() {
     let messages = vec![Message::user("Hi")];
-    let result = completion("openai:gpt-4o-mini", messages, CompletionOptions::default()).await;
+    let result = completion::<OpenAI>("gpt-4o-mini", messages, CompletionOptions::default()).await;
 
     match result {
         Ok(response) => {
@@ -104,8 +108,8 @@ async fn test_completion_returns_usage() {
 #[ignore = "requires OPENAI_API_KEY"]
 async fn test_completion_invalid_model() {
     let messages = vec![Message::user("Hello")];
-    let result = completion(
-        "openai:nonexistent-model-xyz",
+    let result = completion::<OpenAI>(
+        "nonexistent-model-xyz",
         messages,
         CompletionOptions::default(),
     )
@@ -125,13 +129,13 @@ async fn test_concurrent_completions() {
     )];
 
     let (result1, result2) = tokio::join!(
-        completion(
-            "openai:gpt-4o-mini",
+        completion::<OpenAI>(
+            "gpt-4o-mini",
             messages1,
             CompletionOptions::default().max_tokens(20)
         ),
-        completion(
-            "openai:gpt-4o-mini",
+        completion::<OpenAI>(
+            "gpt-4o-mini",
             messages2,
             CompletionOptions::default().max_tokens(20)
         )
@@ -152,7 +156,7 @@ async fn test_concurrent_completions() {
 #[ignore = "requires OPENAI_API_KEY"]
 async fn test_chat_completion_response_structure() {
     let messages = vec![Message::user("Hello")];
-    let result = completion("openai:gpt-4o-mini", messages, CompletionOptions::default()).await;
+    let result = completion::<OpenAI>("gpt-4o-mini", messages, CompletionOptions::default()).await;
 
     match result {
         Ok(response) => {
