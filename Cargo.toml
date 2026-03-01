@@ -19,7 +19,7 @@ tokio = { version = "1", features = ["full"] }
 futures = "0.3"
 
 # Provider SDKs (optional)
-async-openai = "0.27"
+async-openai = "0.33"
 
 # Serialization
 serde = { version = "1", features = ["derive"] }
