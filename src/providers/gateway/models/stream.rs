@@ -33,10 +33,11 @@ impl TryInto<CompletionStream> for GatewayStream {
     type Error = AnyLLMError;
 
     fn try_into(self) -> Result<CompletionStream, Self::Error> {
-        let stream = self
-            .source
+        let GatewayStream { source, model } = self;
+
+        let stream = source
             .map(move |event| {
-                let model = self.model.clone();
+                let model = model.clone();
                 match event {
                     Ok(Event::Message(msg)) => {
                         // The [DONE] sentinel terminates the stream.

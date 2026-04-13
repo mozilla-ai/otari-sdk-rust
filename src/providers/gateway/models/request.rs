@@ -77,15 +77,31 @@ impl TryFrom<CompletionParams> for GatewayRequest {
         let tools = params
             .tools
             .as_ref()
-            .map(|t| serde_json::to_value(t).unwrap_or_default());
+            .map(serde_json::to_value)
+            .transpose()
+            .map_err(|e| {
+                AnyLLMError::invalid_request::<Gateway>(format!("failed to serialize tools: {e}"))
+            })?;
         let tool_choice = params
             .tool_choice
             .as_ref()
-            .map(|tc| serde_json::to_value(tc).unwrap_or_default());
+            .map(serde_json::to_value)
+            .transpose()
+            .map_err(|e| {
+                AnyLLMError::invalid_request::<Gateway>(format!(
+                    "failed to serialize tool_choice: {e}"
+                ))
+            })?;
         let logit_bias = params
             .logit_bias
             .as_ref()
-            .map(|lb| serde_json::to_value(lb).unwrap_or_default());
+            .map(serde_json::to_value)
+            .transpose()
+            .map_err(|e| {
+                AnyLLMError::invalid_request::<Gateway>(format!(
+                    "failed to serialize logit_bias: {e}"
+                ))
+            })?;
         let stop = params.stop.as_ref().map(|s| json!(s.to_vec()));
         let reasoning_effort = params
             .reasoning_effort
@@ -133,10 +149,16 @@ fn convert_message(msg: &Message) -> Result<Value> {
                 .iter()
                 .map(|part| match part {
                     ContentPart::Text { text } => json!({"type": "text", "text": text}),
-                    ContentPart::ImageUrl { image_url } => json!({
-                        "type": "image_url",
-                        "image_url": {"url": image_url.url, "detail": image_url.detail}
-                    }),
+                    ContentPart::ImageUrl { image_url } => {
+                        let mut image_url_obj = json!({"url": image_url.url});
+                        if let Some(detail) = &image_url.detail {
+                            image_url_obj["detail"] = json!(detail);
+                        }
+                        json!({
+                            "type": "image_url",
+                            "image_url": image_url_obj
+                        })
+                    }
                 })
                 .collect();
             obj["content"] = json!(converted);
