@@ -155,7 +155,7 @@ mod tests {
         let json = serde_json::json!({
             "id": "chatcmpl-abc",
             "object": "chat.completion",
-            "created": 1700000000_i64,
+            "created": 1_700_000_000_i64,
             "model": "openai:gpt-4o-mini",
             "choices": [{
                 "index": 0,

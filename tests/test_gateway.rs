@@ -32,7 +32,7 @@ fn chat_completion_json() -> serde_json::Value {
     serde_json::json!({
         "id": "chatcmpl-abc123",
         "object": "chat.completion",
-        "created": 1700000000_i64,
+        "created": 1_700_000_000_i64,
         "model": "openai:gpt-4o-mini",
         "choices": [{
             "index": 0,
@@ -519,7 +519,7 @@ async fn completion_api_function_works() {
 // ---------------------------------------------------------------------------
 
 #[tokio::test]
-#[ignore]
+#[ignore = "requires a running gateway server"]
 async fn live_gateway_completion() {
     let gw = Gateway::from_config(ProviderConfig::default()).unwrap();
 
@@ -536,7 +536,7 @@ async fn live_gateway_completion() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "requires a running gateway server"]
 async fn live_gateway_streaming() {
     let gw = Gateway::from_config(ProviderConfig::default()).unwrap();
 
