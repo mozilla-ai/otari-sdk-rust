@@ -1,23 +1,25 @@
 <p align="center">
   <picture>
-    <img src="https://raw.githubusercontent.com/mozilla-ai/any-llm/refs/heads/main/docs/images/any-llm-logo-mark.png" width="20%" alt="any-llm logo"/>
+    <img src="https://raw.githubusercontent.com/mozilla-ai/any-llm/refs/heads/main/docs/public/images/any-llm-logo-mark.png" width="20%" alt="Project logo"/>
   </picture>
 </p>
 
 <div align="center">
 
-# any-llm
+# any-llm (Rust)
 
 [![Crates.io](https://img.shields.io/crates/v/any-llm.svg)](https://crates.io/crates/any-llm)
 [![Documentation](https://docs.rs/any-llm/badge.svg)](https://docs.rs/any-llm)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.83%2B-orange.svg)](https://www.rust-lang.org)
+<a href="https://discord.gg/4gf3zXrQUc">
+    <img src="https://img.shields.io/static/v1?label=Chat%20on&message=Discord&color=blue&logo=Discord&style=flat-square" alt="Discord">
+</a>
 
 **Communicate with any LLM provider using a single, unified interface.**
-
 Switch between OpenAI, Anthropic, and more without changing your code.
 
-[Documentation](https://docs.rs/any-llm) | [Examples](./examples) | [Contributing](CONTRIBUTING.md)
+[Python SDK](https://github.com/mozilla-ai/any-llm) | [Documentation](https://mozilla-ai.github.io/any-llm/) | [Platform (Beta)](https://any-llm.ai/)
 
 </div>
 
@@ -59,14 +61,14 @@ async fn main() -> any_llm::Result<()> {
 }
 ```
 
-**That's it!** Change the model string to switch between providers.
+**That's it!** Change the generic type to switch between LLM providers.
 
 ## Installation
 
 ### Requirements
 
 - Rust 1.83 or newer
-- API keys for your chosen LLM providers
+- API keys for whichever LLM providers you want to use
 
 ### Feature Flags
 
@@ -92,21 +94,38 @@ export OPENAI_API_KEY="your-key-here"
 export ANTHROPIC_API_KEY="your-key-here"
 ```
 
-Or pass API keys directly in code:
+Alternatively, pass API keys directly in your code:
 
 ```rust
 let options = CompletionOptions::with_api_key("your-api-key");
 ```
 
-## Why choose `any-llm`?
+## any-llm-gateway
 
-- **Simple, unified interface** - Single function for all providers, switch models with just a string change
-- **Type-safe** - Full Rust type safety with serde serialization
-- **Leverages official SDKs** - Uses `async-openai` for OpenAI, ensuring maximum compatibility
-- **Async-first** - Built on Tokio for high-performance async I/O
-- **Streaming support** - Real-time token streaming with async streams
-- **Tool calling** - Function/tool calling with automatic format conversion
-- **Extended thinking** - Support for Anthropic's thinking/reasoning feature
+any-llm-gateway is an **optional** FastAPI-based proxy server that adds enterprise-grade features on top of the core library:
+
+- **Budget Management** - Enforce spending limits with automatic daily, weekly, or monthly resets
+- **API Key Management** - Issue, revoke, and monitor virtual API keys without exposing provider credentials
+- **Usage Analytics** - Track every request with full token counts, costs, and metadata
+- **Multi-tenant Support** - Manage access and budgets across users and teams
+
+The gateway sits between your applications and LLM providers, exposing an OpenAI-compatible API that works with any supported provider.
+
+### Quick Start
+
+```bash
+docker run \
+  -e GATEWAY_MASTER_KEY="your-secure-master-key" \
+  -e OPENAI_API_KEY="your-api-key" \
+  -p 8000:8000 \
+  ghcr.io/mozilla-ai/any-llm/gateway:latest
+```
+
+> **Note:** You can use a specific release version instead of `latest` (e.g., `1.2.0`). See [available versions](https://github.com/orgs/mozilla-ai/packages/container/package/any-llm%2Fgateway).
+
+### Managed Platform (Beta)
+
+Prefer a hosted experience? The [any-llm platform](https://any-llm.ai/) provides a managed control plane for keys, usage tracking, and cost visibility across providers, while still building on the same `any-llm` interfaces.
 
 ## Usage
 
@@ -131,7 +150,7 @@ println!("{}", response.content().unwrap_or_default());
 
 ### Switching Providers
 
-Simply change the function generic type:
+Simply change the generic type parameter:
 
 ```rust
 // OpenAI
@@ -201,7 +220,9 @@ if let Some(tool_calls) = &response.choices[0].message.tool_calls {
 }
 ```
 
-### Extended Thinking (Anthropic)
+### Extended Thinking (Reasoning)
+
+For models that support extended thinking (like Claude):
 
 ```rust
 use any_llm::{completion, Message, CompletionOptions, ReasoningEffort, providers::Anthropic};
@@ -244,14 +265,7 @@ let params = CompletionParams {
 let response = provider.completion(params).await?;
 ```
 
-## Supported Providers
-
-| Provider | Completion | Streaming | Tools | Images | Reasoning |
-|----------|------------|-----------|-------|--------|-----------|
-| OpenAI | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Anthropic | ✅ | ✅ | ✅ | ✅ | ✅ |
-
-## Error Handling
+### Error Handling
 
 ```rust
 use any_llm::{completion, AnyLLMError};
@@ -268,29 +282,53 @@ match completion(model, messages, options).await {
 }
 ```
 
-## Examples
+## Supported Providers
 
-See the [examples](./examples) directory for complete working examples:
+| Provider  | Completion | Streaming | Tools | Images | Reasoning |
+|-----------|:----------:|:---------:|:-----:|:------:|:---------:|
+| OpenAI    |     ✅     |     ✅    |   ✅  |   ✅   |     ❌    |
+| Anthropic |     ✅     |     ✅    |   ✅  |   ✅   |     ✅    |
 
-- [`basic_completion.rs`](./examples/basic_completion.rs) - Simple chat completion
-- [`streaming.rs`](./examples/streaming.rs) - Streaming responses
-- [`tool_calling.rs`](./examples/tool_calling.rs) - Function/tool calling
-- [`multi_provider.rs`](./examples/multi_provider.rs) - Switching between providers
+## Why choose `any-llm`?
 
-Run an example:
+- **Simple, unified interface** - Single function for all providers, switch models with just a type change
+- **Developer friendly** - Full Rust type safety with serde serialization and clear, actionable error messages
+- **Leverages official SDKs** - Uses `async-openai` for OpenAI, ensuring maximum compatibility
+- **Stays framework-agnostic** so it can be used across different projects and use cases
+- **Async-first** - Built on Tokio for high-performance async I/O
+- **Streaming support** - Real-time token streaming with async streams
+- **Battle-tested** - Based on the proven [any-llm](https://github.com/mozilla-ai/any-llm) Python library
+
+## Development
 
 ```bash
+# Build
+cargo build --all-features
+
+# Run all checks
+cargo fmt --check && cargo clippy --all-features -- -D warnings
+
+# Run tests
+cargo test --all-features
+
+# Run an example
 OPENAI_API_KEY=your-key cargo run --example basic_completion
+
+# Build docs
+cargo doc --all-features --no-deps --open
 ```
+
+## Documentation
+
+- **[Full Documentation](https://mozilla-ai.github.io/any-llm/)** - Complete guides and API reference
+- **[Supported Providers](https://mozilla-ai.github.io/any-llm/providers/)** - List of all supported LLM providers
+- **[Gateway Documentation](https://mozilla-ai.github.io/any-llm/gateway/overview/)** - Gateway setup and deployment
+- **[Python SDK](https://github.com/mozilla-ai/any-llm)** - The full Python SDK with direct provider access
+- **[any-llm Platform (Beta)](https://any-llm.ai/)** - Hosted control plane for key management, usage tracking, and cost visibility
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-## Related Projects
-
-- [any-llm (Python)](https://github.com/mozilla-ai/any-llm) - The original Python implementation
-- [async-openai](https://github.com/64bit/async-openai) - Rust OpenAI SDK we build on
+We welcome contributions from developers of all skill levels! Please see our [Contributing Guide](CONTRIBUTING.md) or open an issue to discuss changes.
 
 ## License
 
