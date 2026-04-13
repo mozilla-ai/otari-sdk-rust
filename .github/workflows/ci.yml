@@ -83,6 +83,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Use stable to generate a lockfile that respects rust-version.
+      # The "fallback" resolver (stable since 1.84) picks older dep
+      # versions when newer ones exceed the workspace MSRV.
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Generate MSRV-compatible lockfile
+        run: |
+          mkdir -p .cargo
+          printf '[resolver]\nincompatible-rust-versions = "fallback"\n' >> .cargo/config.toml
+          cargo generate-lockfile
       - uses: dtolnay/rust-toolchain@1.83
       - uses: Swatinem/rust-cache@v2
-      - run: cargo check --all-features
+      - run: cargo check --all-features --locked
