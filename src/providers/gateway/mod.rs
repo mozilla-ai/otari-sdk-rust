@@ -406,10 +406,10 @@ async fn convert_batch_error(response: reqwest::Response, path: &str) -> AnyLLME
 
         return match status {
             409 => {
-                let batch_id = extract_field_from_detail(&detail, "batch_id")
+                let batch_id = extract_batch_id_from_detail(&detail)
                     .unwrap_or_default();
                 let batch_status =
-                    extract_field_from_detail(&detail, "status").unwrap_or("unknown".to_string());
+                    extract_batch_status_from_detail(&detail).unwrap_or("unknown".to_string());
                 AnyLLMError::BatchNotComplete {
                     batch_id: batch_id.into(),
                     status: batch_status.into(),
@@ -431,22 +431,47 @@ async fn convert_batch_error(response: reqwest::Response, path: &str) -> AnyLLME
     convert_error(response).await
 }
 
-/// Try to extract a named field value from an error detail string.
+/// Extract the batch ID from a gateway 409 error detail string.
 ///
-/// Looks for patterns like `batch_id=<value>` or `status=<value>` in
-/// the error message. Returns `None` if the field is not found.
-fn extract_field_from_detail(detail: &str, field: &str) -> Option<String> {
-    let prefix = format!("{field}=");
-    let start = detail.find(&prefix)?;
-    let value_start = start + prefix.len();
+/// The gateway sends messages like:
+/// `"Batch 'batch_abc123' is not yet complete (status: in_progress). ..."`
+///
+/// This function looks for the pattern `Batch '<id>'` (case-insensitive on
+/// the leading `B`) and returns the quoted value.
+fn extract_batch_id_from_detail(detail: &str) -> Option<String> {
+    // Look for "atch '" which covers both "Batch '" and "batch '"
+    let marker = "atch '";
+    let start = detail.find(marker)?;
+    let value_start = start + marker.len();
     let rest = &detail[value_start..];
-    let end = rest
-        .find(|c: char| c.is_whitespace() || c == ',' || c == ')' || c == '}')
-        .unwrap_or(rest.len());
-    let value = rest[..end].to_string();
+    let end = rest.find('\'')?;
+    let value = &rest[..end];
     if value.is_empty() {
         None
     } else {
-        Some(value)
+        Some(value.to_string())
+    }
+}
+
+/// Extract the batch status from a gateway 409 error detail string.
+///
+/// The gateway sends messages like:
+/// `"Batch 'batch_abc123' is not yet complete (status: in_progress). ..."`
+///
+/// This function looks for the pattern `status: <word>` and returns the
+/// status value.
+fn extract_batch_status_from_detail(detail: &str) -> Option<String> {
+    let marker = "status: ";
+    let start = detail.find(marker)?;
+    let value_start = start + marker.len();
+    let rest = &detail[value_start..];
+    let end = rest
+        .find(|c: char| !c.is_alphanumeric() && c != '_')
+        .unwrap_or(rest.len());
+    let value = &rest[..end];
+    if value.is_empty() {
+        None
+    } else {
+        Some(value.to_string())
     }
 }

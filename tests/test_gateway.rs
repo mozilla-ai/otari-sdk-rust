@@ -828,7 +828,7 @@ async fn batch_409_returns_batch_not_complete() {
         .and(path("/v1/batches/batch_abc123/results"))
         .respond_with(ResponseTemplate::new(409).set_body_json(serde_json::json!({
             "error": {
-                "message": "Batch is not yet complete batch_id=batch_abc123 status=in_progress"
+                "message": "Batch 'batch_abc123' is not yet complete (status: in_progress). Call GET /v1/batches/batch_abc123?provider=openai to check the current status."
             }
         })))
         .mount(&server)
@@ -839,7 +839,15 @@ async fn batch_409_returns_batch_not_complete() {
         .retrieve_batch_results("batch_abc123", "openai")
         .await
         .unwrap_err();
-    assert!(matches!(err, AnyLLMError::BatchNotComplete { .. }));
+    match &err {
+        AnyLLMError::BatchNotComplete {
+            batch_id, status, ..
+        } => {
+            assert_eq!(batch_id.as_ref(), "batch_abc123");
+            assert_eq!(status.as_ref(), "in_progress");
+        }
+        other => panic!("expected BatchNotComplete, got: {other:?}"),
+    }
     assert!(err.to_string().contains("not yet complete"));
 }
 
