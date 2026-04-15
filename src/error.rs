@@ -76,6 +76,14 @@ pub enum AnyLLMError {
         hint: ErrorStr,
     },
 
+    /// Batch not yet complete — results cannot be retrieved.
+    #[error("Batch '{batch_id}' is not yet complete (status: {status}). Check status with retrieve_batch().")]
+    BatchNotComplete {
+        batch_id: ErrorStr,
+        status: ErrorStr,
+        provider: ErrorStr,
+    },
+
     /// Streaming error - an error occurred during streaming.
     #[error("Streaming error from {provider}: {message}")]
     Streaming {
