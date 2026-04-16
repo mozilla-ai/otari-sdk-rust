@@ -154,12 +154,12 @@ async fn platform_mode_sends_authorization_header() {
 }
 
 #[tokio::test]
-async fn non_platform_mode_sends_x_anyllm_key_header() {
+async fn non_platform_mode_sends_anyllm_key_header() {
     let server = MockServer::start().await;
 
     Mock::given(method("POST"))
         .and(path("/v1/chat/completions"))
-        .and(header("X-AnyLLM-Key", "Bearer my-api-key"))
+        .and(header("AnyLLM-Key", "Bearer my-api-key"))
         .respond_with(ResponseTemplate::new(200).set_body_json(chat_completion_json()))
         .expect(1)
         .mount(&server)
