@@ -9,7 +9,7 @@
 //! - **Platform mode**: uses `Authorization: Bearer <token>`. Activated by
 //!   setting `GATEWAY_PLATFORM_TOKEN` env var, or by passing
 //!   `platform_token` in `ProviderConfig::extra`.
-//! - **Non-platform mode**: uses the `X-AnyLLM-Key: Bearer <key>` header.
+//! - **Non-platform mode**: uses the `AnyLLM-Key: Bearer <key>` header.
 //!   The key is optional (the gateway may allow unauthenticated access).
 
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_TYPE};
@@ -26,7 +26,7 @@ use models::request::GatewayRequest;
 use models::response::GatewayResponse;
 use models::stream::GatewayStream;
 
-const GATEWAY_HEADER_NAME: &str = "X-AnyLLM-Key";
+const GATEWAY_HEADER_NAME: &str = "AnyLLM-Key";
 const GATEWAY_PLATFORM_TOKEN_ENV: &str = "GATEWAY_PLATFORM_TOKEN";
 const GATEWAY_API_BASE_ENV: &str = "GATEWAY_API_BASE";
 
@@ -154,7 +154,7 @@ impl Provider for Gateway {
 /// This mirrors the Python `GatewayProvider.__init__` logic:
 /// 1. Explicit `platform_mode=true` -> platform mode, needs a token
 /// 2. `GATEWAY_PLATFORM_TOKEN` set + no explicit api_key -> auto-detect platform
-/// 3. Otherwise -> non-platform mode with optional X-AnyLLM-Key header
+/// 3. Otherwise -> non-platform mode with optional AnyLLM-Key header
 fn resolve_auth(
     api_key: Option<String>,
     platform_token: Option<String>,
