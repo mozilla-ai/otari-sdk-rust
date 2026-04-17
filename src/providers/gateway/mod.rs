@@ -378,7 +378,11 @@ async fn convert_error(response: reqwest::Response) -> AnyLLMError {
     // Detect the locked "unsupported moderation" phrasing emitted by the
     // gateway and map it to a typed `Unsupported` error. The substring
     // check is the real signal; provider-name extraction is best-effort.
-    if status == 400 && detail.contains("does not support moderation") {
+    //
+    // Accepted phrasings (from the gateway's locked copy):
+    //   - "Provider <name> does not support moderation"
+    //   - "Provider <name> does not support multimodal moderation input"
+    if status == 400 && detail.contains("does not support") && detail.contains("moderation") {
         let provider = parse_unsupported_provider(&detail).unwrap_or_else(|| "unknown".to_string());
         let operation = if detail.contains("multimodal") {
             "multimodal_moderation"
