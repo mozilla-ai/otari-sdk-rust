@@ -282,6 +282,39 @@ match completion(model, messages, options).await {
 }
 ```
 
+### Moderation (Gateway)
+
+The gateway provider exposes an inherent `moderation` method that calls
+`POST /v1/moderations` and returns an OpenAI-compatible response:
+
+```rust,no_run
+use any_llm::providers::Gateway;
+use any_llm::{AnyLLMError, ModerationInput, ModerationParams, Provider, ProviderConfig};
+
+# async fn example() -> any_llm::Result<()> {
+let gw = Gateway::from_config(ProviderConfig::default())?;
+
+let resp = gw
+    .moderation(
+        ModerationParams::new(
+            "openai:omni-moderation-latest",
+            ModerationInput::Text("hurt someone".into()),
+        )
+        .with_user("user_123"),
+    )
+    .await?;
+
+if resp.results[0].flagged {
+    println!("unsafe input");
+}
+# Ok(())
+# }
+```
+
+Only upstream providers with moderation support will succeed; others
+return `AnyLLMError::Unsupported { provider, operation: "moderation" }`
+(or `"multimodal_moderation"` when the request used image parts).
+
 ## Supported Providers
 
 | Provider  | Completion | Streaming | Tools | Images | Reasoning |
