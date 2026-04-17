@@ -141,8 +141,9 @@ pub use api::{completion, completion_stream, CompletionOptions};
 pub use error::{AnyLLMError, Result};
 pub use provider::{Provider, ProviderConfig};
 pub use types::{
-    ChatCompletion, ChatCompletionChunk, ChatCompletionMessage, Choice, ChoiceDelta,
+    Batch, BatchRequestCounts, BatchRequestItem, BatchResult, BatchResultError, BatchResultItem,
+    BatchStatus, ChatCompletion, ChatCompletionChunk, ChatCompletionMessage, Choice, ChoiceDelta,
     ChunkAccumulator, ChunkChoice, CompletionParams, CompletionUsage, Content, ContentPart,
-    Function, ImageUrl, Message, Reasoning, ReasoningEffort, Role, StopSequence, Tool, ToolCall,
-    ToolCallDelta, ToolChoice, ToolFunction,
+    CreateBatchParams, Function, ImageUrl, ListBatchesOptions, Message, Reasoning, ReasoningEffort,
+    Role, StopSequence, Tool, ToolCall, ToolCallDelta, ToolChoice, ToolFunction,
 };

@@ -16,9 +16,13 @@ use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_TYPE};
 use reqwest::Client;
 use reqwest_eventsource::EventSource;
 
+use serde::Deserialize;
+
 use crate::error::{AnyLLMError, Result};
 use crate::provider::{CompletionStream, Provider, ProviderConfig};
-use crate::types::{ChatCompletion, CompletionParams};
+use crate::types::{
+    Batch, BatchResult, ChatCompletion, CompletionParams, CreateBatchParams, ListBatchesOptions,
+};
 
 mod models;
 
@@ -61,6 +65,96 @@ impl Gateway {
     /// Returns `true` if the client is using platform mode authentication.
     pub fn is_platform_mode(&self) -> bool {
         self.platform_mode
+    }
+
+    // ----- Batch operations -----
+
+    /// Create a batch job.
+    pub async fn create_batch(&self, params: CreateBatchParams) -> Result<Batch> {
+        let url = format!("{}/v1/batches", self.api_base);
+        let response = self.client.post(&url).json(&params).send().await?;
+        if response.status().as_u16() != 200 {
+            return Err(convert_batch_error(response, "/v1/batches").await);
+        }
+        Ok(response.json::<Batch>().await?)
+    }
+
+    /// Retrieve the status of a batch job.
+    pub async fn retrieve_batch(&self, batch_id: &str, provider: &str) -> Result<Batch> {
+        let url = format!("{}/v1/batches/{}", self.api_base, batch_id);
+        let response = self
+            .client
+            .get(&url)
+            .query(&[("provider", provider)])
+            .send()
+            .await?;
+        let path = format!("/v1/batches/{batch_id}");
+        if response.status().as_u16() != 200 {
+            return Err(convert_batch_error(response, &path).await);
+        }
+        Ok(response.json::<Batch>().await?)
+    }
+
+    /// Cancel a batch job.
+    pub async fn cancel_batch(&self, batch_id: &str, provider: &str) -> Result<Batch> {
+        let url = format!("{}/v1/batches/{}/cancel", self.api_base, batch_id);
+        let response = self
+            .client
+            .post(&url)
+            .query(&[("provider", provider)])
+            .send()
+            .await?;
+        let path = format!("/v1/batches/{batch_id}/cancel");
+        if response.status().as_u16() != 200 {
+            return Err(convert_batch_error(response, &path).await);
+        }
+        Ok(response.json::<Batch>().await?)
+    }
+
+    /// List batch jobs for a provider.
+    pub async fn list_batches(
+        &self,
+        provider: &str,
+        options: ListBatchesOptions,
+    ) -> Result<Vec<Batch>> {
+        let url = format!("{}/v1/batches", self.api_base);
+        let mut query: Vec<(&str, String)> = vec![("provider", provider.to_string())];
+        if let Some(after) = &options.after {
+            query.push(("after", after.clone()));
+        }
+        if let Some(limit) = options.limit {
+            query.push(("limit", limit.to_string()));
+        }
+        let response = self.client.get(&url).query(&query).send().await?;
+        if response.status().as_u16() != 200 {
+            return Err(convert_batch_error(response, "/v1/batches").await);
+        }
+        #[derive(Deserialize)]
+        struct ListResponse {
+            data: Vec<Batch>,
+        }
+        let list_resp: ListResponse = response.json().await?;
+        Ok(list_resp.data)
+    }
+
+    /// Retrieve the results of a completed batch job.
+    pub async fn retrieve_batch_results(
+        &self,
+        batch_id: &str,
+        provider: &str,
+    ) -> Result<BatchResult> {
+        let url = format!("{}/v1/batches/{}/results", self.api_base, batch_id);
+        let response = self
+            .client
+            .get(&url)
+            .query(&[("provider", provider)])
+            .send()
+            .await?;
+        let path = format!("/v1/batches/{batch_id}/results");
+        if response.status().as_u16() != 200 {
+            return Err(convert_batch_error(response, &path).await);
+        }
+        Ok(response.json::<BatchResult>().await?)
     }
 }
 
@@ -278,4 +372,106 @@ fn extract_error_message(body: &str) -> Option<String> {
         return Some(msg.to_string());
     }
     err.as_str().map(String::from)
+}
+
+/// Convert an HTTP error response from a batch endpoint to a typed `AnyLLMError`.
+///
+/// Handles batch-specific status codes (409, 404 on batch paths) before
+/// falling through to the generic `convert_error` logic.
+async fn convert_batch_error(response: reqwest::Response, path: &str) -> AnyLLMError {
+    let status = response.status().as_u16();
+
+    // For 409 and batch-404 we need the body *before* delegating, because
+    // `convert_error` consumes the response.
+    if status == 409 || (status == 404 && path.contains("/v1/batches")) {
+        let correlation_id = response
+            .headers()
+            .get("x-correlation-id")
+            .and_then(|v| v.to_str().ok())
+            .map(String::from);
+
+        let body = response.text().await.unwrap_or_default();
+        let message = extract_error_message(&body).unwrap_or_else(|| {
+            if body.is_empty() {
+                format!("HTTP {status}")
+            } else {
+                body.clone()
+            }
+        });
+
+        let detail = match &correlation_id {
+            Some(cid) => format!("{message} (correlation_id={cid})"),
+            None => message,
+        };
+
+        return match status {
+            409 => {
+                let batch_id = extract_batch_id_from_detail(&detail)
+                    .unwrap_or_default();
+                let batch_status =
+                    extract_batch_status_from_detail(&detail).unwrap_or("unknown".to_string());
+                AnyLLMError::BatchNotComplete {
+                    batch_id: batch_id.into(),
+                    status: batch_status.into(),
+                    provider: Gateway::NAME.into(),
+                }
+            }
+            404 => AnyLLMError::Provider {
+                message: format!(
+                    "This gateway does not support batch operations. Upgrade your gateway. ({detail})"
+                )
+                .into(),
+                provider: Gateway::NAME.into(),
+            },
+            _ => unreachable!(),
+        };
+    }
+
+    // Fall through to the generic error converter for all other status codes.
+    convert_error(response).await
+}
+
+/// Extract the batch ID from a gateway 409 error detail string.
+///
+/// The gateway sends messages like:
+/// `"Batch 'batch_abc123' is not yet complete (status: in_progress). ..."`
+///
+/// This function looks for the pattern `Batch '<id>'` (case-insensitive on
+/// the leading `B`) and returns the quoted value.
+fn extract_batch_id_from_detail(detail: &str) -> Option<String> {
+    // Look for "atch '" which covers both "Batch '" and "batch '"
+    let marker = "atch '";
+    let start = detail.find(marker)?;
+    let value_start = start + marker.len();
+    let rest = &detail[value_start..];
+    let end = rest.find('\'')?;
+    let value = &rest[..end];
+    if value.is_empty() {
+        None
+    } else {
+        Some(value.to_string())
+    }
+}
+
+/// Extract the batch status from a gateway 409 error detail string.
+///
+/// The gateway sends messages like:
+/// `"Batch 'batch_abc123' is not yet complete (status: in_progress). ..."`
+///
+/// This function looks for the pattern `status: <word>` and returns the
+/// status value.
+fn extract_batch_status_from_detail(detail: &str) -> Option<String> {
+    let marker = "status: ";
+    let start = detail.find(marker)?;
+    let value_start = start + marker.len();
+    let rest = &detail[value_start..];
+    let end = rest
+        .find(|c: char| !c.is_alphanumeric() && c != '_')
+        .unwrap_or(rest.len());
+    let value = &rest[..end];
+    if value.is_empty() {
+        None
+    } else {
+        Some(value.to_string())
+    }
 }
