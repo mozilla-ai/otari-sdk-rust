@@ -1,7 +1,8 @@
 use any_llm::providers::Gateway;
+use any_llm::types::RerankParams;
 use any_llm::{
-    AnyLLMError, Batch, BatchRequestItem, BatchResult, BatchStatus, CompletionOptions,
-    CreateBatchParams, ListBatchesOptions, Message, Provider, ProviderConfig,
+    rerank, AnyLLMError, Batch, BatchRequestItem, BatchResult, BatchStatus, CompletionOptions,
+    CreateBatchParams, ListBatchesOptions, Message, Provider, ProviderConfig, RerankOptions,
 };
 use futures::StreamExt;
 use wiremock::matchers::{header, method, path, query_param};
@@ -537,6 +538,168 @@ async fn live_gateway_completion() {
     assert!(!content.is_empty());
     println!("Live response: {content}");
 }
+
+// ---------------------------------------------------------------------------
+// Rerank tests (wiremock)
+// ---------------------------------------------------------------------------
+
+fn rerank_response_json() -> String {
+    r#"{
+        "id": "rerank-test-123",
+        "results": [
+            {"index": 0, "relevance_score": 0.95},
+            {"index": 2, "relevance_score": 0.80},
+            {"index": 1, "relevance_score": 0.30}
+        ],
+        "meta": {
+            "billed_units": {"search_units": 1.0},
+            "tokens": {"input_tokens": 100}
+        },
+        "usage": {"total_tokens": 100}
+    }"#
+    .to_string()
+}
+
+#[tokio::test]
+async fn test_gateway_rerank() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("POST"))
+        .and(path("/v1/rerank"))
+        .respond_with(ResponseTemplate::new(200).set_body_string(rerank_response_json()))
+        .mount(&mock_server)
+        .await;
+
+    let gateway = Gateway::from_config(ProviderConfig {
+        api_base: Some(mock_server.uri()),
+        api_key: Some("test-key".to_string()),
+        ..Default::default()
+    })
+    .unwrap();
+
+    let result = gateway
+        .rerank(RerankParams {
+            model_id: "cohere:rerank-v3.5".to_string(),
+            query: "test query".to_string(),
+            documents: vec!["doc1".to_string(), "doc2".to_string(), "doc3".to_string()],
+            top_n: Some(3),
+            max_tokens_per_doc: None,
+            user: None,
+        })
+        .await
+        .unwrap();
+
+    assert_eq!(result.id, "rerank-test-123");
+    assert_eq!(result.results.len(), 3);
+    assert_eq!(result.results[0].relevance_score, 0.95);
+    assert_eq!(result.usage.unwrap().total_tokens, Some(100));
+}
+
+#[tokio::test]
+async fn test_gateway_rerank_401_error() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("POST"))
+        .and(path("/v1/rerank"))
+        .respond_with(
+            ResponseTemplate::new(401).set_body_string(r#"{"error": {"message": "Unauthorized"}}"#),
+        )
+        .mount(&mock_server)
+        .await;
+
+    let gateway = Gateway::from_config(ProviderConfig {
+        api_base: Some(mock_server.uri()),
+        api_key: Some("bad-key".to_string()),
+        ..Default::default()
+    })
+    .unwrap();
+
+    let err = gateway
+        .rerank(RerankParams {
+            model_id: "cohere:rerank-v3.5".to_string(),
+            query: "test".to_string(),
+            documents: vec!["doc".to_string()],
+            top_n: None,
+            max_tokens_per_doc: None,
+            user: None,
+        })
+        .await
+        .unwrap_err();
+
+    assert!(matches!(err, AnyLLMError::Authentication { .. }));
+}
+
+#[tokio::test]
+async fn test_gateway_rerank_429_error() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("POST"))
+        .and(path("/v1/rerank"))
+        .respond_with(
+            ResponseTemplate::new(429)
+                .set_body_string(r#"{"error": {"message": "Rate limited"}}"#)
+                .append_header("retry-after", "60"),
+        )
+        .mount(&mock_server)
+        .await;
+
+    let gateway = Gateway::from_config(ProviderConfig {
+        api_base: Some(mock_server.uri()),
+        api_key: Some("key".to_string()),
+        ..Default::default()
+    })
+    .unwrap();
+
+    let err = gateway
+        .rerank(RerankParams {
+            model_id: "cohere:rerank-v3.5".to_string(),
+            query: "test".to_string(),
+            documents: vec!["doc".to_string()],
+            top_n: None,
+            max_tokens_per_doc: None,
+            user: None,
+        })
+        .await
+        .unwrap_err();
+
+    assert!(matches!(err, AnyLLMError::RateLimit { .. }));
+}
+
+#[tokio::test]
+async fn test_rerank_api_function() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("POST"))
+        .and(path("/v1/rerank"))
+        .respond_with(ResponseTemplate::new(200).set_body_string(rerank_response_json()))
+        .mount(&mock_server)
+        .await;
+
+    let result = rerank::<Gateway>(
+        "cohere:rerank-v3.5",
+        "test query",
+        vec!["doc1".to_string(), "doc2".to_string()],
+        RerankOptions {
+            api_base: Some(mock_server.uri()),
+            api_key: Some("test-key".to_string()),
+            top_n: Some(2),
+            ..Default::default()
+        },
+    )
+    .await
+    .unwrap();
+
+    assert_eq!(result.id, "rerank-test-123");
+}
+
+#[test]
+fn test_gateway_supports_rerank() {
+    assert!(Gateway::SUPPORTS_RERANK);
+}
+
+// ---------------------------------------------------------------------------
+// Live integration tests (require a running gateway)
+// ---------------------------------------------------------------------------
 
 #[tokio::test]
 #[ignore = "requires a running gateway server"]
