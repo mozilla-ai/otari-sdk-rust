@@ -591,7 +591,7 @@ async fn test_gateway_rerank() {
 
     assert_eq!(result.id, "rerank-test-123");
     assert_eq!(result.results.len(), 3);
-    assert_eq!(result.results[0].relevance_score, 0.95);
+    assert!((result.results[0].relevance_score - 0.95).abs() < f64::EPSILON);
     assert_eq!(result.usage.unwrap().total_tokens, Some(100));
 }
 
@@ -694,7 +694,7 @@ async fn test_rerank_api_function() {
 
 #[test]
 fn test_gateway_supports_rerank() {
-    assert!(Gateway::SUPPORTS_RERANK);
+    const { assert!(Gateway::SUPPORTS_RERANK) };
 }
 
 // ---------------------------------------------------------------------------
