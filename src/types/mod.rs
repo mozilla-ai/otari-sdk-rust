@@ -8,6 +8,7 @@ mod batch;
 mod chunk;
 mod completion;
 mod message;
+mod moderation;
 mod tool;
 mod usage;
 
@@ -15,5 +16,6 @@ pub use batch::*;
 pub use chunk::*;
 pub use completion::*;
 pub use message::*;
+pub use moderation::*;
 pub use tool::*;
 pub use usage::*;
