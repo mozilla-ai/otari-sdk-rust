@@ -68,6 +68,13 @@ pub enum AnyLLMError {
     #[error("Unsupported provider: '{provider}'. Supported providers: openai, anthropic")]
     UnsupportedProvider { provider: ErrorStr },
 
+    /// Unsupported operation - the provider does not support this operation.
+    #[error("Operation '{operation}' is not supported by {provider}")]
+    Unsupported {
+        provider: ErrorStr,
+        operation: ErrorStr,
+    },
+
     /// Unsupported parameter - a parameter is not supported by the provider.
     #[error("Parameter '{param}' is not supported by {provider}. {hint}")]
     UnsupportedParameter {

@@ -22,6 +22,7 @@ use crate::error::{AnyLLMError, Result};
 use crate::provider::{CompletionStream, Provider, ProviderConfig};
 use crate::types::{
     Batch, BatchResult, ChatCompletion, CompletionParams, CreateBatchParams, ListBatchesOptions,
+    ModerationParams, ModerationResponse,
 };
 
 mod models;
@@ -155,6 +156,38 @@ impl Gateway {
             return Err(convert_batch_error(response, &path).await);
         }
         Ok(response.json::<BatchResult>().await?)
+    }
+
+    /// Call `POST /v1/moderations` on the gateway.
+    ///
+    /// Auth headers (`Authorization` / `X-AnyLLM-Key`) are already injected
+    /// as default headers on the inner HTTP client.
+    ///
+    /// When `params.include_raw` is `true`, `?include_raw=true` is appended
+    /// to the URL instead of being sent in the JSON body.
+    ///
+    /// # Errors
+    ///
+    /// - [`AnyLLMError::Unsupported`] if the gateway reports the chosen
+    ///   upstream provider does not support moderation (or multimodal
+    ///   moderation input).
+    /// - Other [`AnyLLMError`] variants for standard HTTP error mapping,
+    ///   transport failures, and deserialization errors.
+    pub async fn moderation(&self, params: ModerationParams) -> Result<ModerationResponse> {
+        let mut url = format!("{}/v1/moderations", self.api_base);
+        if params.include_raw {
+            url.push_str("?include_raw=true");
+        }
+
+        let body = serde_json::to_value(&params)?;
+        let response = self.client.post(&url).json(&body).send().await?;
+
+        if !response.status().is_success() {
+            return Err(convert_error(response).await);
+        }
+
+        let body_bytes = response.bytes().await?;
+        serde_json::from_slice::<ModerationResponse>(&body_bytes).map_err(AnyLLMError::from)
     }
 }
 
@@ -342,6 +375,23 @@ async fn convert_error(response: reqwest::Response) -> AnyLLMError {
         None => message,
     };
 
+    // Detect the locked "unsupported moderation" phrasing emitted by the
+    // gateway and map it to a typed `Unsupported` error. The substring
+    // check is the real signal; provider-name extraction is best-effort.
+    //
+    // Accepted phrasings (from the gateway's locked copy):
+    //   - "Provider <name> does not support moderation"
+    //   - "Provider <name> does not support multimodal moderation input"
+    if status == 400 && detail.contains("does not support") && detail.contains("moderation") {
+        let provider = parse_unsupported_provider(&detail).unwrap_or_else(|| "unknown".to_string());
+        let operation = if detail.contains("multimodal") {
+            "multimodal_moderation"
+        } else {
+            "moderation"
+        };
+        return AnyLLMError::unsupported_dynamic(provider, operation);
+    }
+
     let detail_with_retry = match &retry_after {
         Some(ra) => format!("{detail} (retry_after={ra})"),
         None => detail,
@@ -364,14 +414,39 @@ async fn convert_error(response: reqwest::Response) -> AnyLLMError {
     }
 }
 
-/// Extract a message from an OpenAI-style error JSON body.
+/// Extract a message from an OpenAI-style or FastAPI-style error body.
+///
+/// Recognizes three shapes:
+/// - `{"error": {"message": "..."}}` (OpenAI)
+/// - `{"error": "..."}`
+/// - `{"detail": "..."}` (FastAPI / gateway)
 fn extract_error_message(body: &str) -> Option<String> {
     let val: serde_json::Value = serde_json::from_str(body).ok()?;
-    let err = val.get("error")?;
-    if let Some(msg) = err.get("message").and_then(|m| m.as_str()) {
-        return Some(msg.to_string());
+    if let Some(err) = val.get("error") {
+        if let Some(msg) = err.get("message").and_then(|m| m.as_str()) {
+            return Some(msg.to_string());
+        }
+        if let Some(s) = err.as_str() {
+            return Some(s.to_string());
+        }
     }
-    err.as_str().map(String::from)
+    if let Some(detail) = val.get("detail").and_then(|d| d.as_str()) {
+        return Some(detail.to_string());
+    }
+    None
+}
+
+/// Parse `"Provider <name> does not support [multimodal] moderation..."`
+/// into just `<name>`. Returns `None` if the phrasing does not start with
+/// `"Provider "`.
+fn parse_unsupported_provider(detail: &str) -> Option<String> {
+    let after = detail.strip_prefix("Provider ")?;
+    let before_does = after.split(" does not").next()?;
+    if before_does.is_empty() {
+        None
+    } else {
+        Some(before_does.to_string())
+    }
 }
 
 /// Convert an HTTP error response from a batch endpoint to a typed `AnyLLMError`.
