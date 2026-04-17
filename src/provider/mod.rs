@@ -6,7 +6,7 @@ use futures::Stream;
 
 use crate::{
     error::Result,
-    types::{ChatCompletion, ChatCompletionChunk, CompletionParams},
+    types::{ChatCompletion, ChatCompletionChunk, CompletionParams, RerankParams, RerankResponse},
 };
 
 mod config;
@@ -34,5 +34,10 @@ impl<P: Provider> AnyLLMProvider<P> {
 
     pub async fn completion_stream(&self, params: CompletionParams) -> Result<CompletionStream> {
         self.0.completion_stream(params).await
+    }
+
+    /// Rerank documents by relevance to a query.
+    pub async fn rerank(&self, params: RerankParams) -> Result<RerankResponse> {
+        self.0.rerank(params).await
     }
 }
