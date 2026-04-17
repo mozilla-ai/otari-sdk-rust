@@ -137,7 +137,7 @@ pub mod providers;
 pub mod types;
 
 // Re-export main types for convenience
-pub use api::{completion, completion_stream, CompletionOptions};
+pub use api::{completion, completion_stream, rerank, CompletionOptions, RerankOptions};
 pub use error::{AnyLLMError, Result};
 pub use provider::{Provider, ProviderConfig};
 pub use types::{
@@ -146,6 +146,6 @@ pub use types::{
     ChunkAccumulator, ChunkChoice, CompletionParams, CompletionUsage, Content, ContentPart,
     CreateBatchParams, Function, ImageUrl, ListBatchesOptions, Message, ModerationContentPart,
     ModerationImageUrl, ModerationInput, ModerationParams, ModerationResponse, ModerationResult,
-    Reasoning, ReasoningEffort, Role, StopSequence, Tool, ToolCall, ToolCallDelta, ToolChoice,
-    ToolFunction,
+    Reasoning, ReasoningEffort, RerankMeta, RerankParams, RerankResponse, RerankResult,
+    RerankUsage, Role, StopSequence, Tool, ToolCall, ToolCallDelta, ToolChoice, ToolFunction,
 };
