@@ -53,4 +53,25 @@ impl AnyLLMError {
             hint: hint.into(),
         }
     }
+
+    /// Create a new unsupported operation error with the provider name
+    /// determined at compile time.
+    pub fn unsupported<P: Provider>(operation: impl Into<ErrorStr>) -> Self {
+        Self::Unsupported {
+            provider: P::NAME.into(),
+            operation: operation.into(),
+        }
+    }
+
+    /// Create a new unsupported operation error when the provider name is
+    /// only known at runtime (e.g. parsed from an HTTP response body).
+    pub fn unsupported_dynamic(
+        provider: impl Into<ErrorStr>,
+        operation: impl Into<ErrorStr>,
+    ) -> Self {
+        Self::Unsupported {
+            provider: provider.into(),
+            operation: operation.into(),
+        }
+    }
 }
