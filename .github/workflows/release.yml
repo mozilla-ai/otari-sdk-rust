@@ -16,15 +16,12 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
-      - name: Verify version matches tag
+      - name: Set version from tag
         run: |
-          CARGO_VERSION=$(cargo metadata --format-version 1 --no-deps | jq -r '.packages[0].version')
           TAG_VERSION=${{ github.event.release.tag_name }}
           TAG_VERSION=${TAG_VERSION#v}
-          if [ "$CARGO_VERSION" != "$TAG_VERSION" ]; then
-            echo "Version mismatch: Cargo.toml has $CARGO_VERSION, tag is $TAG_VERSION"
-            exit 1
-          fi
+          sed -i "0,/^version = .*/s//version = \"$TAG_VERSION\"/" Cargo.toml
+          echo "Publishing version $TAG_VERSION"
 
       - name: Run tests
         run: cargo test --all-features
