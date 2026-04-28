@@ -12,10 +12,9 @@
 - `src/`: Library source code
   - `lib.rs`: Public API exports and crate-level documentation
   - `api.rs`: High-level functions (`completion()`, `completion_stream()`)
-  - `error.rs`: Unified error types (`AnyLLMError`)
-  - `provider/`: `Provider` trait, `AnyLLMProvider` wrapper, and config
-  - `providers/`: Provider implementations
-    - `gateway/`: Gateway provider via `reqwest` + SSE (connects to any-llm gateway server)
+  - `error.rs`: Unified error types (`OtariError`)
+  - `config.rs`: `Config` struct for client configuration
+  - `client/`: `Otari` client (connects to Otari gateway server via `reqwest` + SSE)
   - `types/`: Shared data types (messages, completions, tools, streaming chunks, batch, moderation, rerank)
 - `tests/`: Test suites
   - `test_*.rs`: Unit tests for each module
@@ -37,7 +36,7 @@ This repo uses `cargo` (Rust 1.83+). For the full command set, see [CONTRIBUTING
 - Rust indentation: 4 spaces (default)
 - Formatting via `rustfmt` (config in `rustfmt.toml`)
 - Linting via `clippy` with pedantic + nursery lints enabled (see `Cargo.toml` `[lints.clippy]`)
-- Provider code lives under `src/providers/<provider>/`
+- Client code lives under `src/client/`
 - Public items require doc comments (`///`)
 - Add code comments only where logic isn't self-evident; remove obvious comments before finishing
 
@@ -56,4 +55,4 @@ This repo uses `cargo` (Rust 1.83+). For the full command set, see [CONTRIBUTING
 ## Security & Configuration Tips
 
 - Never commit secrets. Use environment variables or a local `.env` (gitignored) for API keys.
-- Required env vars: `ANY_LLM_API_KEY`, `ANY_LLM_API_BASE`
+- Required env vars: `OTARI_API_KEY`, `OTARI_API_BASE`

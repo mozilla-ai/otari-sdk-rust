@@ -1,15 +1,15 @@
-//! Gateway provider implementation.
+//! Otari client implementation.
 //!
-//! Connects to an [any-llm gateway](https://github.com/mozilla-ai/any-llm)
+//! Connects to an [Otari gateway](https://github.com/mozilla-ai/otari-sdk-rust)
 //! server, which exposes an OpenAI-compatible API that proxies to multiple
 //! upstream LLM providers.
 //!
 //! # Auth modes
 //!
 //! - **Platform mode**: uses `Authorization: Bearer <token>`. Activated by
-//!   setting `GATEWAY_PLATFORM_TOKEN` env var, or by passing
-//!   `platform_token` in `ProviderConfig::extra`.
-//! - **Non-platform mode**: uses the `AnyLLM-Key: Bearer <key>` header.
+//!   setting `OTARI_PLATFORM_TOKEN` env var, or by passing
+//!   `platform_token` in `Config::extra`.
+//! - **Non-platform mode**: uses the `Otari-Key: Bearer <key>` header.
 //!   The key is optional (the gateway may allow unauthenticated access).
 
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_TYPE};
@@ -18,11 +18,11 @@ use reqwest_eventsource::EventSource;
 
 use serde::Deserialize;
 
-use crate::error::{AnyLLMError, Result};
-use crate::provider::{CompletionStream, Provider, ProviderConfig};
+use crate::config::Config;
+use crate::error::{OtariError, Result};
 use crate::types::{
-    Batch, BatchResult, ChatCompletion, CompletionParams, CreateBatchParams, ListBatchesOptions,
-    ModerationParams, ModerationResponse, RerankParams, RerankResponse,
+    Batch, BatchResult, ChatCompletion, CompletionParams, CompletionStream, CreateBatchParams,
+    ListBatchesOptions, ModerationParams, ModerationResponse, RerankParams, RerankResponse,
 };
 
 mod models;
@@ -31,22 +31,22 @@ use models::request::GatewayRequest;
 use models::response::GatewayResponse;
 use models::stream::GatewayStream;
 
-const GATEWAY_HEADER_NAME: &str = "AnyLLM-Key";
-const GATEWAY_PLATFORM_TOKEN_ENV: &str = "GATEWAY_PLATFORM_TOKEN";
-const GATEWAY_API_BASE_ENV: &str = "GATEWAY_API_BASE";
+const OTARI_HEADER_NAME: &str = "Otari-Key";
+const OTARI_PLATFORM_TOKEN_ENV: &str = "OTARI_PLATFORM_TOKEN";
+const OTARI_API_BASE_ENV: &str = "OTARI_API_BASE";
 
-/// Gateway provider.
+/// Otari gateway client.
 ///
 /// # Examples
 ///
 /// ```rust,no_run
-/// use any_llm::{completion, Message, CompletionOptions, providers::Gateway};
+/// use otari::{completion, Message, CompletionOptions};
 ///
-/// # async fn example() -> any_llm::Result<()> {
+/// # async fn example() -> otari::Result<()> {
 /// let options = CompletionOptions::with_api_key("tk_my_platform_token")
 ///     .api_base("http://localhost:8000");
 ///
-/// let response = completion::<Gateway>(
+/// let response = completion(
 ///     "openai:gpt-4o-mini",
 ///     vec![Message::user("Hello!")],
 ///     options,
@@ -56,16 +56,117 @@ const GATEWAY_API_BASE_ENV: &str = "GATEWAY_API_BASE";
 /// # Ok(())
 /// # }
 /// ```
-pub struct Gateway {
+pub struct Otari {
     client: Client,
     api_base: String,
     platform_mode: bool,
 }
 
-impl Gateway {
+impl Otari {
+    /// Create a new Otari client from a configuration.
+    pub fn from_config(config: Config) -> Result<Self> {
+        let api_base = config
+            .api_base
+            .or_else(|| std::env::var(OTARI_API_BASE_ENV).ok())
+            .ok_or_else(|| {
+                OtariError::provider_error(format!(
+                    "api_base is required (set via config or {OTARI_API_BASE_ENV} env var)"
+                ))
+            })?
+            .trim_end_matches('/')
+            .to_string();
+
+        let platform_token_env = std::env::var(OTARI_PLATFORM_TOKEN_ENV).ok();
+        let explicit_platform_token = config.extra.get("platform_token").cloned();
+        let explicit_platform_mode = config.extra.get("platform_mode").map(|v| v == "true");
+
+        let (platform_mode, headers) = resolve_auth(
+            config.api_key,
+            explicit_platform_token,
+            explicit_platform_mode,
+            platform_token_env,
+        )?;
+
+        let client = Client::builder()
+            .default_headers(headers)
+            .build()
+            .map_err(|e| OtariError::provider_error(format!("Failed to build HTTP client: {e}")))?;
+
+        Ok(Self {
+            client,
+            api_base,
+            platform_mode,
+        })
+    }
+
     /// Returns `true` if the client is using platform mode authentication.
     pub fn is_platform_mode(&self) -> bool {
         self.platform_mode
+    }
+
+    // ----- Completion operations -----
+
+    /// Create a chat completion.
+    pub async fn completion(&self, params: CompletionParams) -> Result<ChatCompletion> {
+        let body: GatewayRequest = params.try_into()?;
+
+        let response = self
+            .client
+            .post(format!("{}/v1/chat/completions", self.api_base))
+            .json(&body)
+            .send()
+            .await?;
+
+        let status = response.status().as_u16();
+        if status != 200 {
+            return Err(convert_error(response).await);
+        }
+
+        Ok(response.json::<GatewayResponse>().await?.into())
+    }
+
+    /// Create a streaming chat completion.
+    #[allow(clippy::unused_async)]
+    pub async fn completion_stream(&self, params: CompletionParams) -> Result<CompletionStream> {
+        let model = params.model_id.clone();
+        let body = TryInto::<GatewayRequest>::try_into(params)?.stream();
+
+        let request = self
+            .client
+            .post(format!("{}/v1/chat/completions", self.api_base))
+            .json(&body);
+
+        let es = EventSource::new(request).map_err(|e| OtariError::Streaming {
+            provider: "otari".into(),
+            message: e.to_string().into(),
+        })?;
+
+        GatewayStream::new(es, model).try_into()
+    }
+
+    // ----- Rerank operations -----
+
+    /// Rerank documents by relevance to a query.
+    pub async fn rerank(&self, params: RerankParams) -> Result<RerankResponse> {
+        let body = models::rerank::GatewayRerankRequest::from(params);
+
+        let response = self
+            .client
+            .post(format!("{}/v1/rerank", self.api_base))
+            .json(&body)
+            .send()
+            .await
+            .map_err(OtariError::from)?;
+
+        let status = response.status().as_u16();
+        if status != 200 {
+            return Err(convert_error(response).await);
+        }
+
+        response
+            .json::<RerankResponse>()
+            .await
+            .map_err(OtariError::from)
     }
 
     // ----- Batch operations -----
@@ -158,9 +259,11 @@ impl Gateway {
         Ok(response.json::<BatchResult>().await?)
     }
 
+    // ----- Moderation -----
+
     /// Call `POST /v1/moderations` on the gateway.
     ///
-    /// Auth headers (`Authorization` / `X-AnyLLM-Key`) are already injected
+    /// Auth headers (`Authorization` / `Otari-Key`) are already injected
     /// as default headers on the inner HTTP client.
     ///
     /// When `params.include_raw` is `true`, `?include_raw=true` is appended
@@ -168,10 +271,10 @@ impl Gateway {
     ///
     /// # Errors
     ///
-    /// - [`AnyLLMError::Unsupported`] if the gateway reports the chosen
+    /// - [`OtariError::Unsupported`] if the gateway reports the chosen
     ///   upstream provider does not support moderation (or multimodal
     ///   moderation input).
-    /// - Other [`AnyLLMError`] variants for standard HTTP error mapping,
+    /// - Other [`OtariError`] variants for standard HTTP error mapping,
     ///   transport failures, and deserialization errors.
     pub async fn moderation(&self, params: ModerationParams) -> Result<ModerationResponse> {
         let mut url = format!("{}/v1/moderations", self.api_base);
@@ -187,124 +290,15 @@ impl Gateway {
         }
 
         let body_bytes = response.bytes().await?;
-        serde_json::from_slice::<ModerationResponse>(&body_bytes).map_err(AnyLLMError::from)
-    }
-}
-
-impl Provider for Gateway {
-    const NAME: &'static str = "gateway";
-    const ENV_VAR: &'static str = "GATEWAY_API_KEY";
-    const DOCS_URL: &'static str = "https://github.com/mozilla-ai/any-llm";
-
-    // The gateway proxies to any backend, so all features are nominally supported.
-    const SUPPORTS_STREAMING: bool = true;
-    const SUPPORTS_TOOLS: bool = true;
-    const SUPPORTS_IMAGES: bool = true;
-    const SUPPORTS_REASONING: bool = true;
-    const SUPPORTS_PDF: bool = true;
-    const SUPPORTS_RERANK: bool = true;
-
-    fn from_config(config: ProviderConfig) -> Result<Self> {
-        let api_base = config
-            .api_base
-            .or_else(|| std::env::var(GATEWAY_API_BASE_ENV).ok())
-            .ok_or_else(|| {
-                AnyLLMError::provider_error::<Self>(format!(
-                    "api_base is required (set via config or {GATEWAY_API_BASE_ENV} env var)"
-                ))
-            })?
-            .trim_end_matches('/')
-            .to_string();
-
-        let platform_token_env = std::env::var(GATEWAY_PLATFORM_TOKEN_ENV).ok();
-        let explicit_platform_token = config.extra.get("platform_token").cloned();
-        let explicit_platform_mode = config.extra.get("platform_mode").map(|v| v == "true");
-
-        let (platform_mode, headers) = resolve_auth(
-            config.api_key,
-            explicit_platform_token,
-            explicit_platform_mode,
-            platform_token_env,
-        )?;
-
-        let client = Client::builder()
-            .default_headers(headers)
-            .build()
-            .map_err(|e| {
-                AnyLLMError::provider_error::<Self>(format!("Failed to build HTTP client: {e}"))
-            })?;
-
-        Ok(Self {
-            client,
-            api_base,
-            platform_mode,
-        })
-    }
-
-    async fn completion_fn(&self, params: CompletionParams) -> Result<ChatCompletion> {
-        let body: GatewayRequest = params.try_into()?;
-
-        let response = self
-            .client
-            .post(format!("{}/v1/chat/completions", self.api_base))
-            .json(&body)
-            .send()
-            .await?;
-
-        let status = response.status().as_u16();
-        if status != 200 {
-            return Err(convert_error(response).await);
-        }
-
-        Ok(response.json::<GatewayResponse>().await?.into())
-    }
-
-    async fn completion_stream_fn(&self, params: CompletionParams) -> Result<CompletionStream> {
-        let model = params.model_id.clone();
-        let body = TryInto::<GatewayRequest>::try_into(params)?.stream();
-
-        let request = self
-            .client
-            .post(format!("{}/v1/chat/completions", self.api_base))
-            .json(&body);
-
-        let es = EventSource::new(request).map_err(|e| AnyLLMError::Streaming {
-            provider: Self::NAME.into(),
-            message: e.to_string().into(),
-        })?;
-
-        GatewayStream::new(es, model).try_into()
-    }
-
-    async fn rerank_fn(&self, params: RerankParams) -> Result<RerankResponse> {
-        let body = models::rerank::GatewayRerankRequest::from(params);
-
-        let response = self
-            .client
-            .post(format!("{}/v1/rerank", self.api_base))
-            .json(&body)
-            .send()
-            .await
-            .map_err(AnyLLMError::from)?;
-
-        let status = response.status().as_u16();
-        if status != 200 {
-            return Err(convert_error(response).await);
-        }
-
-        response
-            .json::<RerankResponse>()
-            .await
-            .map_err(AnyLLMError::from)
+        serde_json::from_slice::<ModerationResponse>(&body_bytes).map_err(OtariError::from)
     }
 }
 
 /// Resolve auth mode and build the appropriate HTTP headers.
 ///
-/// This mirrors the Python `GatewayProvider.__init__` logic:
 /// 1. Explicit `platform_mode=true` -> platform mode, needs a token
-/// 2. `GATEWAY_PLATFORM_TOKEN` set + no explicit api_key -> auto-detect platform
-/// 3. Otherwise -> non-platform mode with optional AnyLLM-Key header
+/// 2. `OTARI_PLATFORM_TOKEN` set + no explicit api_key -> auto-detect platform
+/// 3. Otherwise -> non-platform mode with optional Otari-Key header
 fn resolve_auth(
     api_key: Option<String>,
     platform_token: Option<String>,
@@ -319,29 +313,28 @@ fn resolve_auth(
         let token = platform_token
             .or(api_key)
             .or(platform_token_env)
-            .ok_or_else(|| AnyLLMError::MissingApiKey {
-                provider: "gateway".into(),
-                env_var: GATEWAY_PLATFORM_TOKEN_ENV.into(),
+            .ok_or_else(|| OtariError::MissingApiKey {
+                provider: "otari".into(),
+                env_var: OTARI_PLATFORM_TOKEN_ENV.into(),
             })?;
 
         let val = format!("Bearer {token}");
         headers.insert(
             AUTHORIZATION,
-            HeaderValue::from_str(&val).map_err(|e| {
-                AnyLLMError::provider_error::<Gateway>(format!("Invalid platform token: {e}"))
-            })?,
+            HeaderValue::from_str(&val)
+                .map_err(|e| OtariError::provider_error(format!("Invalid platform token: {e}")))?,
         );
         return Ok((true, headers));
     }
 
-    // Auto-detect: GATEWAY_PLATFORM_TOKEN set and no explicit api_key
+    // Auto-detect: OTARI_PLATFORM_TOKEN set and no explicit api_key
     if platform_mode.is_none() && api_key.is_none() {
         if let Some(token) = platform_token.or(platform_token_env) {
             let val = format!("Bearer {token}");
             headers.insert(
                 AUTHORIZATION,
                 HeaderValue::from_str(&val).map_err(|e| {
-                    AnyLLMError::provider_error::<Gateway>(format!("Invalid platform token: {e}"))
+                    OtariError::provider_error(format!("Invalid platform token: {e}"))
                 })?,
             );
             return Ok((true, headers));
@@ -350,27 +343,26 @@ fn resolve_auth(
 
     // Non-platform mode
     let key = api_key
-        .or_else(|| std::env::var("GATEWAY_API_KEY").ok())
+        .or_else(|| std::env::var("OTARI_API_KEY").ok())
         .unwrap_or_default();
 
     if !key.is_empty() {
         let val = format!("Bearer {key}");
         headers.insert(
-            GATEWAY_HEADER_NAME,
-            HeaderValue::from_str(&val).map_err(|e| {
-                AnyLLMError::provider_error::<Gateway>(format!("Invalid API key: {e}"))
-            })?,
+            OTARI_HEADER_NAME,
+            HeaderValue::from_str(&val)
+                .map_err(|e| OtariError::provider_error(format!("Invalid API key: {e}")))?,
         );
     }
 
     Ok((false, headers))
 }
 
-/// Convert an HTTP error response to a typed `AnyLLMError`.
+/// Convert an HTTP error response to a typed `OtariError`.
 ///
 /// Extracts `x-correlation-id` and `retry-after` headers and includes
 /// them in the error message for debugging.
-async fn convert_error(response: reqwest::Response) -> AnyLLMError {
+async fn convert_error(response: reqwest::Response) -> OtariError {
     let status = response.status().as_u16();
     let correlation_id = response
         .headers()
@@ -412,7 +404,7 @@ async fn convert_error(response: reqwest::Response) -> AnyLLMError {
         } else {
             "moderation"
         };
-        return AnyLLMError::unsupported_dynamic(provider, operation);
+        return OtariError::unsupported_dynamic(provider, operation);
     }
 
     let detail_with_retry = match &retry_after {
@@ -421,19 +413,13 @@ async fn convert_error(response: reqwest::Response) -> AnyLLMError {
     };
 
     match status {
-        401 | 403 => AnyLLMError::authentication::<Gateway>(detail_with_retry),
-        402 => AnyLLMError::provider_error::<Gateway>(format!(
-            "Insufficient funds: {detail_with_retry}"
-        )),
-        404 => AnyLLMError::model_not_found::<Gateway>(detail_with_retry),
-        429 => AnyLLMError::rate_limit::<Gateway>(detail_with_retry),
-        502 => AnyLLMError::provider_error::<Gateway>(format!(
-            "Upstream provider error: {detail_with_retry}"
-        )),
-        504 => {
-            AnyLLMError::provider_error::<Gateway>(format!("Gateway timeout: {detail_with_retry}"))
-        }
-        _ => AnyLLMError::provider_error::<Gateway>(format!("HTTP {status}: {detail_with_retry}")),
+        401 | 403 => OtariError::authentication(detail_with_retry),
+        402 => OtariError::provider_error(format!("Insufficient funds: {detail_with_retry}")),
+        404 => OtariError::model_not_found(detail_with_retry),
+        429 => OtariError::rate_limit(detail_with_retry),
+        502 => OtariError::provider_error(format!("Upstream provider error: {detail_with_retry}")),
+        504 => OtariError::provider_error(format!("Gateway timeout: {detail_with_retry}")),
+        _ => OtariError::provider_error(format!("HTTP {status}: {detail_with_retry}")),
     }
 }
 
@@ -472,11 +458,11 @@ fn parse_unsupported_provider(detail: &str) -> Option<String> {
     }
 }
 
-/// Convert an HTTP error response from a batch endpoint to a typed `AnyLLMError`.
+/// Convert an HTTP error response from a batch endpoint to a typed `OtariError`.
 ///
 /// Handles batch-specific status codes (409, 404 on batch paths) before
 /// falling through to the generic `convert_error` logic.
-async fn convert_batch_error(response: reqwest::Response, path: &str) -> AnyLLMError {
+async fn convert_batch_error(response: reqwest::Response, path: &str) -> OtariError {
     let status = response.status().as_u16();
 
     // For 409 and batch-404 we need the body *before* delegating, because
@@ -508,18 +494,18 @@ async fn convert_batch_error(response: reqwest::Response, path: &str) -> AnyLLME
                     .unwrap_or_default();
                 let batch_status =
                     extract_batch_status_from_detail(&detail).unwrap_or("unknown".to_string());
-                AnyLLMError::BatchNotComplete {
+                OtariError::BatchNotComplete {
                     batch_id: batch_id.into(),
                     status: batch_status.into(),
-                    provider: Gateway::NAME.into(),
+                    provider: "otari".into(),
                 }
             }
-            404 => AnyLLMError::Provider {
+            404 => OtariError::Provider {
                 message: format!(
                     "This gateway does not support batch operations. Upgrade your gateway. ({detail})"
                 )
                 .into(),
-                provider: Gateway::NAME.into(),
+                provider: "otari".into(),
             },
             _ => unreachable!(),
         };

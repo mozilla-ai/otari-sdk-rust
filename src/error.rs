@@ -1,6 +1,6 @@
-//! Error types for any-llm.
+//! Error types for otari.
 //!
-//! This module provides a unified error hierarchy that maps provider-specific
+//! This module provides a unified error hierarchy that maps gateway
 //! errors to common error types.
 
 use std::borrow::Cow;
@@ -8,9 +8,9 @@ use thiserror::Error;
 
 pub type ErrorStr = Cow<'static, str>;
 
-/// The main error type for any-llm operations.
+/// The main error type for otari operations.
 #[derive(Error, Debug)]
-pub enum AnyLLMError {
+pub enum OtariError {
     /// Rate limit exceeded - the provider is throttling requests.
     #[error("Rate limit exceeded for {provider}: {message}")]
     RateLimit {
@@ -65,7 +65,7 @@ pub enum AnyLLMError {
     },
 
     /// Unsupported provider - the provider is not supported.
-    #[error("Unsupported provider: '{provider}'. Supported providers: gateway")]
+    #[error("Unsupported provider: '{provider}'.")]
     UnsupportedProvider { provider: ErrorStr },
 
     /// Unsupported operation - the provider does not support this operation.
@@ -107,5 +107,80 @@ pub enum AnyLLMError {
     Http(#[from] reqwest::Error),
 }
 
-/// A specialized Result type for any-llm operations.
-pub type Result<T> = std::result::Result<T, AnyLLMError>;
+/// A specialized Result type for otari operations.
+pub type Result<T> = std::result::Result<T, OtariError>;
+
+// ── Error helper constructors ───────────────────────────────────────
+
+const PROVIDER_NAME: &str = "otari";
+
+impl OtariError {
+    /// Create a new rate limit error.
+    pub fn rate_limit(message: impl Into<ErrorStr>) -> Self {
+        Self::RateLimit {
+            provider: PROVIDER_NAME.into(),
+            message: message.into(),
+        }
+    }
+
+    /// Create a new authentication error.
+    pub fn authentication(message: impl Into<ErrorStr>) -> Self {
+        Self::Authentication {
+            provider: PROVIDER_NAME.into(),
+            message: message.into(),
+        }
+    }
+
+    /// Create a new invalid request error.
+    pub fn invalid_request(message: impl Into<ErrorStr>) -> Self {
+        Self::InvalidRequest {
+            provider: PROVIDER_NAME.into(),
+            message: message.into(),
+        }
+    }
+
+    /// Create a new provider error.
+    pub fn provider_error(message: impl Into<ErrorStr>) -> Self {
+        Self::Provider {
+            provider: PROVIDER_NAME.into(),
+            message: message.into(),
+        }
+    }
+
+    /// Create a new model not found error.
+    pub fn model_not_found(model: impl Into<ErrorStr>) -> Self {
+        Self::ModelNotFound {
+            provider: PROVIDER_NAME.into(),
+            model: model.into(),
+        }
+    }
+
+    /// Create a new unsupported parameter error.
+    pub fn unsupported_parameter(param: impl Into<ErrorStr>, hint: impl Into<ErrorStr>) -> Self {
+        Self::UnsupportedParameter {
+            provider: PROVIDER_NAME.into(),
+            param: param.into(),
+            hint: hint.into(),
+        }
+    }
+
+    /// Create a new unsupported operation error.
+    pub fn unsupported(operation: impl Into<ErrorStr>) -> Self {
+        Self::Unsupported {
+            provider: PROVIDER_NAME.into(),
+            operation: operation.into(),
+        }
+    }
+
+    /// Create a new unsupported operation error when the provider name is
+    /// only known at runtime (e.g. parsed from an HTTP response body).
+    pub fn unsupported_dynamic(
+        provider: impl Into<ErrorStr>,
+        operation: impl Into<ErrorStr>,
+    ) -> Self {
+        Self::Unsupported {
+            provider: provider.into(),
+            operation: operation.into(),
+        }
+    }
+}

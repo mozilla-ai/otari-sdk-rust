@@ -1,7 +1,6 @@
-use any_llm::providers::Gateway;
-use any_llm::{
-    AnyLLMError, ModerationContentPart, ModerationImageUrl, ModerationInput, ModerationParams,
-    Provider, ProviderConfig,
+use otari::{
+    Config, ModerationContentPart, ModerationImageUrl, ModerationInput, ModerationParams, Otari,
+    OtariError,
 };
 use wiremock::matchers::{body_json, method, path, query_param};
 use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -10,8 +9,8 @@ use wiremock::{Mock, MockServer, ResponseTemplate};
 // Helpers
 // ---------------------------------------------------------------------------
 
-fn platform_config(base: &str) -> ProviderConfig {
-    ProviderConfig {
+fn platform_config(base: &str) -> Config {
+    Config {
         api_key: None,
         api_base: Some(base.to_string()),
         extra: [
@@ -48,7 +47,7 @@ async fn moderation_happy_path() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let resp = gw
         .moderation(ModerationParams::new(
             "openai:omni-moderation-latest",
@@ -76,7 +75,7 @@ async fn moderation_include_raw_uses_query_param() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let params = ModerationParams::new(
         "openai:omni-moderation-latest",
         ModerationInput::Text("x".into()),
@@ -89,10 +88,6 @@ async fn moderation_include_raw_uses_query_param() {
 
 #[tokio::test]
 async fn moderation_omits_include_raw_query_when_false() {
-    // Server only accepts the request when the query param is ABSENT; wiremock
-    // has no "absent query" matcher, so we rely on a second mock that would
-    // match if the param were set. The default mock answers when no query
-    // params are present.
     let server = MockServer::start().await;
     Mock::given(method("POST"))
         .and(path("/v1/moderations"))
@@ -100,12 +95,11 @@ async fn moderation_omits_include_raw_query_when_false() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let params = ModerationParams::new(
         "openai:omni-moderation-latest",
         ModerationInput::Text("x".into()),
     );
-    // Default is false; request must succeed without the query param.
     assert!(!params.include_raw);
     gw.moderation(params).await.unwrap();
 }
@@ -123,7 +117,7 @@ async fn moderation_text_input_serializes_as_string() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     gw.moderation(ModerationParams::new(
         "openai:omni-moderation-latest",
         ModerationInput::Text("hello".into()),
@@ -145,7 +139,7 @@ async fn moderation_batch_input_serializes_as_array() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     gw.moderation(ModerationParams::new(
         "openai:omni-moderation-latest",
         ModerationInput::Batch(vec!["a".into(), "b".into()]),
@@ -170,7 +164,7 @@ async fn moderation_multimodal_input_serializes_parts() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let parts = vec![
         ModerationContentPart::Text {
             text: "caption".into(),
@@ -203,7 +197,7 @@ async fn moderation_with_user_includes_user_field() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let params = ModerationParams::new(
         "openai:omni-moderation-latest",
         ModerationInput::Text("x".into()),
@@ -227,7 +221,7 @@ async fn moderation_unsupported_provider_maps_to_typed_error() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let err = gw
         .moderation(ModerationParams::new(
             "anthropic:claude-3-haiku",
@@ -237,7 +231,7 @@ async fn moderation_unsupported_provider_maps_to_typed_error() {
         .unwrap_err();
 
     match err {
-        AnyLLMError::Unsupported {
+        OtariError::Unsupported {
             provider,
             operation,
         } => {
@@ -259,7 +253,7 @@ async fn moderation_unsupported_multimodal_maps_to_typed_error() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let err = gw
         .moderation(ModerationParams::new(
             "mistral:mistral-moderation-latest",
@@ -269,7 +263,7 @@ async fn moderation_unsupported_multimodal_maps_to_typed_error() {
         .unwrap_err();
 
     match err {
-        AnyLLMError::Unsupported {
+        OtariError::Unsupported {
             provider,
             operation,
         } => {
@@ -291,7 +285,7 @@ async fn moderation_unsupported_without_provider_prefix_falls_back_to_unknown() 
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let err = gw
         .moderation(ModerationParams::new(
             "weird:thing",
@@ -301,7 +295,7 @@ async fn moderation_unsupported_without_provider_prefix_falls_back_to_unknown() 
         .unwrap_err();
 
     match err {
-        AnyLLMError::Unsupported {
+        OtariError::Unsupported {
             provider,
             operation,
         } => {
@@ -328,7 +322,7 @@ async fn moderation_error_401_maps_to_authentication() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let err = gw
         .moderation(ModerationParams::new(
             "openai:omni-moderation-latest",
@@ -337,7 +331,7 @@ async fn moderation_error_401_maps_to_authentication() {
         .await
         .unwrap_err();
 
-    assert!(matches!(err, AnyLLMError::Authentication { .. }));
+    assert!(matches!(err, OtariError::Authentication { .. }));
     assert!(err.to_string().contains("Invalid token"));
 }
 
@@ -354,7 +348,7 @@ async fn moderation_error_429_maps_to_rate_limit() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let err = gw
         .moderation(ModerationParams::new(
             "openai:omni-moderation-latest",
@@ -363,7 +357,7 @@ async fn moderation_error_429_maps_to_rate_limit() {
         .await
         .unwrap_err();
 
-    assert!(matches!(err, AnyLLMError::RateLimit { .. }));
+    assert!(matches!(err, OtariError::RateLimit { .. }));
     assert!(err.to_string().contains("retry_after=5"));
 }
 
@@ -376,7 +370,7 @@ async fn moderation_error_500_maps_to_provider_error() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let err = gw
         .moderation(ModerationParams::new(
             "openai:omni-moderation-latest",
@@ -385,7 +379,7 @@ async fn moderation_error_500_maps_to_provider_error() {
         .await
         .unwrap_err();
 
-    assert!(matches!(err, AnyLLMError::Provider { .. }));
+    assert!(matches!(err, OtariError::Provider { .. }));
     assert!(err.to_string().contains("HTTP 500"));
 }
 
@@ -396,7 +390,7 @@ async fn moderation_error_500_maps_to_provider_error() {
 #[tokio::test]
 #[ignore = "requires a running gateway server"]
 async fn live_gateway_moderation() {
-    let gw = Gateway::from_config(ProviderConfig::default()).unwrap();
+    let gw = Otari::from_config(Config::default()).unwrap();
     let resp = gw
         .moderation(ModerationParams::new(
             "openai:omni-moderation-latest",

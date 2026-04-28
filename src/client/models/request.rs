@@ -3,8 +3,7 @@
 use serde::Serialize;
 use serde_json::{json, Value};
 
-use crate::error::{AnyLLMError, Result};
-use crate::providers::Gateway;
+use crate::error::{OtariError, Result};
 use crate::types::{CompletionParams, Content, ContentPart, Message};
 
 /// Request body for the gateway's `/v1/chat/completions` endpoint.
@@ -65,7 +64,7 @@ impl GatewayRequest {
 }
 
 impl TryFrom<CompletionParams> for GatewayRequest {
-    type Error = AnyLLMError;
+    type Error = OtariError;
 
     fn try_from(params: CompletionParams) -> Result<Self> {
         let messages = params
@@ -79,18 +78,14 @@ impl TryFrom<CompletionParams> for GatewayRequest {
             .as_ref()
             .map(serde_json::to_value)
             .transpose()
-            .map_err(|e| {
-                AnyLLMError::invalid_request::<Gateway>(format!("failed to serialize tools: {e}"))
-            })?;
+            .map_err(|e| OtariError::invalid_request(format!("failed to serialize tools: {e}")))?;
         let tool_choice = params
             .tool_choice
             .as_ref()
             .map(serde_json::to_value)
             .transpose()
             .map_err(|e| {
-                AnyLLMError::invalid_request::<Gateway>(format!(
-                    "failed to serialize tool_choice: {e}"
-                ))
+                OtariError::invalid_request(format!("failed to serialize tool_choice: {e}"))
             })?;
         let logit_bias = params
             .logit_bias
@@ -98,9 +93,7 @@ impl TryFrom<CompletionParams> for GatewayRequest {
             .map(serde_json::to_value)
             .transpose()
             .map_err(|e| {
-                AnyLLMError::invalid_request::<Gateway>(format!(
-                    "failed to serialize logit_bias: {e}"
-                ))
+                OtariError::invalid_request(format!("failed to serialize logit_bias: {e}"))
             })?;
         let stop = params.stop.as_ref().map(|s| json!(s.to_vec()));
         let reasoning_effort = params
@@ -133,7 +126,7 @@ impl TryFrom<CompletionParams> for GatewayRequest {
     }
 }
 
-/// Convert an any-llm `Message` to an OpenAI-format JSON value.
+/// Convert an otari `Message` to an OpenAI-format JSON value.
 fn convert_message(msg: &Message) -> Result<Value> {
     let role = msg.role.as_str();
 
@@ -171,7 +164,7 @@ fn convert_message(msg: &Message) -> Result<Value> {
     // Tool calls (assistant messages)
     if let Some(tool_calls) = &msg.tool_calls {
         obj["tool_calls"] = serde_json::to_value(tool_calls).map_err(|e| {
-            AnyLLMError::provider_error::<Gateway>(format!("Failed to serialize tool calls: {e}"))
+            OtariError::provider_error(format!("Failed to serialize tool calls: {e}"))
         })?;
     }
 

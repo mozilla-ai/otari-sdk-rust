@@ -1,4 +1,4 @@
-use any_llm::types::{RerankMeta, RerankParams, RerankResponse, RerankResult, RerankUsage};
+use otari::types::{RerankMeta, RerankParams, RerankResponse, RerankResult, RerankUsage};
 use pretty_assertions::assert_eq;
 use std::collections::HashMap;
 

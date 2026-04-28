@@ -1,18 +1,18 @@
-/// Configuration for creating a provider.
+/// Configuration for creating an Otari client.
 #[derive(Debug, Clone, Default)]
-pub struct ProviderConfig {
+pub struct Config {
     /// The API key (if not set, will try environment variable).
     pub api_key: Option<String>,
 
     /// The API base URL (for custom endpoints/proxies).
     pub api_base: Option<String>,
 
-    /// Additional configuration (provider-specific).
+    /// Additional configuration.
     pub extra: std::collections::HashMap<String, String>,
 }
 
-impl ProviderConfig {
-    /// Create a new provider config with an API key.
+impl Config {
+    /// Create a new config with an API key.
     pub fn new(api_key: impl Into<String>) -> Self {
         Self {
             api_key: Some(api_key.into()),
