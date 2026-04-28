@@ -1,6 +1,6 @@
 //! Unit tests for core completion functionality.
 
-use any_llm::{CompletionOptions, CompletionParams, Message, ProviderConfig, Role, ToolChoice};
+use otari::{CompletionOptions, CompletionParams, Config, Message, Role, ToolChoice};
 
 #[test]
 fn test_message_creation() {
@@ -53,10 +53,10 @@ fn test_completion_options_builder() {
 }
 
 #[test]
-fn test_provider_config_from_options() {
+fn test_config_from_options() {
     let options = CompletionOptions::with_api_key("my-key").api_base("https://custom.api.com");
 
-    let config: ProviderConfig = options.into();
+    let config: Config = options.into();
 
     assert_eq!(config.api_key, Some("my-key".to_string()));
     assert_eq!(config.api_base, Some("https://custom.api.com".to_string()));

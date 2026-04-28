@@ -74,8 +74,8 @@ jobs:
       - name: Run integration tests
         run: cargo test --all-features -- --ignored
         env:
-          ANY_LLM_API_KEY: ${{ secrets.ANY_LLM_API_KEY }}
-          ANY_LLM_API_BASE: ${{ secrets.ANY_LLM_API_BASE }}
+          OTARI_API_KEY: ${{ secrets.OTARI_API_KEY }}
+          OTARI_API_BASE: ${{ secrets.OTARI_API_BASE }}
 
   # Ensure minimum supported Rust version works
   msrv:

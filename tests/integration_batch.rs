@@ -3,15 +3,12 @@
 //! These tests require a running gateway server and are gated behind `#[ignore]`.
 //! Run with: `cargo test --test integration_batch -- --ignored`
 
-use any_llm::providers::Gateway;
-use any_llm::{
-    AnyLLMError, BatchRequestItem, BatchStatus, CreateBatchParams, Provider, ProviderConfig,
-};
+use otari::{BatchRequestItem, BatchStatus, Config, CreateBatchParams, Otari, OtariError};
 
 #[tokio::test]
 #[ignore = "requires a running gateway server"]
 async fn live_create_and_retrieve_batch() {
-    let gw = Gateway::from_config(ProviderConfig::default()).unwrap();
+    let gw = Otari::from_config(Config::default()).unwrap();
 
     let params = CreateBatchParams::new(
         "openai:gpt-4o-mini",
@@ -46,7 +43,7 @@ async fn live_create_and_retrieve_batch() {
 #[tokio::test]
 #[ignore = "requires a running gateway server"]
 async fn live_retrieve_batch_results_not_complete() {
-    let gw = Gateway::from_config(ProviderConfig::default()).unwrap();
+    let gw = Otari::from_config(Config::default()).unwrap();
 
     let params = CreateBatchParams::new(
         "openai:gpt-4o-mini",
@@ -68,7 +65,7 @@ async fn live_retrieve_batch_results_not_complete() {
         .retrieve_batch_results(&batch.id, provider)
         .await
         .unwrap_err();
-    assert!(matches!(err, AnyLLMError::BatchNotComplete { .. }));
+    assert!(matches!(err, OtariError::BatchNotComplete { .. }));
     println!("Got expected error: {err}");
 
     // Clean up

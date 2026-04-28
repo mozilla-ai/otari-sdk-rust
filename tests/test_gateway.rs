@@ -1,10 +1,9 @@
-use any_llm::providers::Gateway;
-use any_llm::types::RerankParams;
-use any_llm::{
-    rerank, AnyLLMError, Batch, BatchRequestItem, BatchResult, BatchStatus, CompletionOptions,
-    CreateBatchParams, ListBatchesOptions, Message, Provider, ProviderConfig, RerankOptions,
-};
 use futures::StreamExt;
+use otari::types::RerankParams;
+use otari::{
+    rerank, Batch, BatchRequestItem, BatchResult, BatchStatus, CompletionOptions, Config,
+    CreateBatchParams, ListBatchesOptions, Message, Otari, OtariError, RerankOptions,
+};
 use wiremock::matchers::{header, method, path, query_param};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -12,8 +11,8 @@ use wiremock::{Mock, MockServer, ResponseTemplate};
 // Helpers
 // ---------------------------------------------------------------------------
 
-fn platform_config(base: &str) -> ProviderConfig {
-    ProviderConfig {
+fn platform_config(base: &str) -> Config {
+    Config {
         api_key: None,
         api_base: Some(base.to_string()),
         extra: [
@@ -24,8 +23,8 @@ fn platform_config(base: &str) -> ProviderConfig {
     }
 }
 
-fn non_platform_config(base: &str, key: &str) -> ProviderConfig {
-    ProviderConfig {
+fn non_platform_config(base: &str, key: &str) -> Config {
+    Config {
         api_key: Some(key.to_string()),
         api_base: Some(base.to_string()),
         extra: Default::default(),
@@ -66,8 +65,8 @@ fn streaming_sse_body() -> String {
     .join("\n\n")
 }
 
-fn simple_params() -> any_llm::CompletionParams {
-    any_llm::CompletionParams::new("openai:gpt-4o-mini", vec![Message::user("hello")])
+fn simple_params() -> otari::CompletionParams {
+    otari::CompletionParams::new("openai:gpt-4o-mini", vec![Message::user("hello")])
 }
 
 // ---------------------------------------------------------------------------
@@ -76,14 +75,14 @@ fn simple_params() -> any_llm::CompletionParams {
 
 #[test]
 fn gateway_requires_api_base() {
-    let config = ProviderConfig::default();
-    let result = Gateway::from_config(config);
+    let config = Config::default();
+    let result = Otari::from_config(config);
     assert!(result.is_err());
 }
 
 #[test]
 fn gateway_platform_mode_explicit() {
-    let config = ProviderConfig {
+    let config = Config {
         api_key: None,
         api_base: Some("http://example.com".to_string()),
         extra: [
@@ -92,47 +91,47 @@ fn gateway_platform_mode_explicit() {
         ]
         .into(),
     };
-    let gw = Gateway::from_config(config).unwrap();
+    let gw = Otari::from_config(config).unwrap();
     assert!(gw.is_platform_mode());
 }
 
 #[test]
 fn gateway_platform_mode_requires_token() {
-    let config = ProviderConfig {
+    let config = Config {
         api_key: None,
         api_base: Some("http://example.com".to_string()),
         extra: [("platform_mode".to_string(), "true".to_string())].into(),
     };
-    let result = Gateway::from_config(config);
+    let result = Otari::from_config(config);
     assert!(result.is_err());
 }
 
 #[test]
 fn gateway_non_platform_mode_with_api_key() {
     let config = non_platform_config("http://example.com", "my-key");
-    let gw = Gateway::from_config(config).unwrap();
+    let gw = Otari::from_config(config).unwrap();
     assert!(!gw.is_platform_mode());
 }
 
 #[test]
 fn gateway_non_platform_mode_no_key_is_ok() {
-    let config = ProviderConfig {
+    let config = Config {
         api_key: None,
         api_base: Some("http://example.com".to_string()),
         extra: [("platform_mode".to_string(), "false".to_string())].into(),
     };
-    let gw = Gateway::from_config(config).unwrap();
+    let gw = Otari::from_config(config).unwrap();
     assert!(!gw.is_platform_mode());
 }
 
 #[test]
 fn gateway_strips_trailing_slash_from_api_base() {
-    let config = ProviderConfig {
+    let config = Config {
         api_key: None,
         api_base: Some("http://example.com/".to_string()),
         extra: [("platform_mode".to_string(), "false".to_string())].into(),
     };
-    let _gw = Gateway::from_config(config).unwrap();
+    let _gw = Otari::from_config(config).unwrap();
     // If this doesn't panic, the trailing slash was handled.
 }
 
@@ -152,24 +151,24 @@ async fn platform_mode_sends_authorization_header() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let result = gw.completion(simple_params()).await;
     assert!(result.is_ok());
 }
 
 #[tokio::test]
-async fn non_platform_mode_sends_anyllm_key_header() {
+async fn non_platform_mode_sends_otari_key_header() {
     let server = MockServer::start().await;
 
     Mock::given(method("POST"))
         .and(path("/v1/chat/completions"))
-        .and(header("AnyLLM-Key", "Bearer my-api-key"))
+        .and(header("Otari-Key", "Bearer my-api-key"))
         .respond_with(ResponseTemplate::new(200).set_body_json(chat_completion_json()))
         .expect(1)
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(non_platform_config(&server.uri(), "my-api-key")).unwrap();
+    let gw = Otari::from_config(non_platform_config(&server.uri(), "my-api-key")).unwrap();
     let result = gw.completion(simple_params()).await;
     assert!(result.is_ok());
 }
@@ -188,7 +187,7 @@ async fn completion_parses_response() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let completion = gw.completion(simple_params()).await.unwrap();
 
     assert_eq!(completion.id, "chatcmpl-abc123");
@@ -223,7 +222,7 @@ async fn completion_with_reasoning() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let completion = gw.completion(simple_params()).await.unwrap();
     assert_eq!(completion.reasoning(), Some("Let me think about this..."));
 }
@@ -261,7 +260,7 @@ async fn completion_with_tool_calls() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let completion = gw.completion(simple_params()).await.unwrap();
     let tc = completion.tool_calls().unwrap();
     assert_eq!(tc.len(), 1);
@@ -285,7 +284,7 @@ async fn streaming_returns_all_chunks() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let stream = gw.completion_stream(simple_params()).await.unwrap();
     let chunks: Vec<_> = stream.collect().await;
 
@@ -316,10 +315,10 @@ async fn streaming_accumulator_works() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let mut stream = gw.completion_stream(simple_params()).await.unwrap();
 
-    let mut acc = any_llm::ChunkAccumulator::new();
+    let mut acc = otari::ChunkAccumulator::new();
     while let Some(chunk) = stream.next().await {
         let chunk = chunk.unwrap();
         acc.add(&chunk);
@@ -345,9 +344,9 @@ async fn error_401_maps_to_authentication() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let err = gw.completion(simple_params()).await.unwrap_err();
-    assert!(matches!(err, AnyLLMError::Authentication { .. }));
+    assert!(matches!(err, OtariError::Authentication { .. }));
     assert!(err.to_string().contains("Invalid token"));
 }
 
@@ -363,9 +362,9 @@ async fn error_403_maps_to_authentication() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let err = gw.completion(simple_params()).await.unwrap_err();
-    assert!(matches!(err, AnyLLMError::Authentication { .. }));
+    assert!(matches!(err, OtariError::Authentication { .. }));
 }
 
 #[tokio::test]
@@ -380,9 +379,9 @@ async fn error_402_maps_to_provider_error_with_insufficient_funds() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let err = gw.completion(simple_params()).await.unwrap_err();
-    assert!(matches!(err, AnyLLMError::Provider { .. }));
+    assert!(matches!(err, OtariError::Provider { .. }));
     assert!(err.to_string().contains("Insufficient funds"));
 }
 
@@ -398,9 +397,9 @@ async fn error_404_maps_to_model_not_found() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let err = gw.completion(simple_params()).await.unwrap_err();
-    assert!(matches!(err, AnyLLMError::ModelNotFound { .. }));
+    assert!(matches!(err, OtariError::ModelNotFound { .. }));
 }
 
 #[tokio::test]
@@ -416,9 +415,9 @@ async fn error_429_maps_to_rate_limit() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let err = gw.completion(simple_params()).await.unwrap_err();
-    assert!(matches!(err, AnyLLMError::RateLimit { .. }));
+    assert!(matches!(err, OtariError::RateLimit { .. }));
     assert!(err.to_string().contains("retry_after=30"));
 }
 
@@ -434,9 +433,9 @@ async fn error_502_maps_to_provider_error() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let err = gw.completion(simple_params()).await.unwrap_err();
-    assert!(matches!(err, AnyLLMError::Provider { .. }));
+    assert!(matches!(err, OtariError::Provider { .. }));
     assert!(err.to_string().contains("Upstream provider error"));
 }
 
@@ -452,9 +451,9 @@ async fn error_504_maps_to_provider_error() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let err = gw.completion(simple_params()).await.unwrap_err();
-    assert!(matches!(err, AnyLLMError::Provider { .. }));
+    assert!(matches!(err, OtariError::Provider { .. }));
     assert!(err.to_string().contains("Gateway timeout"));
 }
 
@@ -471,7 +470,7 @@ async fn error_includes_correlation_id() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let err = gw.completion(simple_params()).await.unwrap_err();
     assert!(err.to_string().contains("correlation_id=corr-abc-123"));
 }
@@ -485,14 +484,14 @@ async fn unknown_error_status_maps_to_provider_error() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let err = gw.completion(simple_params()).await.unwrap_err();
-    assert!(matches!(err, AnyLLMError::Provider { .. }));
+    assert!(matches!(err, OtariError::Provider { .. }));
     assert!(err.to_string().contains("HTTP 500"));
 }
 
 // ---------------------------------------------------------------------------
-// High-level API tests (via completion::<Gateway>)
+// High-level API tests (via completion())
 // ---------------------------------------------------------------------------
 
 #[tokio::test]
@@ -507,13 +506,13 @@ async fn completion_api_function_works() {
 
     let options = CompletionOptions::default().api_base(server.uri());
 
-    // Force non-platform mode via the ProviderConfig path
-    let mut config: ProviderConfig = options.into();
+    // Force non-platform mode via the Config path
+    let mut config: Config = options.into();
     config
         .extra
         .insert("platform_mode".to_string(), "false".to_string());
 
-    let gw = Gateway::from_config(config).unwrap();
+    let gw = Otari::from_config(config).unwrap();
     let result = gw.completion(simple_params()).await.unwrap();
     assert_eq!(result.content(), Some("Hello! How can I help you?"));
 }
@@ -525,9 +524,9 @@ async fn completion_api_function_works() {
 #[tokio::test]
 #[ignore = "requires a running gateway server"]
 async fn live_gateway_completion() {
-    let gw = Gateway::from_config(ProviderConfig::default()).unwrap();
+    let gw = Otari::from_config(Config::default()).unwrap();
 
-    let params = any_llm::CompletionParams::new(
+    let params = otari::CompletionParams::new(
         "openai:gpt-4o-mini",
         vec![Message::user("Say just the word 'hello'")],
     );
@@ -570,7 +569,7 @@ async fn test_gateway_rerank() {
         .mount(&mock_server)
         .await;
 
-    let gateway = Gateway::from_config(ProviderConfig {
+    let gateway = Otari::from_config(Config {
         api_base: Some(mock_server.uri()),
         api_key: Some("test-key".to_string()),
         ..Default::default()
@@ -607,7 +606,7 @@ async fn test_gateway_rerank_401_error() {
         .mount(&mock_server)
         .await;
 
-    let gateway = Gateway::from_config(ProviderConfig {
+    let gateway = Otari::from_config(Config {
         api_base: Some(mock_server.uri()),
         api_key: Some("bad-key".to_string()),
         ..Default::default()
@@ -626,7 +625,7 @@ async fn test_gateway_rerank_401_error() {
         .await
         .unwrap_err();
 
-    assert!(matches!(err, AnyLLMError::Authentication { .. }));
+    assert!(matches!(err, OtariError::Authentication { .. }));
 }
 
 #[tokio::test]
@@ -643,7 +642,7 @@ async fn test_gateway_rerank_429_error() {
         .mount(&mock_server)
         .await;
 
-    let gateway = Gateway::from_config(ProviderConfig {
+    let gateway = Otari::from_config(Config {
         api_base: Some(mock_server.uri()),
         api_key: Some("key".to_string()),
         ..Default::default()
@@ -662,7 +661,7 @@ async fn test_gateway_rerank_429_error() {
         .await
         .unwrap_err();
 
-    assert!(matches!(err, AnyLLMError::RateLimit { .. }));
+    assert!(matches!(err, OtariError::RateLimit { .. }));
 }
 
 #[tokio::test]
@@ -675,7 +674,7 @@ async fn test_rerank_api_function() {
         .mount(&mock_server)
         .await;
 
-    let result = rerank::<Gateway>(
+    let result = rerank(
         "cohere:rerank-v3.5",
         "test query",
         vec!["doc1".to_string(), "doc2".to_string()],
@@ -692,11 +691,6 @@ async fn test_rerank_api_function() {
     assert_eq!(result.id, "rerank-test-123");
 }
 
-#[test]
-fn test_gateway_supports_rerank() {
-    const { assert!(Gateway::SUPPORTS_RERANK) };
-}
-
 // ---------------------------------------------------------------------------
 // Live integration tests (require a running gateway)
 // ---------------------------------------------------------------------------
@@ -704,15 +698,15 @@ fn test_gateway_supports_rerank() {
 #[tokio::test]
 #[ignore = "requires a running gateway server"]
 async fn live_gateway_streaming() {
-    let gw = Gateway::from_config(ProviderConfig::default()).unwrap();
+    let gw = Otari::from_config(Config::default()).unwrap();
 
-    let params = any_llm::CompletionParams::new(
+    let params = otari::CompletionParams::new(
         "openai:gpt-4o-mini",
         vec![Message::user("Say just the word 'hello'")],
     );
 
     let mut stream = gw.completion_stream(params).await.unwrap();
-    let mut acc = any_llm::ChunkAccumulator::new();
+    let mut acc = otari::ChunkAccumulator::new();
 
     while let Some(chunk) = stream.next().await {
         let chunk = chunk.unwrap();
@@ -868,7 +862,7 @@ async fn create_batch_sends_correct_request() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let params = CreateBatchParams::new(
         "openai:gpt-4o-mini",
         vec![BatchRequestItem {
@@ -896,7 +890,7 @@ async fn retrieve_batch_sends_provider_query_param() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let batch = gw.retrieve_batch("batch_abc123", "openai").await.unwrap();
     assert_eq!(batch.id, "batch_abc123");
 }
@@ -922,7 +916,7 @@ async fn cancel_batch_sends_correct_request() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let batch = gw.cancel_batch("batch_abc123", "openai").await.unwrap();
     assert_eq!(batch.id, "batch_abc123");
     assert_eq!(batch.status, BatchStatus::Cancelling);
@@ -946,7 +940,7 @@ async fn list_batches_sends_pagination_params() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let options = ListBatchesOptions {
         after: Some("cursor_abc".to_string()),
         limit: Some(10),
@@ -968,7 +962,7 @@ async fn retrieve_batch_results_returns_batch_result() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let result = gw
         .retrieve_batch_results("batch_abc123", "openai")
         .await
@@ -997,13 +991,13 @@ async fn batch_409_returns_batch_not_complete() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let err = gw
         .retrieve_batch_results("batch_abc123", "openai")
         .await
         .unwrap_err();
     match &err {
-        AnyLLMError::BatchNotComplete {
+        OtariError::BatchNotComplete {
             batch_id, status, ..
         } => {
             assert_eq!(batch_id.as_ref(), "batch_abc123");
@@ -1027,9 +1021,9 @@ async fn batch_404_returns_upgrade_gateway_hint() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let err = gw.retrieve_batch("batch_xyz", "openai").await.unwrap_err();
-    assert!(matches!(err, AnyLLMError::Provider { .. }));
+    assert!(matches!(err, OtariError::Provider { .. }));
     let msg = err.to_string();
     assert!(msg.contains("does not support batch operations"));
     assert!(msg.contains("Upgrade your gateway"));
@@ -1048,10 +1042,10 @@ async fn batch_401_returns_authentication_error() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let params = CreateBatchParams::new("openai:gpt-4o-mini", vec![]);
     let err = gw.create_batch(params).await.unwrap_err();
-    assert!(matches!(err, AnyLLMError::Authentication { .. }));
+    assert!(matches!(err, OtariError::Authentication { .. }));
     assert!(err.to_string().contains("Invalid token"));
 }
 
@@ -1067,10 +1061,10 @@ async fn batch_422_returns_provider_error() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let params = CreateBatchParams::new("xyz:model", vec![]);
     let err = gw.create_batch(params).await.unwrap_err();
-    assert!(matches!(err, AnyLLMError::Provider { .. }));
+    assert!(matches!(err, OtariError::Provider { .. }));
     assert!(err.to_string().contains("Unsupported provider"));
 }
 
@@ -1086,11 +1080,11 @@ async fn batch_502_returns_provider_error() {
         .mount(&server)
         .await;
 
-    let gw = Gateway::from_config(platform_config(&server.uri())).unwrap();
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let err = gw
         .retrieve_batch("batch_abc123", "openai")
         .await
         .unwrap_err();
-    assert!(matches!(err, AnyLLMError::Provider { .. }));
+    assert!(matches!(err, OtariError::Provider { .. }));
     assert!(err.to_string().contains("Upstream provider error"));
 }

@@ -1,15 +1,15 @@
 //! High-level API functions for easy LLM access.
 //!
 //! This module provides simple, stateless functions for making LLM calls.
-//! For more control or connection reuse, use the `Provider` trait directly.
+//! For more control or connection reuse, use the `Otari` client directly.
 
+use crate::client::Otari;
+use crate::config::Config;
 use crate::error::Result;
-use crate::provider::{AnyLLMProvider, CompletionStream, ProviderConfig};
 use crate::types::{
-    ChatCompletion, CompletionParams, Message, ReasoningEffort, RerankParams, RerankResponse,
-    StopSequence, Tool, ToolChoice,
+    ChatCompletion, CompletionParams, CompletionStream, Message, ReasoningEffort, RerankParams,
+    RerankResponse, StopSequence, Tool, ToolChoice,
 };
-use crate::Provider;
 use serde_json::Value;
 
 /// Options for completion requests.
@@ -119,9 +119,9 @@ impl CompletionOptions {
     }
 }
 
-impl From<CompletionOptions> for ProviderConfig {
+impl From<CompletionOptions> for Config {
     fn from(options: CompletionOptions) -> Self {
-        ProviderConfig {
+        Config {
             api_key: options.api_key,
             api_base: options.api_base,
             extra: Default::default(),
@@ -140,16 +140,16 @@ impl From<CompletionOptions> for ProviderConfig {
 /// # Examples
 ///
 /// ```rust,no_run
-/// use any_llm::{completion, Message, CompletionOptions, providers::Gateway};
+/// use otari::{completion, Message, CompletionOptions};
 ///
 /// #[tokio::main]
-/// async fn main() -> any_llm::Result<()> {
+/// async fn main() -> otari::Result<()> {
 ///     let messages = vec![
 ///         Message::system("You are a helpful assistant."),
 ///         Message::user("What is the capital of France?"),
 ///     ];
 ///
-///     let response = completion::<Gateway>(
+///     let response = completion(
 ///         "openai:gpt-4o-mini",
 ///         messages,
 ///         CompletionOptions::with_api_key("your-api-key")
@@ -160,13 +160,13 @@ impl From<CompletionOptions> for ProviderConfig {
 ///     Ok(())
 /// }
 /// ```
-pub async fn completion<P: Provider>(
+pub async fn completion(
     model: &str,
     messages: Vec<Message>,
     options: CompletionOptions,
 ) -> Result<ChatCompletion> {
     let model_id = model.to_string();
-    let provider = AnyLLMProvider::<P>::from_config(options.clone().into())?;
+    let client = Otari::from_config(options.clone().into())?;
 
     let params = CompletionParams {
         model_id,
@@ -191,7 +191,7 @@ pub async fn completion<P: Provider>(
         reasoning_effort: options.reasoning_effort,
     };
 
-    provider.completion(params).await
+    client.completion(params).await
 }
 
 /// Create a streaming chat completion.
@@ -205,14 +205,14 @@ pub async fn completion<P: Provider>(
 /// # Examples
 ///
 /// ```rust,no_run
-/// use any_llm::{completion_stream, Message, CompletionOptions, providers::Gateway};
+/// use otari::{completion_stream, Message, CompletionOptions};
 /// use futures::StreamExt;
 ///
 /// #[tokio::main]
-/// async fn main() -> any_llm::Result<()> {
+/// async fn main() -> otari::Result<()> {
 ///     let messages = vec![Message::user("Tell me a story")];
 ///
-///     let mut stream = completion_stream::<Gateway>(
+///     let mut stream = completion_stream(
 ///         "openai:gpt-4o-mini",
 ///         messages,
 ///         CompletionOptions::with_api_key("your-api-key")
@@ -228,13 +228,13 @@ pub async fn completion<P: Provider>(
 ///     Ok(())
 /// }
 /// ```
-pub async fn completion_stream<P: Provider>(
+pub async fn completion_stream(
     model: &str,
     messages: Vec<Message>,
     options: CompletionOptions,
 ) -> Result<CompletionStream> {
     let model_id = model.to_string();
-    let provider = AnyLLMProvider::<P>::from_config(options.clone().into())?;
+    let client = Otari::from_config(options.clone().into())?;
 
     let params = CompletionParams {
         model_id,
@@ -259,7 +259,7 @@ pub async fn completion_stream<P: Provider>(
         reasoning_effort: options.reasoning_effort,
     };
 
-    provider.completion_stream(params).await
+    client.completion_stream(params).await
 }
 
 /// Options for a rerank request.
@@ -281,9 +281,9 @@ pub struct RerankOptions {
     pub user: Option<String>,
 }
 
-impl From<RerankOptions> for ProviderConfig {
+impl From<RerankOptions> for Config {
     fn from(options: RerankOptions) -> Self {
-        ProviderConfig {
+        Config {
             api_key: options.api_key,
             api_base: options.api_base,
             extra: Default::default(),
@@ -303,14 +303,14 @@ impl From<RerankOptions> for ProviderConfig {
 /// A `RerankResponse` with results sorted by `relevance_score` descending.
 ///
 /// # Errors
-/// Returns `AnyLLMError` if the provider does not support reranking or the request fails.
-pub async fn rerank<P: Provider>(
+/// Returns `OtariError` if the request fails.
+pub async fn rerank(
     model: &str,
     query: &str,
     documents: Vec<String>,
     options: RerankOptions,
 ) -> Result<RerankResponse> {
-    let provider = AnyLLMProvider::<P>::from_config(options.clone().into())?;
+    let client = Otari::from_config(options.clone().into())?;
     let params = RerankParams {
         model_id: model.to_string(),
         query: query.to_string(),
@@ -319,7 +319,7 @@ pub async fn rerank<P: Provider>(
         max_tokens_per_doc: options.max_tokens_per_doc,
         user: options.user,
     };
-    provider.rerank(params).await
+    client.rerank(params).await
 }
 
 #[cfg(test)]

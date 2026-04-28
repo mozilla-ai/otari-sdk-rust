@@ -8,12 +8,11 @@ use reqwest_eventsource::{Event, EventSource};
 use serde::Deserialize;
 use serde_json::Value;
 
-use crate::provider::CompletionStream;
 use crate::types::{
-    ChatCompletionChunk, ChoiceDelta, ChunkChoice, CompletionUsage, FunctionDelta, Reasoning,
-    ToolCallDelta,
+    ChatCompletionChunk, ChoiceDelta, ChunkChoice, CompletionStream, CompletionUsage,
+    FunctionDelta, Reasoning, ToolCallDelta,
 };
-use crate::AnyLLMError;
+use crate::OtariError;
 
 /// Field names that providers use for reasoning/thinking content in deltas.
 const REASONING_FIELD_NAMES: &[&str] = &["reasoning", "reasoning_content", "thinking", "think"];
@@ -30,7 +29,7 @@ impl GatewayStream {
 }
 
 impl TryInto<CompletionStream> for GatewayStream {
-    type Error = AnyLLMError;
+    type Error = OtariError;
 
     fn try_into(self) -> Result<CompletionStream, Self::Error> {
         let GatewayStream { source, model } = self;
@@ -47,16 +46,16 @@ impl TryInto<CompletionStream> for GatewayStream {
 
                         match serde_json::from_str::<GatewayChunkRaw>(&msg.data) {
                             Ok(raw) => Some(Ok(raw.into_chunk(&model))),
-                            Err(e) => Some(Err(AnyLLMError::Streaming {
-                                provider: "gateway".into(),
+                            Err(e) => Some(Err(OtariError::Streaming {
+                                provider: "otari".into(),
                                 message: format!("Failed to parse chunk: {e}").into(),
                             })),
                         }
                     }
                     Ok(Event::Open) => Some(Ok(ChatCompletionChunk::empty(&model))),
                     Err(reqwest_eventsource::Error::StreamEnded) => None,
-                    Err(e) => Some(Err(AnyLLMError::Streaming {
-                        provider: "gateway".into(),
+                    Err(e) => Some(Err(OtariError::Streaming {
+                        provider: "otari".into(),
                         message: e.to_string().into(),
                     })),
                 }

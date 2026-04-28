@@ -22,7 +22,7 @@ assignees: ''
 
 ## Environment
 - Rust version:
-- any-llm version:
+- otari version:
 - OS:
 - Provider (OpenAI/Anthropic):
 

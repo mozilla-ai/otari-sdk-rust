@@ -1,16 +1,16 @@
-# Contributing to any-llm (Rust)
+# Contributing to otari (Rust)
 
-Thank you for your interest in contributing to any-llm!
+Thank you for your interest in contributing to otari!
 
-We're building a simple, unified Rust interface for working with LLMs through the any-llm gateway, and we welcome contributions from developers of all experience levels.
+We're building a simple, unified Rust interface for working with LLMs through the Otari gateway, and we welcome contributions from developers of all experience levels.
 
 ## Before You Start
 
 ### Check for Duplicates
 
 Before creating a new issue or starting work:
-- [ ] Search [existing issues](https://github.com/anthropics/any-llm-rust/issues) for duplicates
-- [ ] Check [open pull requests](https://github.com/anthropics/any-llm-rust/pulls) to see if someone is already working on it
+- [ ] Search [existing issues](https://github.com/mozilla-ai/otari-sdk-rust/issues) for duplicates
+- [ ] Check [open pull requests](https://github.com/mozilla-ai/otari-sdk-rust/pulls) to see if someone is already working on it
 - [ ] For bugs, verify it still exists in the `main` branch
 
 ### Discuss Major Changes First
@@ -27,7 +27,7 @@ For significant changes, please open an issue **before** starting work:
 
 - **Rust 1.83 or newer** (`rustup update stable`)
 - **Git**
-- A running **any-llm gateway** instance for integration tests
+- A running **Otari gateway** instance for integration tests
 
 ### Quick Start
 
@@ -35,11 +35,11 @@ For significant changes, please open an issue **before** starting work:
 # 1. Fork the repository on GitHub
 
 # 2. Clone your fork
-git clone https://github.com/YOUR_USERNAME/any-llm-rust.git
-cd any-llm-rust
+git clone https://github.com/YOUR_USERNAME/otari-sdk-rust.git
+cd otari-sdk-rust
 
 # 3. Add upstream remote
-git remote add upstream https://github.com/anthropics/any-llm-rust.git
+git remote add upstream https://github.com/mozilla-ai/otari-sdk-rust.git
 
 # 4. Build the project
 cargo build
@@ -59,15 +59,15 @@ cargo fmt
 Create a `.env` file in the project root (this file is gitignored):
 
 ```bash
-ANY_LLM_API_KEY=your_key_here
-ANY_LLM_API_BASE=http://localhost:8000
+OTARI_API_KEY=your_key_here
+OTARI_API_BASE=http://localhost:8000
 ```
 
 Or export environment variables:
 
 ```bash
-export ANY_LLM_API_KEY="your_key_here"
-export ANY_LLM_API_BASE="http://localhost:8000"
+export OTARI_API_KEY="your_key_here"
+export OTARI_API_BASE="http://localhost:8000"
 ```
 
 **Never commit API keys!**

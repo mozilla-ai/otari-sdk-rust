@@ -1,11 +1,11 @@
-//! Example: Chat completion via the any-llm gateway.
+//! Example: Chat completion via the Otari gateway.
 //!
 //! # Setup
 //!
 //! Set environment variables:
 //! ```sh
-//! export GATEWAY_API_BASE=http://localhost:8000
-//! export GATEWAY_PLATFORM_TOKEN=tk_your_token_here
+//! export OTARI_API_BASE=http://localhost:8000
+//! export OTARI_PLATFORM_TOKEN=tk_your_token_here
 //! ```
 //!
 //! # Run
@@ -14,20 +14,17 @@
 //! cargo run --example gateway_completion
 //! ```
 
-use any_llm::{
-    completion, completion_stream, providers::Gateway, ChunkAccumulator, CompletionOptions, Message,
-};
 use futures::StreamExt;
+use otari::{completion, completion_stream, ChunkAccumulator, CompletionOptions, Message};
 
 #[tokio::main]
-async fn main() -> any_llm::Result<()> {
+async fn main() -> otari::Result<()> {
     let messages = vec![Message::user("Say hello in three languages.")];
     let options = CompletionOptions::default();
 
     // --- Non-streaming ---
     println!("--- Non-streaming ---");
-    let response =
-        completion::<Gateway>("openai:gpt-4o-mini", messages.clone(), options.clone()).await?;
+    let response = completion("openai:gpt-4o-mini", messages.clone(), options.clone()).await?;
     println!("{}", response.content().unwrap_or("(no content)"));
 
     if let Some(usage) = &response.usage {
@@ -39,7 +36,7 @@ async fn main() -> any_llm::Result<()> {
 
     // --- Streaming ---
     println!("\n--- Streaming ---");
-    let mut stream = completion_stream::<Gateway>("openai:gpt-4o-mini", messages, options).await?;
+    let mut stream = completion_stream("openai:gpt-4o-mini", messages, options).await?;
 
     let mut acc = ChunkAccumulator::new();
     while let Some(chunk) = stream.next().await {
