@@ -6,7 +6,8 @@
 use crate::error::Result;
 use crate::provider::{AnyLLMProvider, CompletionStream, ProviderConfig};
 use crate::types::{
-    ChatCompletion, CompletionParams, Message, ReasoningEffort, StopSequence, Tool, ToolChoice,
+    ChatCompletion, CompletionParams, Message, ReasoningEffort, RerankParams, RerankResponse,
+    StopSequence, Tool, ToolChoice,
 };
 use crate::Provider;
 use serde_json::Value;
@@ -306,6 +307,66 @@ pub async fn completion_stream<P: Provider>(
     };
 
     provider.completion_stream(params).await
+}
+
+/// Options for a rerank request.
+#[derive(Debug, Clone, Default)]
+pub struct RerankOptions {
+    /// API key (if not set, uses environment variable).
+    pub api_key: Option<String>,
+
+    /// API base URL (for custom endpoints/proxies).
+    pub api_base: Option<String>,
+
+    /// Maximum number of results to return.
+    pub top_n: Option<u32>,
+
+    /// Maximum tokens per document for truncation.
+    pub max_tokens_per_doc: Option<u32>,
+
+    /// User identifier for abuse detection.
+    pub user: Option<String>,
+}
+
+impl From<RerankOptions> for ProviderConfig {
+    fn from(options: RerankOptions) -> Self {
+        ProviderConfig {
+            api_key: options.api_key,
+            api_base: options.api_base,
+            extra: Default::default(),
+        }
+    }
+}
+
+/// Rerank documents by relevance to a query.
+///
+/// # Arguments
+/// * `model` - Model identifier (e.g., "cohere:rerank-v3.5")
+/// * `query` - The search query
+/// * `documents` - Documents to rerank
+/// * `options` - Additional options (API key, base URL, top_n, etc.)
+///
+/// # Returns
+/// A `RerankResponse` with results sorted by `relevance_score` descending.
+///
+/// # Errors
+/// Returns `AnyLLMError` if the provider does not support reranking or the request fails.
+pub async fn rerank<P: Provider>(
+    model: &str,
+    query: &str,
+    documents: Vec<String>,
+    options: RerankOptions,
+) -> Result<RerankResponse> {
+    let provider = AnyLLMProvider::<P>::from_config(options.clone().into())?;
+    let params = RerankParams {
+        model_id: model.to_string(),
+        query: query.to_string(),
+        documents,
+        top_n: options.top_n,
+        max_tokens_per_doc: options.max_tokens_per_doc,
+        user: options.user,
+    };
+    provider.rerank(params).await
 }
 
 #[cfg(test)]

@@ -22,7 +22,7 @@ use crate::error::{AnyLLMError, Result};
 use crate::provider::{CompletionStream, Provider, ProviderConfig};
 use crate::types::{
     Batch, BatchResult, ChatCompletion, CompletionParams, CreateBatchParams, ListBatchesOptions,
-    ModerationParams, ModerationResponse,
+    ModerationParams, ModerationResponse, RerankParams, RerankResponse,
 };
 
 mod models;
@@ -202,6 +202,7 @@ impl Provider for Gateway {
     const SUPPORTS_IMAGES: bool = true;
     const SUPPORTS_REASONING: bool = true;
     const SUPPORTS_PDF: bool = true;
+    const SUPPORTS_RERANK: bool = true;
 
     fn from_config(config: ProviderConfig) -> Result<Self> {
         let api_base = config
@@ -273,6 +274,28 @@ impl Provider for Gateway {
         })?;
 
         GatewayStream::new(es, model).try_into()
+    }
+
+    async fn rerank_fn(&self, params: RerankParams) -> Result<RerankResponse> {
+        let body = models::rerank::GatewayRerankRequest::from(params);
+
+        let response = self
+            .client
+            .post(format!("{}/v1/rerank", self.api_base))
+            .json(&body)
+            .send()
+            .await
+            .map_err(AnyLLMError::from)?;
+
+        let status = response.status().as_u16();
+        if status != 200 {
+            return Err(convert_error(response).await);
+        }
+
+        response
+            .json::<RerankResponse>()
+            .await
+            .map_err(AnyLLMError::from)
     }
 }
 

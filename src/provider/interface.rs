@@ -3,7 +3,7 @@ use futures::Future;
 use crate::{
     error::{AnyLLMError, Result},
     types::Content,
-    types::{ChatCompletion, CompletionParams},
+    types::{ChatCompletion, CompletionParams, RerankParams, RerankResponse},
 };
 
 use super::{config::ProviderConfig, CompletionStream};
@@ -21,6 +21,7 @@ pub trait Provider: Sized + Send + Sync {
     const SUPPORTS_IMAGES: bool = false;
     const SUPPORTS_REASONING: bool = false;
     const SUPPORTS_PDF: bool = false;
+    const SUPPORTS_RERANK: bool = false;
 
     fn api_key(config: &ProviderConfig) -> Option<String> {
         config
@@ -104,6 +105,34 @@ pub trait Provider: Sized + Send + Sync {
             Self::validate_completion_params(&params)?;
 
             self.completion_stream_fn(params).await
+        }
+    }
+
+    // ── Rerank ──────────────────────────────────────────────────
+
+    /// Rerank documents by relevance to a query.
+    /// Providers that support reranking must override `rerank_fn`.
+    fn rerank_fn(
+        &self,
+        _params: RerankParams,
+    ) -> impl Future<Output = Result<RerankResponse>> + Send {
+        async {
+            Err(AnyLLMError::invalid_request::<Self>(
+                "rerank not supported by this provider",
+            ))
+        }
+    }
+
+    /// Rerank documents by relevance to a query (with validation).
+    fn rerank(&self, params: RerankParams) -> impl Future<Output = Result<RerankResponse>> + Send {
+        async {
+            if !Self::SUPPORTS_RERANK {
+                return Err(AnyLLMError::unsupported_parameter::<Self>(
+                    "rerank",
+                    "this provider does not support reranking",
+                ));
+            }
+            self.rerank_fn(params).await
         }
     }
 }
