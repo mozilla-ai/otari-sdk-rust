@@ -129,55 +129,6 @@ impl From<CompletionOptions> for ProviderConfig {
     }
 }
 
-// /// Parse a model string in the format "provider:model" or "provider/model".
-// ///
-// /// # Examples
-// ///
-// /// ```
-// /// use any_llm::parse_model_string;
-// ///
-// /// let (provider, model) = parse_model_string("openai:gpt-4o-mini").unwrap();
-// /// assert_eq!(model, "gpt-4o-mini");
-// ///
-// /// let (provider, model) = parse_model_string("anthropic:claude-3-5-sonnet-latest").unwrap();
-// /// assert_eq!(model, "claude-3-5-sonnet-latest");
-// /// ```
-// pub fn parse_model_string(model: &str) -> Result<(LLMProvider, String)> {
-//     // Try colon first, then slash
-//     let separator = if model.contains(':') { ':' } else { '/' };
-//     let parts: Vec<&str> = model.splitn(2, separator).collect();
-
-//     if parts.len() != 2 {
-//         return Err(AnyLLMError::InvalidRequest {
-//             message: format!(
-//                 "Invalid model format: '{}'. Use 'provider:model' (e.g., 'openai:gpt-4o-mini')",
-//                 model
-//             ),
-//             provider: "unknown".to_string(),
-//         });
-//     }
-
-//     let provider_str = parts[0];
-//     let model_id = parts[1];
-
-//     if provider_str.is_empty() {
-//         return Err(AnyLLMError::InvalidRequest {
-//             message: format!("Empty provider in model string: '{}'", model),
-//             provider: "unknown".to_string(),
-//         });
-//     }
-
-//     if model_id.is_empty() {
-//         return Err(AnyLLMError::InvalidRequest {
-//             message: format!("Empty model ID in model string: '{}'", model),
-//             provider: provider_str.to_string(),
-//         });
-//     }
-
-//     let provider = LLMProvider::from_str(provider_str)?;
-//     Ok((provider, model_id.to_string()))
-// }
-
 /// Create a chat completion.
 ///
 /// # Arguments
@@ -189,7 +140,7 @@ impl From<CompletionOptions> for ProviderConfig {
 /// # Examples
 ///
 /// ```rust,no_run
-/// use any_llm::{completion, Message, CompletionOptions, providers::OpenAI};
+/// use any_llm::{completion, Message, CompletionOptions, providers::Gateway};
 ///
 /// #[tokio::main]
 /// async fn main() -> any_llm::Result<()> {
@@ -198,10 +149,11 @@ impl From<CompletionOptions> for ProviderConfig {
 ///         Message::user("What is the capital of France?"),
 ///     ];
 ///
-///     let response = completion::<OpenAI>(
-///         "gpt-4o-mini",
+///     let response = completion::<Gateway>(
+///         "openai:gpt-4o-mini",
 ///         messages,
-///         CompletionOptions::default(),
+///         CompletionOptions::with_api_key("your-api-key")
+///             .api_base("http://localhost:8000"),
 ///     ).await?;
 ///
 ///     println!("{}", response.content().unwrap_or("No response"));
@@ -253,17 +205,18 @@ pub async fn completion<P: Provider>(
 /// # Examples
 ///
 /// ```rust,no_run
-/// use any_llm::{completion_stream, Message, CompletionOptions, providers::anthropic::Anthropic};
+/// use any_llm::{completion_stream, Message, CompletionOptions, providers::Gateway};
 /// use futures::StreamExt;
 ///
 /// #[tokio::main]
 /// async fn main() -> any_llm::Result<()> {
 ///     let messages = vec![Message::user("Tell me a story")];
 ///
-///     let mut stream = completion_stream::<Anthropic>(
-///         "claude-3-5-sonnet-latest",
+///     let mut stream = completion_stream::<Gateway>(
+///         "openai:gpt-4o-mini",
 ///         messages,
-///         CompletionOptions::default(),
+///         CompletionOptions::with_api_key("your-api-key")
+///             .api_base("http://localhost:8000"),
 ///     ).await?;
 ///
 ///     while let Some(chunk) = stream.next().await {

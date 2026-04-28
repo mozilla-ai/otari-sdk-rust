@@ -74,8 +74,8 @@ jobs:
       - name: Run integration tests
         run: cargo test --all-features -- --ignored
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANY_LLM_API_KEY: ${{ secrets.ANY_LLM_API_KEY }}
+          ANY_LLM_API_BASE: ${{ secrets.ANY_LLM_API_BASE }}
 
   # Ensure minimum supported Rust version works
   msrv:

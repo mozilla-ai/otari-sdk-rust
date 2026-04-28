@@ -16,8 +16,7 @@
     <img src="https://img.shields.io/static/v1?label=Chat%20on&message=Discord&color=blue&logo=Discord&style=flat-square" alt="Discord">
 </a>
 
-**Communicate with any LLM provider using a single, unified interface.**
-Switch between OpenAI, Anthropic, and more without changing your code.
+**Communicate with any LLM provider through the any-llm gateway.**
 
 [Python SDK](https://github.com/mozilla-ai/any-llm) | [Documentation](https://mozilla-ai.github.io/any-llm/) | [Platform (Beta)](https://any-llm.ai/)
 
@@ -42,18 +41,17 @@ tokio = { version = "1", features = ["full"] }
 ```
 
 ```rust
-use any_llm::{completion, Message, CompletionOptions, providers::OpenAI};
+use any_llm::{completion, Message, CompletionOptions, providers::Gateway};
 
 #[tokio::main]
 async fn main() -> any_llm::Result<()> {
-    // Set OPENAI_API_KEY or ANTHROPIC_API_KEY environment variable
-
     let messages = vec![Message::user("Hello!")];
 
-    let response = completion::<OpenAI>(
-        "gpt-4o-mini",
+    let response = completion::<Gateway>(
+        "openai:gpt-4o-mini",
         messages,
-        CompletionOptions::default(),
+        CompletionOptions::with_api_key("your-api-key")
+            .api_base("http://localhost:8000"),
     ).await?;
 
     println!("{}", response.content().unwrap_or_default());
@@ -61,55 +59,37 @@ async fn main() -> any_llm::Result<()> {
 }
 ```
 
-**That's it!** Change the generic type to switch between LLM providers.
-
 ## Installation
 
 ### Requirements
 
 - Rust 1.83 or newer
-- API keys for whichever LLM providers you want to use
-
-### Feature Flags
-
-```toml
-[dependencies]
-# Both providers enabled by default
-any-llm = "0.1"
-
-# Or select specific providers
-any-llm = { version = "0.1", default-features = false, features = ["openai"] }
-any-llm = { version = "0.1", default-features = false, features = ["anthropic"] }
-
-# From GitHub with specific features
-any-llm = { git = "https://github.com/mozilla-ai/any-llm-rust", features = ["openai"] }
-```
+- A running [any-llm gateway](https://github.com/mozilla-ai/any-llm) instance
 
 ### Setting Up API Keys
 
-Set environment variables for your chosen providers:
+Set environment variables:
 
 ```bash
-export OPENAI_API_KEY="your-key-here"
-export ANTHROPIC_API_KEY="your-key-here"
+export ANY_LLM_API_KEY="your-key-here"
+export ANY_LLM_API_BASE="http://localhost:8000"
 ```
 
-Alternatively, pass API keys directly in your code:
+Alternatively, pass the API key and base URL directly in your code:
 
 ```rust
-let options = CompletionOptions::with_api_key("your-api-key");
+let options = CompletionOptions::with_api_key("your-api-key")
+    .api_base("http://localhost:8000");
 ```
 
-## any-llm-gateway
+## any-llm Gateway
 
-any-llm-gateway is an **optional** FastAPI-based proxy server that adds enterprise-grade features on top of the core library:
+The [any-llm gateway](https://github.com/mozilla-ai/any-llm) is a FastAPI-based proxy server that exposes an OpenAI-compatible API and routes requests to multiple upstream LLM providers. It adds enterprise-grade features:
 
 - **Budget Management** - Enforce spending limits with automatic daily, weekly, or monthly resets
 - **API Key Management** - Issue, revoke, and monitor virtual API keys without exposing provider credentials
 - **Usage Analytics** - Track every request with full token counts, costs, and metadata
 - **Multi-tenant Support** - Manage access and budgets across users and teams
-
-The gateway sits between your applications and LLM providers, exposing an OpenAI-compatible API that works with any supported provider.
 
 ### Quick Start
 
@@ -132,46 +112,52 @@ Prefer a hosted experience? The [any-llm platform](https://any-llm.ai/) provides
 ### Basic Completion
 
 ```rust
-use any_llm::{completion, Message, CompletionOptions, providers::OpenAI};
+use any_llm::{completion, Message, CompletionOptions, providers::Gateway};
 
 let messages = vec![
     Message::system("You are a helpful assistant."),
     Message::user("What is the capital of France?"),
 ];
 
-let response = completion::<OpenAI>(
-    "gpt-4o-mini",
+let response = completion::<Gateway>(
+    "openai:gpt-4o-mini",
     messages,
-    CompletionOptions::default(),
+    CompletionOptions::with_api_key("your-api-key")
+        .api_base("http://localhost:8000"),
 ).await?;
 
 println!("{}", response.content().unwrap_or_default());
 ```
 
-### Switching Providers
+### Switching Models
 
-Simply change the generic type parameter:
+Change the model string to route to different upstream providers through the gateway:
 
 ```rust
-// OpenAI
-let response = completion::<OpenAI>("gpt-4o", messages.clone(), options.clone()).await?;
+// OpenAI via gateway
+let response = completion::<Gateway>(
+    "openai:gpt-4o", messages.clone(), options.clone()
+).await?;
 
-// Anthropic
-let response = completion::<Anthropic>("claude-3-5-sonnet-latest", messages, options).await?;
+// Anthropic via gateway
+let response = completion::<Gateway>(
+    "anthropic:claude-3-5-sonnet-latest", messages, options
+).await?;
 ```
 
 ### Streaming
 
 ```rust
-use any_llm::{completion_stream, Message, CompletionOptions, ChunkAccumulator, providers::OpenAI};
+use any_llm::{completion_stream, Message, CompletionOptions, ChunkAccumulator, providers::Gateway};
 use futures::StreamExt;
 
 let messages = vec![Message::user("Tell me a story")];
 
-let mut stream = completion_stream::<OpenAI>(
-    "gpt-4o-mini",
+let mut stream = completion_stream::<Gateway>(
+    "openai:gpt-4o-mini",
     messages,
-    CompletionOptions::default(),
+    CompletionOptions::with_api_key("your-api-key")
+        .api_base("http://localhost:8000"),
 ).await?;
 
 let mut accumulator = ChunkAccumulator::new();
@@ -189,7 +175,7 @@ println!("\nTotal tokens: {:?}", accumulator.usage);
 ### Tool Calling
 
 ```rust
-use any_llm::{completion, Message, CompletionOptions, Tool, ToolChoice, providers::OpenAI};
+use any_llm::{completion, Message, CompletionOptions, Tool, ToolChoice, providers::Gateway};
 use serde_json::json;
 
 let weather_tool = Tool::function("get_weather", "Get the current weather")
@@ -206,11 +192,12 @@ let weather_tool = Tool::function("get_weather", "Get the current weather")
     .build();
 
 let messages = vec![Message::user("What's the weather in Paris?")];
-let options = CompletionOptions::default()
+let options = CompletionOptions::with_api_key("your-api-key")
+    .api_base("http://localhost:8000")
     .tools(vec![weather_tool])
     .tool_choice(ToolChoice::auto());
 
-let response = completion::<OpenAI>("gpt-4o-mini", messages, options).await?;
+let response = completion::<Gateway>("openai:gpt-4o-mini", messages, options).await?;
 
 if let Some(tool_calls) = &response.choices[0].message.tool_calls {
     for call in tool_calls {
@@ -222,19 +209,20 @@ if let Some(tool_calls) = &response.choices[0].message.tool_calls {
 
 ### Extended Thinking (Reasoning)
 
-For models that support extended thinking (like Claude):
+For models that support extended thinking:
 
 ```rust
-use any_llm::{completion, Message, CompletionOptions, ReasoningEffort, providers::Anthropic};
+use any_llm::{completion, Message, CompletionOptions, ReasoningEffort, providers::Gateway};
 
 let messages = vec![Message::user("Solve this step by step: What is 15% of 240?")];
 
-let options = CompletionOptions::default()
+let options = CompletionOptions::with_api_key("your-api-key")
+    .api_base("http://localhost:8000")
     .reasoning_effort(ReasoningEffort::Medium)
     .max_tokens(16000);
 
-let response = completion::<Anthropic>(
-    "claude-sonnet-4-20250514",
+let response = completion::<Gateway>(
+    "anthropic:claude-sonnet-4-20250514",
     messages,
     options,
 ).await?;
@@ -246,43 +234,7 @@ if let Some(reasoning) = &response.choices[0].message.reasoning {
 println!("Answer: {}", response.content().unwrap_or_default());
 ```
 
-### Using the Provider Directly
-
-For more control or connection reuse:
-
-```rust
-use any_llm::{create_provider, LLMProvider, ProviderConfig, CompletionParams, Message};
-
-let config = ProviderConfig::new("your-api-key");
-let provider = create_provider(LLMProvider::OpenAI, config)?;
-
-let params = CompletionParams {
-    model_id: "gpt-4o-mini".to_string(),
-    messages: vec![Message::user("Hello!")],
-    ..Default::default()
-};
-
-let response = provider.completion(params).await?;
-```
-
-### Error Handling
-
-```rust
-use any_llm::{completion, AnyLLMError};
-
-match completion(model, messages, options).await {
-    Ok(response) => println!("{}", response.content().unwrap_or_default()),
-    Err(AnyLLMError::RateLimit { provider, message }) => {
-        eprintln!("Rate limited by {}: {}", provider, message);
-    }
-    Err(AnyLLMError::Authentication { provider, message }) => {
-        eprintln!("Auth failed for {}: {}", provider, message);
-    }
-    Err(e) => eprintln!("Error: {}", e),
-}
-```
-
-### Moderation (Gateway)
+### Moderation
 
 The gateway provider exposes an inherent `moderation` method that calls
 `POST /v1/moderations` and returns an OpenAI-compatible response:
@@ -315,19 +267,67 @@ Only upstream providers with moderation support will succeed; others
 return `AnyLLMError::Unsupported { provider, operation: "moderation" }`
 (or `"multimodal_moderation"` when the request used image parts).
 
-## Supported Providers
+### Batch Operations
 
-| Provider  | Completion | Streaming | Tools | Images | Reasoning |
-|-----------|:----------:|:---------:|:-----:|:------:|:---------:|
-| OpenAI    |     ✅     |     ✅    |   ✅  |   ✅   |     ❌    |
-| Anthropic |     ✅     |     ✅    |   ✅  |   ✅   |     ✅    |
+```rust
+use any_llm::providers::Gateway;
+use any_llm::{CreateBatchParams, Message, Provider, ProviderConfig};
+
+# async fn example() -> any_llm::Result<()> {
+let gw = Gateway::from_config(ProviderConfig::default())?;
+
+let params = CreateBatchParams::new(
+    "openai:gpt-4o-mini",
+    vec![
+        ("req-1", vec![Message::user("Hello")]),
+        ("req-2", vec![Message::user("World")]),
+    ],
+);
+
+let batch = gw.create_batch(params).await?;
+println!("Batch ID: {}", batch.id);
+# Ok(())
+# }
+```
+
+### Error Handling
+
+```rust
+use any_llm::{completion, AnyLLMError};
+
+match completion::<Gateway>(model, messages, options).await {
+    Ok(response) => println!("{}", response.content().unwrap_or_default()),
+    Err(AnyLLMError::RateLimit { provider, message }) => {
+        eprintln!("Rate limited by {}: {}", provider, message);
+    }
+    Err(AnyLLMError::Authentication { provider, message }) => {
+        eprintln!("Auth failed for {}: {}", provider, message);
+    }
+    Err(e) => eprintln!("Error: {}", e),
+}
+```
+
+## Gateway Capabilities
+
+The gateway supports all features through upstream providers:
+
+| Feature     | Supported |
+|-------------|:---------:|
+| Completion  |     ✅     |
+| Streaming   |     ✅     |
+| Tools       |     ✅     |
+| Images      |     ✅     |
+| Reasoning   |     ✅     |
+| PDF         |     ✅     |
+| Reranking   |     ✅     |
+| Batch       |     ✅     |
+| Moderation  |     ✅     |
 
 ## Why choose `any-llm`?
 
-- **Simple, unified interface** - Single function for all providers, switch models with just a type change
+- **Simple, unified interface** - Single function for all models, switch providers by changing the model string
 - **Developer friendly** - Full Rust type safety with serde serialization and clear, actionable error messages
-- **Leverages official SDKs** - Uses `async-openai` for OpenAI, ensuring maximum compatibility
-- **Stays framework-agnostic** so it can be used across different projects and use cases
+- **Gateway-powered** - Route to any upstream provider through a single gateway endpoint
 - **Async-first** - Built on Tokio for high-performance async I/O
 - **Streaming support** - Real-time token streaming with async streams
 - **Battle-tested** - Based on the proven [any-llm](https://github.com/mozilla-ai/any-llm) Python library
@@ -344,8 +344,8 @@ cargo fmt --check && cargo clippy --all-features -- -D warnings
 # Run tests
 cargo test --all-features
 
-# Run an example
-OPENAI_API_KEY=your-key cargo run --example basic_completion
+# Run the gateway example
+cargo run --example gateway_completion
 
 # Build docs
 cargo doc --all-features --no-deps --open
@@ -354,7 +354,6 @@ cargo doc --all-features --no-deps --open
 ## Documentation
 
 - **[Full Documentation](https://mozilla-ai.github.io/any-llm/)** - Complete guides and API reference
-- **[Supported Providers](https://mozilla-ai.github.io/any-llm/providers/)** - List of all supported LLM providers
 - **[Gateway Documentation](https://mozilla-ai.github.io/any-llm/gateway/overview/)** - Gateway setup and deployment
 - **[Python SDK](https://github.com/mozilla-ai/any-llm)** - The full Python SDK with direct provider access
 - **[any-llm Platform (Beta)](https://any-llm.ai/)** - Hosted control plane for key management, usage tracking, and cost visibility
