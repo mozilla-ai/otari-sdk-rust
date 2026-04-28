@@ -3,13 +3,13 @@ name = "any-llm"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.83"
-description = "A unified Rust SDK for multiple LLM providers - switch between OpenAI, Anthropic, and more without changing your code"
+description = "A unified Rust SDK for interacting with LLMs via the any-llm gateway"
 license = "Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/mozilla-ai/any-llm-rust"
 homepage = "https://github.com/mozilla-ai/any-llm-rust"
 documentation = "https://docs.rs/any-llm"
-keywords = ["llm", "openai", "anthropic", "ai", "claude"]
+keywords = ["llm", "ai", "gateway", "api-gateway", "any-llm"]
 categories = ["api-bindings", "asynchronous", "web-programming"]
 authors = ["Mozilla AI <any-llm@mozilla.ai>"]
 
@@ -17,9 +17,6 @@ authors = ["Mozilla AI <any-llm@mozilla.ai>"]
 # Async runtime
 tokio = { version = "1", features = ["full"] }
 futures = "0.3"
-
-# Provider SDKs (optional)
-async-openai = "0.27"
 
 # Serialization
 serde = { version = "1", features = ["derive"] }
@@ -32,16 +29,7 @@ reqwest-eventsource = "0.6"
 # Error handling
 thiserror = "2"
 
-# Async streams
-async-stream = "0.3"
-tokio-stream = "0.1"
-pin-project-lite = "0.2"
 
-# Logging
-tracing = "0.1"
-
-# Base64 for image handling
-base64 = "0.22"
 
 [dev-dependencies]
 tokio-test = "0.4"

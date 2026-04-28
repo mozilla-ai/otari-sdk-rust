@@ -1,38 +1,38 @@
 //! # any-llm
 //!
-//! A unified Rust SDK for multiple LLM providers.
+//! A unified Rust SDK for interacting with LLMs via the any-llm gateway.
 //!
 //! This library provides a single, consistent interface to interact with
-//! multiple LLM providers (OpenAI, Anthropic, and more). Switch providers
-//! without changing your code.
+//! the [any-llm gateway](https://github.com/mozilla-ai/any-llm), a FastAPI-based
+//! proxy that exposes an OpenAI-compatible API and routes requests to multiple
+//! upstream LLM providers.
 //!
 //! ## Features
 //!
-//! - **Unified API**: Single interface for all providers
+//! - **Unified API**: Single interface for all models through the gateway
 //! - **Streaming support**: Real-time token streaming with async streams
 //! - **Tool calling**: Function/tool calling with automatic format conversion
 //! - **Image support**: Send images to vision-capable models
-//! - **Extended thinking**: Support for Anthropic's thinking/reasoning feature
+//! - **Extended thinking**: Support for reasoning features
+//! - **Reranking**: Document reranking support
+//! - **Batch operations**: Create, retrieve, cancel, and list batch jobs
+//! - **Moderation**: Content moderation via the gateway
 //! - **Type-safe**: Strong Rust types with serde serialization
-//!
-//! ## Cargo Features
-//!
-//! - `openai` (default): Enable OpenAI provider support
-//! - `anthropic` (default): Enable Anthropic provider support
 //!
 //! ## Quick Start
 //!
 //! ```rust,no_run
-//! use any_llm::{completion, Message, CompletionOptions, providers::OpenAI};
+//! use any_llm::{completion, Message, CompletionOptions, providers::Gateway};
 //!
 //! #[tokio::main]
 //! async fn main() -> any_llm::Result<()> {
 //!     let messages = vec![Message::user("Hello, how are you?")];
 //!
-//!     let response = completion::<OpenAI>(
-//!         "gpt-4o-mini",
+//!     let response = completion::<Gateway>(
+//!         "openai:gpt-4o-mini",
 //!         messages,
-//!         CompletionOptions::default(),
+//!         CompletionOptions::with_api_key("your-api-key")
+//!             .api_base("http://localhost:8000"),
 //!     ).await?;
 //!
 //!     println!("{}", response.content().unwrap_or_default());
@@ -40,36 +40,20 @@
 //! }
 //! ```
 //!
-//! ## Switching Providers
-//!
-//! Simply change the model string to switch providers:
-//!
-//! ```rust,no_run
-//! # use any_llm::{completion, Message, CompletionOptions, providers::{OpenAI, Anthropic}};
-//! # async fn example() -> any_llm::Result<()> {
-//! # let messages = vec![Message::user("Hello")];
-//! // OpenAI
-//! let response = completion::<OpenAI>(":gpt-4o", messages.clone(), CompletionOptions::default()).await?;
-//!
-//! // Anthropic
-//! let response = completion::<Anthropic>("claude-3-5-sonnet-latest", messages, CompletionOptions::default()).await?;
-//! # Ok(())
-//! # }
-//! ```
-//!
 //! ## Streaming
 //!
 //! ```rust,no_run
-//! use any_llm::{completion_stream, Message, CompletionOptions, ChunkAccumulator, providers::OpenAI};
+//! use any_llm::{completion_stream, Message, CompletionOptions, ChunkAccumulator, providers::Gateway};
 //! use futures::StreamExt;
 //!
 //! # async fn example() -> any_llm::Result<()> {
 //! let messages = vec![Message::user("Tell me a story")];
 //!
-//! let mut stream = completion_stream::<OpenAI>(
-//!     "gpt-4o-mini",
+//! let mut stream = completion_stream::<Gateway>(
+//!     "openai:gpt-4o-mini",
 //!     messages,
-//!     CompletionOptions::default(),
+//!     CompletionOptions::with_api_key("your-api-key")
+//!         .api_base("http://localhost:8000"),
 //! ).await?;
 //!
 //! let mut accumulator = ChunkAccumulator::new();
@@ -90,7 +74,7 @@
 //! ## Tool Calling
 //!
 //! ```rust,no_run
-//! use any_llm::{completion, Message, CompletionOptions, Tool, ToolChoice, providers::OpenAI};
+//! use any_llm::{completion, Message, CompletionOptions, Tool, ToolChoice, providers::Gateway};
 //! use serde_json::json;
 //!
 //! # async fn example() -> any_llm::Result<()> {
@@ -108,11 +92,12 @@
 //!     .build();
 //!
 //! let messages = vec![Message::user("What's the weather in Paris?")];
-//! let options = CompletionOptions::default()
+//! let options = CompletionOptions::with_api_key("your-api-key")
+//!     .api_base("http://localhost:8000")
 //!     .tools(vec![weather_tool])
 //!     .tool_choice(ToolChoice::auto());
 //!
-//! let response = completion::<OpenAI>("gpt-4o-mini", messages, options).await?;
+//! let response = completion::<Gateway>("openai:gpt-4o-mini", messages, options).await?;
 //!
 //! if let Some(tool_calls) = &response.choices[0].message.tool_calls {
 //!     for call in tool_calls {
@@ -125,10 +110,8 @@
 //!
 //! ## Environment Variables
 //!
-//! Set your API keys via environment variables:
-//!
-//! - `OPENAI_API_KEY`: OpenAI API key
-//! - `ANTHROPIC_API_KEY`: Anthropic API key
+//! - `ANY_LLM_API_KEY`: API key for the any-llm gateway
+//! - `ANY_LLM_API_BASE`: Base URL of the any-llm gateway
 
 pub mod api;
 pub mod error;

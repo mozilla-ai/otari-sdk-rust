@@ -65,7 +65,7 @@ pub enum AnyLLMError {
     },
 
     /// Unsupported provider - the provider is not supported.
-    #[error("Unsupported provider: '{provider}'. Supported providers: openai, anthropic")]
+    #[error("Unsupported provider: '{provider}'. Supported providers: gateway")]
     UnsupportedProvider { provider: ErrorStr },
 
     /// Unsupported operation - the provider does not support this operation.
