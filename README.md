@@ -1,7 +1,5 @@
 <p align="center">
-  <picture>
-    <img src="https://raw.githubusercontent.com/mozilla-ai/any-llm/refs/heads/main/docs/public/images/any-llm-logo-mark.png" width="20%" alt="Project logo"/>
-  </picture>
+  <img src="assets/otari-logo.svg" width="320" alt="otari logo"/>
 </p>
 
 <div align="center">
@@ -18,7 +16,7 @@
 
 **Communicate with any LLM provider through the Otari gateway.**
 
-[Python SDK](https://github.com/mozilla-ai/any-llm) | [Documentation](https://mozilla-ai.github.io/any-llm/) | [Platform (Beta)](https://otari.ai/)
+[Python SDK](https://github.com/mozilla-ai/otari-sdk-python) | [TypeScript SDK](https://github.com/mozilla-ai/otari-sdk-ts) | [Go SDK](https://github.com/mozilla-ai/otari-sdk-go) | [Documentation](https://mozilla-ai.github.io/otari/) | [Platform (Beta)](https://otari.ai/)
 
 </div>
 
@@ -64,7 +62,7 @@ async fn main() -> otari::Result<()> {
 ### Requirements
 
 - Rust 1.83 or newer
-- A running [Otari gateway](https://github.com/mozilla-ai/any-llm) instance
+- A running [Otari gateway](https://github.com/mozilla-ai/otari) instance
 
 ### Setting Up API Keys
 
@@ -84,7 +82,7 @@ let options = CompletionOptions::with_api_key("your-api-key")
 
 ## Otari Gateway
 
-The [Otari gateway](https://github.com/mozilla-ai/any-llm) is a FastAPI-based proxy server that exposes an OpenAI-compatible API and routes requests to multiple upstream LLM providers. It adds enterprise-grade features:
+The [Otari gateway](https://github.com/mozilla-ai/otari) is a FastAPI-based proxy server that exposes an OpenAI-compatible API and routes requests to multiple upstream LLM providers. It adds enterprise-grade features:
 
 - **Budget Management** - Enforce spending limits with automatic daily, weekly, or monthly resets
 - **API Key Management** - Issue, revoke, and monitor virtual API keys without exposing provider credentials
@@ -98,10 +96,12 @@ docker run \
   -e GATEWAY_MASTER_KEY="your-secure-master-key" \
   -e OPENAI_API_KEY="your-api-key" \
   -p 8000:8000 \
-  ghcr.io/mozilla-ai/any-llm/gateway:latest
+  ghcr.io/mozilla-ai/otari/gateway:latest
 ```
 
-> **Note:** You can use a specific release version instead of `latest` (e.g., `1.2.0`). See [available versions](https://github.com/orgs/mozilla-ai/packages/container/package/any-llm%2Fgateway).
+> **Note:** You can use a specific release version instead of `latest` (e.g., `1.2.0`). See [available versions](https://github.com/orgs/mozilla-ai/packages/container/package/otari%2Fgateway).
+
+The gateway needs at least one provider key configured (e.g. the `OPENAI_API_KEY` above, or via [otari.ai/organization-settings/provider-keys](https://otari.ai/organization-settings/provider-keys) on the hosted platform) so it can route requests upstream.
 
 ### Managed Platform (Beta)
 
@@ -351,9 +351,11 @@ cargo doc --all-features --no-deps --open
 
 ## Documentation
 
-- **[Full Documentation](https://mozilla-ai.github.io/any-llm/)** - Complete guides and API reference
-- **[Gateway Documentation](https://mozilla-ai.github.io/any-llm/gateway/overview/)** - Gateway setup and deployment
-- **[Python SDK](https://github.com/mozilla-ai/any-llm)** - The full Python SDK with direct provider access
+- **[Full Documentation](https://mozilla-ai.github.io/otari/)** - Complete guides and API reference
+- **[Gateway Documentation](https://mozilla-ai.github.io/otari/gateway/overview/)** - Gateway setup and deployment
+- **[Python SDK](https://github.com/mozilla-ai/otari-sdk-python)** - The Python SDK
+- **[TypeScript SDK](https://github.com/mozilla-ai/otari-sdk-ts)** - The TypeScript SDK for Node.js applications
+- **[Go SDK](https://github.com/mozilla-ai/otari-sdk-go)** - The Go SDK
 - **[Otari Platform (Beta)](https://otari.ai/)** - Hosted control plane for key management, usage tracking, and cost visibility
 
 ## Contributing
