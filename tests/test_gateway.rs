@@ -157,6 +157,29 @@ async fn platform_mode_sends_authorization_header() {
 }
 
 #[tokio::test]
+async fn sends_user_agent_header() {
+    // The hosted gateway's edge rejects requests with no User-Agent (403),
+    // so every request must carry one. The mock only matches when the
+    // expected User-Agent is present, so a missing/empty UA fails the call.
+    let server = MockServer::start().await;
+
+    Mock::given(method("POST"))
+        .and(path("/v1/chat/completions"))
+        .and(header(
+            "user-agent",
+            concat!("otari-rust/", env!("CARGO_PKG_VERSION")),
+        ))
+        .respond_with(ResponseTemplate::new(200).set_body_json(chat_completion_json()))
+        .expect(1)
+        .mount(&server)
+        .await;
+
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
+    let result = gw.completion(simple_params()).await;
+    assert!(result.is_ok(), "expected success, got: {result:?}");
+}
+
+#[tokio::test]
 async fn non_platform_mode_sends_otari_key_header() {
     let server = MockServer::start().await;
 

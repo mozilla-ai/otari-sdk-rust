@@ -62,6 +62,10 @@ const OTARI_API_KEY_ENV: &str = "OTARI_API_KEY";
 /// base URL is configured via `Config::api_base` or env.
 const HOSTED_API_BASE: &str = "https://api.otari.ai";
 
+/// User-Agent sent on every request. The hosted gateway's edge rejects
+/// requests with no User-Agent (HTTP 403), so always identify the client.
+const USER_AGENT: &str = concat!("otari-rust/", env!("CARGO_PKG_VERSION"));
+
 /// Read the platform token from env: canonical first, then legacy alias.
 fn platform_token_from_env() -> Option<String> {
     std::env::var(OTARI_AI_TOKEN_ENV)
@@ -151,6 +155,7 @@ impl Otari {
             .to_string();
 
         let client = Client::builder()
+            .user_agent(USER_AGENT)
             .default_headers(headers)
             .build()
             .map_err(|e| OtariError::provider_error(format!("Failed to build HTTP client: {e}")))?;
