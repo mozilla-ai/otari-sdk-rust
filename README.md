@@ -38,6 +38,14 @@ otari = { git = "https://github.com/mozilla-ai/otari-sdk-rust" }
 tokio = { version = "1", features = ["full"] }
 ```
 
+The fastest way to start is the **hosted gateway**. Grab a platform token from
+[otari.ai](https://otari.ai/), set it in your environment, and the SDK targets
+`https://api.otari.ai` automatically — no API key or base URL needed in code.
+
+```bash
+export OTARI_AI_TOKEN="your-platform-token"
+```
+
 ```rust
 use otari::{completion, Message, CompletionOptions};
 
@@ -45,11 +53,12 @@ use otari::{completion, Message, CompletionOptions};
 async fn main() -> otari::Result<()> {
     let messages = vec![Message::user("Hello!")];
 
+    // No api_key / api_base: platform mode uses OTARI_AI_TOKEN against the
+    // hosted gateway (https://api.otari.ai).
     let response = completion(
         "openai:gpt-4o-mini",
         messages,
-        CompletionOptions::with_api_key("your-api-key")
-            .api_base("http://localhost:8000"),
+        CompletionOptions::default(),
     ).await?;
 
     println!("{}", response.content().unwrap_or_default());
@@ -62,23 +71,42 @@ async fn main() -> otari::Result<()> {
 ### Requirements
 
 - Rust 1.83 or newer
-- A running [Otari gateway](https://github.com/mozilla-ai/otari) instance
+- Either a platform token for the hosted gateway, or a running
+  [Otari gateway](https://github.com/mozilla-ai/otari) instance for self-hosting
 
-### Setting Up API Keys
+### Authentication
 
-Set environment variables:
+There are two ways to authenticate, depending on where the gateway runs.
+
+**Hosted platform (recommended)** — uses `Authorization: Bearer` platform-mode
+auth against the hosted gateway. Set the platform token in your environment and
+leave `api_key` / `api_base` unset:
 
 ```bash
-export OTARI_API_KEY="your-key-here"
-export OTARI_API_BASE="http://localhost:8000"
+export OTARI_AI_TOKEN="your-platform-token"
 ```
 
-Alternatively, pass the API key and base URL directly in your code:
+**Self-hosting the gateway** — point the SDK at your own gateway with an API key
+(sent as the `Otari-Key` header) and an explicit base URL:
 
 ```rust
-let options = CompletionOptions::with_api_key("your-api-key")
+let options = CompletionOptions::with_api_key("your-gateway-key")
     .api_base("http://localhost:8000");
 ```
+
+Or via environment variables (the SDK reads canonical names first, then the
+legacy aliases):
+
+```bash
+export GATEWAY_API_KEY="your-gateway-key"   # legacy alias: OTARI_API_KEY
+export GATEWAY_API_BASE="http://localhost:8000"  # legacy alias: OTARI_API_BASE
+```
+
+| Variable           | Purpose                                  | Legacy alias            |
+|--------------------|------------------------------------------|-------------------------|
+| `OTARI_AI_TOKEN`   | Platform token for the hosted gateway    | `OTARI_PLATFORM_TOKEN`  |
+| `GATEWAY_API_KEY`  | API key for a self-hosted gateway        | `OTARI_API_KEY`         |
+| `GATEWAY_API_BASE` | Gateway base URL                         | `OTARI_API_BASE`        |
 
 ## Otari Gateway
 
