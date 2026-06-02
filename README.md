@@ -1,7 +1,5 @@
 <p align="center">
-  <picture>
-    <img src="https://raw.githubusercontent.com/mozilla-ai/any-llm/refs/heads/main/docs/public/images/any-llm-logo-mark.png" width="20%" alt="Project logo"/>
-  </picture>
+  <img src="assets/otari-logo.svg" width="320" alt="otari logo"/>
 </p>
 
 <div align="center">
@@ -18,7 +16,7 @@
 
 **Communicate with any LLM provider through the Otari gateway.**
 
-[Python SDK](https://github.com/mozilla-ai/any-llm) | [Documentation](https://mozilla-ai.github.io/any-llm/) | [Platform (Beta)](https://otari.ai/)
+[Python SDK](https://github.com/mozilla-ai/otari-sdk-python) | [TypeScript SDK](https://github.com/mozilla-ai/otari-sdk-ts) | [Go SDK](https://github.com/mozilla-ai/otari-sdk-go) | [Documentation](https://mozilla-ai.github.io/otari/) | [Platform (Beta)](https://otari.ai/)
 
 </div>
 
@@ -40,6 +38,14 @@ otari = { git = "https://github.com/mozilla-ai/otari-sdk-rust" }
 tokio = { version = "1", features = ["full"] }
 ```
 
+The fastest way to start is the **hosted gateway**. Grab a platform token from
+[otari.ai](https://otari.ai/), set it in your environment, and the SDK targets
+`https://api.otari.ai` automatically — no API key or base URL needed in code.
+
+```bash
+export OTARI_AI_TOKEN="your-platform-token"
+```
+
 ```rust
 use otari::{completion, Message, CompletionOptions};
 
@@ -47,11 +53,12 @@ use otari::{completion, Message, CompletionOptions};
 async fn main() -> otari::Result<()> {
     let messages = vec![Message::user("Hello!")];
 
+    // No api_key / api_base: platform mode uses OTARI_AI_TOKEN against the
+    // hosted gateway (https://api.otari.ai).
     let response = completion(
         "openai:gpt-4o-mini",
         messages,
-        CompletionOptions::with_api_key("your-api-key")
-            .api_base("http://localhost:8000"),
+        CompletionOptions::default(),
     ).await?;
 
     println!("{}", response.content().unwrap_or_default());
@@ -64,27 +71,46 @@ async fn main() -> otari::Result<()> {
 ### Requirements
 
 - Rust 1.83 or newer
-- A running [Otari gateway](https://github.com/mozilla-ai/any-llm) instance
+- Either a platform token for the hosted gateway, or a running
+  [Otari gateway](https://github.com/mozilla-ai/otari) instance for self-hosting
 
-### Setting Up API Keys
+### Authentication
 
-Set environment variables:
+There are two ways to authenticate, depending on where the gateway runs.
+
+**Hosted platform (recommended)** — uses `Authorization: Bearer` platform-mode
+auth against the hosted gateway. Set the platform token in your environment and
+leave `api_key` / `api_base` unset:
 
 ```bash
-export OTARI_API_KEY="your-key-here"
-export OTARI_API_BASE="http://localhost:8000"
+export OTARI_AI_TOKEN="your-platform-token"
 ```
 
-Alternatively, pass the API key and base URL directly in your code:
+**Self-hosting the gateway** — point the SDK at your own gateway with an API key
+(sent as the `Otari-Key` header) and an explicit base URL:
 
 ```rust
-let options = CompletionOptions::with_api_key("your-api-key")
+let options = CompletionOptions::with_api_key("your-gateway-key")
     .api_base("http://localhost:8000");
 ```
 
+Or via environment variables (the SDK reads canonical names first, then the
+legacy aliases):
+
+```bash
+export GATEWAY_API_KEY="your-gateway-key"   # legacy alias: OTARI_API_KEY
+export GATEWAY_API_BASE="http://localhost:8000"  # legacy alias: OTARI_API_BASE
+```
+
+| Variable           | Purpose                                  | Legacy alias            |
+|--------------------|------------------------------------------|-------------------------|
+| `OTARI_AI_TOKEN`   | Platform token for the hosted gateway    | `OTARI_PLATFORM_TOKEN`  |
+| `GATEWAY_API_KEY`  | API key for a self-hosted gateway        | `OTARI_API_KEY`         |
+| `GATEWAY_API_BASE` | Gateway base URL                         | `OTARI_API_BASE`        |
+
 ## Otari Gateway
 
-The [Otari gateway](https://github.com/mozilla-ai/any-llm) is a FastAPI-based proxy server that exposes an OpenAI-compatible API and routes requests to multiple upstream LLM providers. It adds enterprise-grade features:
+The [Otari gateway](https://github.com/mozilla-ai/otari) is a FastAPI-based proxy server that exposes an OpenAI-compatible API and routes requests to multiple upstream LLM providers. It adds enterprise-grade features:
 
 - **Budget Management** - Enforce spending limits with automatic daily, weekly, or monthly resets
 - **API Key Management** - Issue, revoke, and monitor virtual API keys without exposing provider credentials
@@ -98,10 +124,12 @@ docker run \
   -e GATEWAY_MASTER_KEY="your-secure-master-key" \
   -e OPENAI_API_KEY="your-api-key" \
   -p 8000:8000 \
-  ghcr.io/mozilla-ai/any-llm/gateway:latest
+  ghcr.io/mozilla-ai/otari/gateway:latest
 ```
 
-> **Note:** You can use a specific release version instead of `latest` (e.g., `1.2.0`). See [available versions](https://github.com/orgs/mozilla-ai/packages/container/package/any-llm%2Fgateway).
+> **Note:** You can use a specific release version instead of `latest` (e.g., `1.2.0`). See [available versions](https://github.com/orgs/mozilla-ai/packages/container/package/otari%2Fgateway).
+
+The gateway needs at least one provider key configured (e.g. the `OPENAI_API_KEY` above, or via [otari.ai/organization-settings/provider-keys](https://otari.ai/organization-settings/provider-keys) on the hosted platform) so it can route requests upstream.
 
 ### Managed Platform (Beta)
 
@@ -351,9 +379,11 @@ cargo doc --all-features --no-deps --open
 
 ## Documentation
 
-- **[Full Documentation](https://mozilla-ai.github.io/any-llm/)** - Complete guides and API reference
-- **[Gateway Documentation](https://mozilla-ai.github.io/any-llm/gateway/overview/)** - Gateway setup and deployment
-- **[Python SDK](https://github.com/mozilla-ai/any-llm)** - The full Python SDK with direct provider access
+- **[Full Documentation](https://mozilla-ai.github.io/otari/)** - Complete guides and API reference
+- **[Gateway Documentation](https://mozilla-ai.github.io/otari/gateway/overview/)** - Gateway setup and deployment
+- **[Python SDK](https://github.com/mozilla-ai/otari-sdk-python)** - The Python SDK
+- **[TypeScript SDK](https://github.com/mozilla-ai/otari-sdk-ts)** - The TypeScript SDK for Node.js applications
+- **[Go SDK](https://github.com/mozilla-ai/otari-sdk-go)** - The Go SDK
 - **[Otari Platform (Beta)](https://otari.ai/)** - Hosted control plane for key management, usage tracking, and cost visibility
 
 ## Contributing

@@ -110,8 +110,14 @@
 //!
 //! ## Environment Variables
 //!
-//! - `OTARI_API_KEY`: API key for the Otari gateway
-//! - `OTARI_API_BASE`: Base URL of the Otari gateway
+//! Canonical names are read first, with the legacy alias as a fallback:
+//!
+//! - `OTARI_AI_TOKEN`: platform token for the hosted gateway (enables
+//!   `Authorization: Bearer` platform mode). Legacy alias: `OTARI_PLATFORM_TOKEN`.
+//! - `GATEWAY_API_KEY`: API key for a self-hosted gateway (`Otari-Key` header).
+//!   Legacy alias: `OTARI_API_KEY`.
+//! - `GATEWAY_API_BASE`: Base URL of the gateway. Legacy alias: `OTARI_API_BASE`.
+//!   In platform mode this defaults to `https://api.otari.ai` when unset.
 
 pub mod api;
 pub mod client;
