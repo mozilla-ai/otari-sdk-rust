@@ -180,6 +180,23 @@ impl Otari {
         &self.api_base
     }
 
+    /// Build a configured client for the control-plane (management) endpoints
+    /// (keys, users, budgets, pricing, usage).
+    ///
+    /// Those endpoints authenticate with `Authorization: Bearer <admin/master
+    /// key>`, distinct from the inference auth. Pass the gateway master key (or
+    /// an admin token); use the returned configuration with the generated
+    /// functions under [`crate::control_plane`].
+    pub fn control_plane(
+        &self,
+        admin_key: impl Into<String>,
+    ) -> crate::control_plane::Configuration {
+        let mut config = crate::control_plane::Configuration::new();
+        config.base_path = self.api_base.clone();
+        config.bearer_access_token = Some(admin_key.into());
+        config
+    }
+
     // ----- Completion operations -----
 
     /// Create a chat completion.

@@ -29,6 +29,9 @@ reqwest-eventsource = "0.6"
 # Error handling
 thiserror = "2"
 
+# Generated control-plane (management) client.
+otari-control-plane = { path = "control-plane" }
+
 
 
 [dev-dependencies]
