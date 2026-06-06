@@ -1,0 +1,61 @@
+# Endpoint-coverage drift manifest for the otari gateway.
+#
+# This file pins which gateway OpenAPI endpoints this SDK's PUBLIC API accounts
+# for. CI fetches the canonical spec
+#   https://raw.githubusercontent.com/mozilla-ai/otari/main/docs/public/openapi.json
+# computes its set of "METHOD path" pairs (excluding /health* meta routes), and
+# asserts that set is a subset of (covered + excluded). A new gateway endpoint
+# in neither section FAILS the build: add a wrapper and list it under [covered],
+# or deliberately defer it under [excluded] with a one-word reason.
+#
+# All four otari SDKs (python/ts/go/rust) keep this list identical: they target
+# the same gateway. Lines are "METHOD /path"; blank lines and # comments ignore.
+
+[covered]
+# Inference
+POST /v1/chat/completions
+POST /v1/responses
+POST /v1/messages
+POST /v1/embeddings
+POST /v1/moderations
+POST /v1/rerank
+GET /v1/models
+# Batches
+POST /v1/batches
+GET /v1/batches
+GET /v1/batches/{batch_id}
+POST /v1/batches/{batch_id}/cancel
+GET /v1/batches/{batch_id}/results
+# Control plane: keys
+POST /v1/keys
+GET /v1/keys
+GET /v1/keys/{key_id}
+PATCH /v1/keys/{key_id}
+DELETE /v1/keys/{key_id}
+# Control plane: users
+POST /v1/users
+GET /v1/users
+GET /v1/users/{user_id}
+PATCH /v1/users/{user_id}
+DELETE /v1/users/{user_id}
+GET /v1/users/{user_id}/usage
+# Control plane: budgets
+POST /v1/budgets
+GET /v1/budgets
+GET /v1/budgets/{budget_id}
+PATCH /v1/budgets/{budget_id}
+DELETE /v1/budgets/{budget_id}
+# Control plane: pricing
+POST /v1/pricing
+GET /v1/pricing
+GET /v1/pricing/{model_key}
+GET /v1/pricing/{model_key}/history
+DELETE /v1/pricing/{model_key}
+# Control plane: usage
+GET /v1/usage
+
+[excluded]
+POST /v1/audio/speech          # binary, not yet wrapped
+POST /v1/audio/transcriptions  # binary, not yet wrapped
+POST /v1/images/generations    # binary, not yet wrapped
+GET /v1/models/{model_id}      # redundant, list_models covers discovery
