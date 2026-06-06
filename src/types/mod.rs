@@ -31,3 +31,8 @@ pub use usage::*;
 /// A stream of completion chunks.
 pub type CompletionStream =
     Pin<Box<dyn Stream<Item = Result<ChatCompletionChunk>> + Send + 'static>>;
+
+/// A stream of raw SSE event payloads parsed as JSON values, used by the
+/// responses / messages streaming endpoints (which have no single typed chunk
+/// model). Re-exported from the SSE shim.
+pub use crate::client::models::stream::RawValueStream;

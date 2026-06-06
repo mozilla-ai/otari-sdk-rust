@@ -14,6 +14,54 @@ use crate::types::{
 };
 use crate::OtariError;
 
+/// A stream of raw SSE event payloads parsed as JSON `Value`s.
+///
+/// Used for the responses (`/responses`) and messages (`/messages`) event
+/// streams, which (mirroring the Python reference) have no single typed chunk
+/// model: callers get the raw parsed event. Terminates on `[DONE]` and on
+/// end-of-stream.
+pub type RawValueStream =
+    std::pin::Pin<Box<dyn futures::Stream<Item = Result<Value, OtariError>> + Send + 'static>>;
+
+/// Wrap a `reqwest-eventsource` source into a stream of raw JSON values,
+/// stopping on the `[DONE]` sentinel (matching the chat shim's semantics).
+///
+/// Each emitted item is either a parsed event (`Ok`), or `None` for frames
+/// that carry no chunk data (the connection-open frame, mirroring the Python
+/// shim's skipping of non-`data:` framing lines). The `take_while` stops at
+/// the `[DONE]` sentinel / end-of-stream; `filter_map` drops the `None`s.
+pub fn raw_value_stream(source: EventSource) -> RawValueStream {
+    let stream = source
+        .map(|event| match event {
+            Ok(Event::Message(msg)) => {
+                // The [DONE] sentinel terminates the stream (outer `None`).
+                if msg.data.trim() == "[DONE]" {
+                    return None;
+                }
+                match serde_json::from_str::<Value>(&msg.data) {
+                    Ok(value) => Some(Some(Ok(value))),
+                    Err(e) => Some(Some(Err(OtariError::Streaming {
+                        provider: "otari".into(),
+                        message: format!("Failed to parse event: {e}").into(),
+                    }))),
+                }
+            }
+            // Connection-open frame carries no payload; emit a skippable item.
+            Ok(Event::Open) => Some(None),
+            Err(reqwest_eventsource::Error::StreamEnded) => None,
+            Err(e) => Some(Some(Err(OtariError::Streaming {
+                provider: "otari".into(),
+                message: e.to_string().into(),
+            }))),
+        })
+        // Stop on the [DONE] sentinel (outer `None`) and on end-of-stream.
+        .take_while(|outer| std::future::ready(outer.is_some()))
+        // Drop the connection-open skip (inner `None`); keep real items.
+        .filter_map(|outer| std::future::ready(outer.flatten()));
+
+    Box::pin(stream)
+}
+
 /// Field names that providers use for reasoning/thinking content in deltas.
 const REASONING_FIELD_NAMES: &[&str] = &["reasoning", "reasoning_content", "thinking", "think"];
 

@@ -1,6 +1,6 @@
 //! Control-plane (management) client: keys, users, budgets, pricing, usage.
 //!
-//! Re-exports the generated [`otari_control_plane`] client. These endpoints
+//! Re-exports the generated [`otari_client`] typed core. These endpoints
 //! authenticate with `Authorization: Bearer <admin/master key>`, distinct from
 //! the inference auth. Build a configured client with
 //! [`crate::Otari::control_plane`], then call the generated functions:
@@ -14,7 +14,12 @@
 //! # Ok(())
 //! # }
 //! ```
+//!
+//! The management APIs live under [`apis`] (for example
+//! [`apis::keys_api`], [`apis::users_api`], [`apis::budgets_api`],
+//! [`apis::pricing_api`], [`apis::usage_api`]); their request/response models
+//! live under [`models`].
 
-pub use otari_control_plane::apis;
-pub use otari_control_plane::apis::configuration::Configuration;
-pub use otari_control_plane::models;
+pub use otari_client::apis;
+pub use otari_client::apis::configuration::Configuration;
+pub use otari_client::models;
