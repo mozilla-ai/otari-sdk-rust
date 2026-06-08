@@ -189,17 +189,19 @@ impl Otari {
         &self.api_base
     }
 
-    /// Build a configured client for the control-plane (management) endpoints
+    /// Build a client for the control-plane (management) endpoints
     /// (keys, users, budgets, pricing, usage).
     ///
     /// Those endpoints authenticate with `Authorization: Bearer <admin/master
     /// key>`, distinct from the inference auth. Pass the gateway master key (or
-    /// an admin token); use the returned configuration with the generated
-    /// functions under [`crate::control_plane`].
+    /// an admin token); call the ergonomic aliases on the returned
+    /// [`crate::control_plane::ControlPlane`] (for example
+    /// `cp.keys().create(...)`), or reach the generated functions via
+    /// [`crate::control_plane::ControlPlane::config`].
     pub fn control_plane(
         &self,
         admin_key: impl Into<String>,
-    ) -> crate::control_plane::Configuration {
+    ) -> crate::control_plane::ControlPlane {
         // The control-plane endpoints expect `Authorization: Bearer <admin/
         // master key>`. The generated functions read auth from the
         // configuration's `reqwest::Client` default headers (the spec declares
@@ -220,7 +222,7 @@ impl Otari {
         config.base_path = self.api_base.clone();
         config.user_agent = Some(USER_AGENT.to_string());
         config.client = client;
-        config
+        crate::control_plane::ControlPlane::new(config)
     }
 
     /// Build a generated-core [`Configuration`] for the typed inference and

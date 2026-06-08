@@ -29,6 +29,10 @@ reqwest-eventsource = "0.6"
 # Error handling
 thiserror = "2"
 
+# Date/time types used in the control-plane query parameters (matches the
+# generated core's chrono dependency).
+chrono = { version = "0.4", default-features = false }
+
 # Generated typed core (every endpoint + control plane), produced by the
 # otari OpenAPI codegen pipeline. Supersedes the old control-plane-only crate.
 otari-client = { path = "client" }

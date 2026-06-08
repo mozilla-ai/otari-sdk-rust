@@ -1,4 +1,4 @@
-//! Tests for the generated-core (Option C) ergonomic surface on `Otari`.
+//! Tests for the generated-core ergonomic surface on `Otari`.
 //!
 //! Mirrors the Python reference's rewrite (`tests/unit/test_client.py`): a mock
 //! HTTP server (`wiremock`) asserts method / URL / headers per auth mode, body
@@ -425,9 +425,15 @@ async fn control_plane_sends_admin_bearer() {
         .await;
 
     let client = key_client(&server.uri());
-    let cfg = client.control_plane("master");
-    let keys = otari::control_plane::apis::keys_api::list_keys_v1_keys_get(&cfg, None, None)
+    let cp = client.control_plane("master");
+
+    // Ergonomic alias delegates to the generated operation with the bearer header.
+    let keys = cp.keys().list(None, None).await.unwrap();
+    assert!(keys.is_empty());
+
+    // Escape hatch: the generated functions stay reachable via `config()`.
+    let raw = otari::control_plane::apis::keys_api::list_keys_v1_keys_get(cp.config(), None, None)
         .await
         .unwrap();
-    assert!(keys.is_empty());
+    assert!(raw.is_empty());
 }
