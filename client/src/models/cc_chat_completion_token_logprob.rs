@@ -20,11 +20,11 @@ pub struct CcChatCompletionTokenLogprob {
     #[serde(rename = "logprob")]
     pub logprob: f64,
     #[serde(rename = "top_logprobs")]
-    pub top_logprobs: Vec<models::CcTopLogprob>,
+    pub top_logprobs: Vec<models::CckTopLogprob>,
 }
 
 impl CcChatCompletionTokenLogprob {
-    pub fn new(token: String, logprob: f64, top_logprobs: Vec<models::CcTopLogprob>) -> CcChatCompletionTokenLogprob {
+    pub fn new(token: String, logprob: f64, top_logprobs: Vec<models::CckTopLogprob>) -> CcChatCompletionTokenLogprob {
         CcChatCompletionTokenLogprob {
             token,
             bytes: None,

@@ -51,7 +51,7 @@ OpenAI-compatible audio transcription endpoint.  Authentication modes: - Master 
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**file** | **String** |  | [required] |
+**file** | **std::path::PathBuf** |  | [required] |
 **model** | **String** |  | [required] |
 **language** | Option<**String**> |  |  |
 **prompt** | Option<**String**> |  |  |
