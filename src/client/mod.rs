@@ -29,13 +29,17 @@ use reqwest_eventsource::EventSource;
 use serde::Deserialize;
 
 use crate::config::Config;
+use crate::core::{make_configuration, map_error};
 use crate::error::{OtariError, Result};
 use crate::types::{
     Batch, BatchResult, ChatCompletion, CompletionParams, CompletionStream, CreateBatchParams,
     ListBatchesOptions, ModerationParams, ModerationResponse, RerankParams, RerankResponse,
 };
 
-mod models;
+use otari_client::apis::models_api;
+use otari_client::models as gen_models;
+
+pub mod models;
 
 use models::request::GatewayRequest;
 use models::response::GatewayResponse;
@@ -65,6 +69,11 @@ const HOSTED_API_BASE: &str = "https://api.otari.ai";
 /// User-Agent sent on every request. The hosted gateway's edge rejects
 /// requests with no User-Agent (HTTP 403), so always identify the client.
 const USER_AGENT: &str = concat!("otari-rust/", env!("CARGO_PKG_VERSION"));
+
+/// The User-Agent string this SDK sends, for the generated-core configuration.
+pub(crate) fn user_agent() -> &'static str {
+    USER_AGENT
+}
 
 /// Read the platform token from env: canonical first, then legacy alias.
 fn platform_token_from_env() -> Option<String> {
@@ -178,6 +187,47 @@ impl Otari {
     /// hosted gateway default (`https://api.otari.ai`).
     pub fn api_base(&self) -> &str {
         &self.api_base
+    }
+
+    /// Build a configured client for the control-plane (management) endpoints
+    /// (keys, users, budgets, pricing, usage).
+    ///
+    /// Those endpoints authenticate with `Authorization: Bearer <admin/master
+    /// key>`, distinct from the inference auth. Pass the gateway master key (or
+    /// an admin token); use the returned configuration with the generated
+    /// functions under [`crate::control_plane`].
+    pub fn control_plane(
+        &self,
+        admin_key: impl Into<String>,
+    ) -> crate::control_plane::Configuration {
+        // The control-plane endpoints expect `Authorization: Bearer <admin/
+        // master key>`. The generated functions read auth from the
+        // configuration's `reqwest::Client` default headers (the spec declares
+        // no security scheme), so bake the bearer header into a dedicated
+        // client rather than relying on `bearer_access_token`.
+        let mut headers = HeaderMap::new();
+        headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
+        if let Ok(val) = HeaderValue::from_str(&format!("Bearer {}", admin_key.into())) {
+            headers.insert(AUTHORIZATION, val);
+        }
+        let client = Client::builder()
+            .user_agent(USER_AGENT)
+            .default_headers(headers)
+            .build()
+            .unwrap_or_default();
+
+        let mut config = crate::control_plane::Configuration::new();
+        config.base_path = self.api_base.clone();
+        config.user_agent = Some(USER_AGENT.to_string());
+        config.client = client;
+        config
+    }
+
+    /// Build a generated-core [`Configuration`] for the typed inference and
+    /// management endpoints, reusing this client's already-authenticated
+    /// `reqwest::Client` (per-mode auth header baked into its default headers).
+    fn gen_config(&self) -> otari_client::apis::configuration::Configuration {
+        make_configuration(&self.api_base, self.client.clone())
     }
 
     // ----- Completion operations -----
@@ -367,6 +417,212 @@ impl Otari {
 
         let body_bytes = response.bytes().await?;
         serde_json::from_slice::<ModerationResponse>(&body_bytes).map_err(OtariError::from)
+    }
+
+    // ----- Generated-core typed endpoints (Option C) -----
+    //
+    // These ergonomic methods mirror the Python reference: shape a JSON body,
+    // POST it to the gateway, deserialize the response into the OpenAPI-
+    // generated typed response model, and map non-2xx responses to a typed
+    // `OtariError`. `list_models` (no request body) goes through the generated
+    // GET function directly.
+    //
+    // NOTE (divergence from the Python reference): the Rust generator collapses
+    // the inference *request* unions destructively (e.g. `ChatMessageInput.role`
+    // accepts only `function`, `EmbeddingRequest.input` / `ModerationRequest.
+    // input` become structs that reject a plain string). So unlike Python's
+    // `Model.from_dict`, the generated Rust *request* models cannot be built
+    // from a natural JSON body. We therefore send the caller's JSON straight to
+    // the wire (the gateway is the source of truth for request validation) and
+    // only use the generated models for the typed *responses*, which
+    // deserialize correctly (verified for chat / embedding / rerank /
+    // moderation / models). `/messages` and `/responses` have no usable typed
+    // response model, so they return a raw `serde_json::Value`.
+
+    /// Create a chat completion through the generated typed core.
+    ///
+    /// Returns the generated [`gen_models::ChatCompletion`]. Use
+    /// [`Self::completion`] for the hand-written ergonomic response type, or
+    /// [`Self::completion_stream`] for streaming.
+    ///
+    /// `body` is the request payload (`model`, `messages`, and any optional
+    /// fields such as `temperature`, `tools`, `guardrails`).
+    pub async fn chat(&self, body: serde_json::Value) -> Result<gen_models::ChatCompletion> {
+        self.post_typed("/v1/chat/completions", &body).await
+    }
+
+    /// Create a response via the OpenAI-style Responses API.
+    ///
+    /// The gateway's responses payload has no single typed model, so this
+    /// returns the raw [`serde_json::Value`]. For streaming responses, use
+    /// [`Self::response_stream`].
+    pub async fn response(&self, body: serde_json::Value) -> Result<serde_json::Value> {
+        self.post_typed("/v1/responses", &body).await
+    }
+
+    /// Create an Anthropic-style message via the gateway `/messages` endpoint.
+    ///
+    /// This endpoint has no OpenAI-SDK seam and was previously missing from the
+    /// SDK. Returns the raw [`serde_json::Value`] response. For streaming, use
+    /// [`Self::message_stream`].
+    ///
+    /// `body` must include `model`, `messages`, and `max_tokens` (required by
+    /// `/messages`), plus any optional fields (`system`, `temperature`,
+    /// `tools`, `thinking`, ...).
+    ///
+    /// Returns a raw `Value`: the generated `MessageResponse` model collapses
+    /// the Anthropic content-block union into a single over-constrained struct
+    /// that cannot deserialize a real response (it requires `text`,
+    /// `signature`, `thinking`, `data`, ... all at once, and types `model` as
+    /// an empty struct rather than a string).
+    pub async fn message(&self, body: serde_json::Value) -> Result<serde_json::Value> {
+        self.post_typed("/v1/messages", &body).await
+    }
+
+    /// Create embeddings for the given input through the generated typed core.
+    pub async fn embedding(
+        &self,
+        body: serde_json::Value,
+    ) -> Result<gen_models::CreateEmbeddingResponse> {
+        self.post_typed("/v1/embeddings", &body).await
+    }
+
+    /// Classify text against the gateway moderation endpoint, returning the
+    /// generated typed [`gen_models::ModerationResponse`].
+    ///
+    /// This is the generated-core counterpart to [`Self::moderation`] (which
+    /// returns the hand-written response type). `include_raw` maps to the
+    /// `?include_raw=true` query parameter.
+    pub async fn moderate(
+        &self,
+        body: serde_json::Value,
+        include_raw: bool,
+    ) -> Result<gen_models::ModerationResponse> {
+        let path = if include_raw {
+            "/v1/moderations?include_raw=true"
+        } else {
+            "/v1/moderations"
+        };
+        self.post_typed(path, &body).await
+    }
+
+    /// Rerank documents by relevance, returning the generated typed
+    /// [`gen_models::RerankResponse`].
+    ///
+    /// This is the generated-core counterpart to [`Self::rerank`] (which
+    /// returns the hand-written response type).
+    pub async fn rerank_typed(
+        &self,
+        body: serde_json::Value,
+    ) -> Result<gen_models::RerankResponse> {
+        self.post_typed("/v1/rerank", &body).await
+    }
+
+    /// List available models from the gateway.
+    ///
+    /// Pass `provider` to scope the list to one provider. This goes through the
+    /// generated GET function (no request body to shape).
+    pub async fn list_models(
+        &self,
+        provider: Option<&str>,
+    ) -> Result<Vec<gen_models::ModelObject>> {
+        models_api::list_models_v1_models_get(&self.gen_config(), provider)
+            .await
+            .map(|resp| resp.data)
+            .map_err(map_error)
+    }
+
+    /// POST `body` to `path`, deserialize the 2xx response into the typed
+    /// generated model `R`, and map non-2xx responses through the shared error
+    /// table (`x-correlation-id` / `retry-after` honored). `R = serde_json::
+    /// Value` yields the raw response for endpoints with no usable typed model.
+    async fn post_typed<R: serde::de::DeserializeOwned>(
+        &self,
+        path: &str,
+        body: &serde_json::Value,
+    ) -> Result<R> {
+        let response = self
+            .client
+            .post(format!("{}{path}", self.api_base))
+            .json(body)
+            .send()
+            .await?;
+
+        let status = response.status().as_u16();
+        let correlation_id = response
+            .headers()
+            .get("x-correlation-id")
+            .and_then(|v| v.to_str().ok())
+            .map(String::from);
+        let retry_after = response
+            .headers()
+            .get("retry-after")
+            .and_then(|v| v.to_str().ok())
+            .map(String::from);
+
+        if !(200..300).contains(&status) {
+            let text = response.text().await.unwrap_or_default();
+            return Err(crate::core::map_response(
+                status,
+                &text,
+                correlation_id.as_deref(),
+                retry_after.as_deref(),
+            ));
+        }
+
+        let bytes = response.bytes().await?;
+        serde_json::from_slice::<R>(&bytes).map_err(OtariError::from)
+    }
+
+    /// Stream a Responses-API response as raw JSON events.
+    ///
+    /// The generated core can't stream, so this uses the same hand-written
+    /// `reqwest-eventsource` shim as [`Self::completion_stream`], yielding the
+    /// raw parsed event values (the responses event stream has no single typed
+    /// chunk model). `body` should NOT set `stream`; it is forced on here.
+    #[allow(clippy::unused_async)]
+    pub async fn response_stream(
+        &self,
+        body: serde_json::Value,
+    ) -> Result<crate::types::RawValueStream> {
+        self.raw_stream("/v1/responses", body)
+    }
+
+    /// Stream an Anthropic-style `/messages` response as raw JSON events.
+    ///
+    /// Like [`Self::response_stream`], this uses the `reqwest-eventsource` shim
+    /// and yields raw parsed event values (the messages event stream has no
+    /// single typed chunk model). `body` must include `max_tokens`.
+    #[allow(clippy::unused_async)]
+    pub async fn message_stream(
+        &self,
+        body: serde_json::Value,
+    ) -> Result<crate::types::RawValueStream> {
+        self.raw_stream("/v1/messages", body)
+    }
+
+    /// Open a raw SSE stream against `path`, forcing `stream: true`.
+    fn raw_stream(
+        &self,
+        path: &str,
+        mut body: serde_json::Value,
+    ) -> Result<crate::types::RawValueStream> {
+        if let Some(obj) = body.as_object_mut() {
+            obj.insert("stream".to_string(), serde_json::Value::Bool(true));
+        }
+        // `reqwest-eventsource` sets `Accept: text/event-stream` on the request
+        // itself, so we don't add it here (doing so would duplicate the header).
+        let request = self
+            .client
+            .post(format!("{}{path}", self.api_base))
+            .json(&body);
+
+        let es = EventSource::new(request).map_err(|e| OtariError::Streaming {
+            provider: "otari".into(),
+            message: e.to_string().into(),
+        })?;
+
+        Ok(models::stream::raw_value_stream(es))
     }
 }
 

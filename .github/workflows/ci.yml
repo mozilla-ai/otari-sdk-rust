@@ -49,6 +49,12 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: cargo test --all-features
+      # Endpoint-coverage drift gate: fetches the canonical gateway OpenAPI spec
+      # and fails if it exposes an endpoint absent from sdk-endpoints.txt
+      # ([covered] or [excluded]). GitHub sets CI=true, so the network fetch is
+      # required here (a soft skip only happens offline / locally).
+      - name: Endpoint-coverage drift gate
+        run: cargo test --all-features --test endpoint_coverage
 
   docs:
     name: Docs
