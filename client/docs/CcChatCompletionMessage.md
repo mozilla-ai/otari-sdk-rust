@@ -11,7 +11,7 @@ Name | Type | Description | Notes
 **audio** | Option<[**models::CcChatCompletionAudio**](CCChatCompletionAudio.md)> |  | [optional]
 **function_call** | Option<[**models::CcFunctionCall**](CCFunctionCall.md)> |  | [optional]
 **tool_calls** | Option<[**Vec<models::CcChatCompletionMessageToolCallsInner>**](CCChatCompletionMessageToolCallsInner.md)> |  | [optional]
-**reasoning** | Option<[**models::CcReasoning**](CCReasoning.md)> |  | [optional]
+**reasoning** | Option<[**models::CckReasoning**](CCKReasoning.md)> |  | [optional]
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

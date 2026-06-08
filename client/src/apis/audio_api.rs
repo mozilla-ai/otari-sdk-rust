@@ -13,6 +13,8 @@ use reqwest;
 use serde::{Deserialize, Serialize, de::Error as _};
 use crate::{apis::ResponseContent, models};
 use super::{Error, configuration, ContentType};
+use tokio::fs::File as TokioFile;
+use tokio_util::codec::{BytesCodec, FramedRead};
 
 
 /// struct for typed errors of method [`create_speech_v1_audio_speech_post`]
@@ -71,7 +73,7 @@ pub async fn create_speech_v1_audio_speech_post(configuration: &configuration::C
 }
 
 /// OpenAI-compatible audio transcription endpoint.  Authentication modes: - Master key + user field: Use specified user (must exist) - API key + user field: Use specified user (must exist) - API key without user field: Use virtual user created with API key
-pub async fn create_transcription_v1_audio_transcriptions_post(configuration: &configuration::Configuration, file: &str, model: &str, language: Option<&str>, prompt: Option<&str>, response_format: Option<&str>, temperature: Option<f64>, user: Option<&str>) -> Result<serde_json::Value, Error<CreateTranscriptionV1AudioTranscriptionsPostError>> {
+pub async fn create_transcription_v1_audio_transcriptions_post(configuration: &configuration::Configuration, file: std::path::PathBuf, model: &str, language: Option<&str>, prompt: Option<&str>, response_format: Option<&str>, temperature: Option<f64>, user: Option<&str>) -> Result<serde_json::Value, Error<CreateTranscriptionV1AudioTranscriptionsPostError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_form_file = file;
     let p_form_model = model;
@@ -88,7 +90,11 @@ pub async fn create_transcription_v1_audio_transcriptions_post(configuration: &c
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
     let mut multipart_form = reqwest::multipart::Form::new();
-    multipart_form = multipart_form.text("file", p_form_file.to_string());
+    let file = TokioFile::open(&p_form_file).await?;
+    let stream = FramedRead::new(file, BytesCodec::new());
+    let file_name = p_form_file.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+    let file_part = reqwest::multipart::Part::stream(reqwest::Body::wrap_stream(stream)).file_name(file_name);
+    multipart_form = multipart_form.part("file", file_part);
     if let Some(param_value) = p_form_language {
         multipart_form = multipart_form.text("language", param_value.to_string());
     }

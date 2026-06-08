@@ -21,7 +21,7 @@ pub struct CcCompletionUsage {
     #[serde(rename = "total_tokens")]
     pub total_tokens: i32,
     #[serde(rename = "completion_tokens_details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub completion_tokens_details: Option<Option<models::CcCompletionTokensDetails>>,
+    pub completion_tokens_details: Option<Option<models::CckCompletionTokensDetails>>,
     #[serde(rename = "prompt_tokens_details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub prompt_tokens_details: Option<Option<models::CcPromptTokensDetails>>,
 }
