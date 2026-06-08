@@ -1,4 +1,4 @@
-//! Tests for the generated-core (Option C) ergonomic surface on `Otari`.
+//! Tests for the generated-core ergonomic surface on `Otari`.
 //!
 //! Mirrors the Python reference's rewrite (`tests/unit/test_client.py`): a mock
 //! HTTP server (`wiremock`) asserts method / URL / headers per auth mode, body

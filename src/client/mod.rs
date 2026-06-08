@@ -419,7 +419,7 @@ impl Otari {
         serde_json::from_slice::<ModerationResponse>(&body_bytes).map_err(OtariError::from)
     }
 
-    // ----- Generated-core typed endpoints (Option C) -----
+    // ----- Generated-core typed endpoints -----
     //
     // These ergonomic methods mirror the Python reference: shape a JSON body,
     // POST it to the gateway, deserialize the response into the OpenAPI-
