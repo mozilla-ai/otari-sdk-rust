@@ -37,7 +37,7 @@ pub struct MessagesRequest {
     #[serde(rename = "stream", skip_serializing_if = "Option::is_none")]
     pub stream: Option<bool>,
     #[serde(rename = "system", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub system: Option<Option<Box<models::System>>>,
+    pub system: Option<Option<Box<models::System1>>>,
     #[serde(rename = "temperature", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub temperature: Option<Option<f64>>,
     #[serde(rename = "thinking", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
