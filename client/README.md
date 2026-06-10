@@ -49,6 +49,7 @@ Class | Method | HTTP request | Description
 *KeysApi* | [**get_key_v1_keys_key_id_get**](docs/KeysApi.md#get_key_v1_keys_key_id_get) | **GET** /v1/keys/{key_id} | Get Key
 *KeysApi* | [**list_keys_v1_keys_get**](docs/KeysApi.md#list_keys_v1_keys_get) | **GET** /v1/keys | List Keys
 *KeysApi* | [**update_key_v1_keys_key_id_patch**](docs/KeysApi.md#update_key_v1_keys_key_id_patch) | **PATCH** /v1/keys/{key_id} | Update Key
+*MessagesApi* | [**count_message_tokens_v1_messages_count_tokens_post**](docs/MessagesApi.md#count_message_tokens_v1_messages_count_tokens_post) | **POST** /v1/messages/count_tokens | Count Message Tokens
 *MessagesApi* | [**create_message_v1_messages_post**](docs/MessagesApi.md#create_message_v1_messages_post) | **POST** /v1/messages | Create Message
 *ModelsApi* | [**get_model_v1_models_model_id_get**](docs/ModelsApi.md#get_model_v1_models_model_id_get) | **GET** /v1/models/{model_id} | Get Model
 *ModelsApi* | [**list_models_v1_models_get**](docs/ModelsApi.md#list_models_v1_models_get) | **GET** /v1/models | List Models
@@ -119,6 +120,8 @@ Class | Method | HTTP request | Description
  - [Content8](docs/Content8.md)
  - [Content9Inner](docs/Content9Inner.md)
  - [ContentAnyOfInner](docs/ContentAnyOfInner.md)
+ - [CountTokensRequest](docs/CountTokensRequest.md)
+ - [CountTokensResponse](docs/CountTokensResponse.md)
  - [CreateBatchRequest](docs/CreateBatchRequest.md)
  - [CreateBudgetRequest](docs/CreateBudgetRequest.md)
  - [CreateEmbeddingResponse](docs/CreateEmbeddingResponse.md)
@@ -223,6 +226,7 @@ Class | Method | HTTP request | Description
  - [SetPricingRequest](docs/SetPricingRequest.md)
  - [Source](docs/Source.md)
  - [System](docs/System.md)
+ - [System1](docs/System1.md)
  - [ToolCallsInner](docs/ToolCallsInner.md)
  - [ToolChoice](docs/ToolChoice.md)
  - [UpdateBudgetRequest](docs/UpdateBudgetRequest.md)
