@@ -481,6 +481,24 @@ impl Otari {
         self.post_typed("/v1/messages", &body).await
     }
 
+    /// Count input tokens for an Anthropic-style message request via the
+    /// gateway `/v1/messages/count_tokens` endpoint.
+    ///
+    /// Counts the tokens a `/messages` request would consume without generating
+    /// a response, so `max_tokens` is not part of the body. Returns the
+    /// generated typed [`gen_models::CountTokensResponse`], whose
+    /// `input_tokens` field deserializes cleanly (unlike the `/messages`
+    /// response).
+    ///
+    /// `body` must include `model` and `messages`, plus any optional fields
+    /// (`system`, `tools`, `tool_choice`, `thinking`, ...).
+    pub async fn count_tokens(
+        &self,
+        body: serde_json::Value,
+    ) -> Result<gen_models::CountTokensResponse> {
+        self.post_typed("/v1/messages/count_tokens", &body).await
+    }
+
     /// Create embeddings for the given input through the generated typed core.
     pub async fn embedding(
         &self,

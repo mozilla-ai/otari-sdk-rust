@@ -237,6 +237,30 @@ async fn message_returns_raw_value() {
 }
 
 #[tokio::test]
+async fn count_tokens_returns_typed_response() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/v1/messages/count_tokens"))
+        .and(header("Otari-Key", "Bearer vk"))
+        .and(body_partial_json(
+            json!({"model": "anthropic:claude-3-5-sonnet"}),
+        ))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"input_tokens": 42})))
+        .mount(&server)
+        .await;
+
+    let client = key_client(&server.uri());
+    let result = client
+        .count_tokens(json!({
+            "model": "anthropic:claude-3-5-sonnet",
+            "messages": [{"role": "user", "content": "Hi"}]
+        }))
+        .await
+        .unwrap();
+    assert_eq!(result.input_tokens, 42);
+}
+
+#[tokio::test]
 async fn list_models_returns_typed_models() {
     let server = MockServer::start().await;
     Mock::given(method("GET"))
