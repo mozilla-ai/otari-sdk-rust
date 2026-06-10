@@ -1,7 +1,7 @@
 //! Shared glue between the ergonomic [`crate::Otari`] shell and the
 //! OpenAPI-generated typed core in the [`otari_client`] crate.
 //!
-//! Option C (mirroring the Python reference): non-streaming calls go through
+//! Mirroring the Python reference: non-streaming calls go through
 //! the generated per-endpoint API functions (returning typed models such as
 //! [`otari_client::models::ChatCompletion`]); streaming goes through the
 //! hand-written SSE shim (see [`crate::client::models::stream`]); the
