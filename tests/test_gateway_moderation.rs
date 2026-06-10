@@ -5,6 +5,8 @@ use otari::{
 use wiremock::matchers::{body_json, method, path, query_param};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
+mod common;
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -390,7 +392,9 @@ async fn moderation_error_500_maps_to_provider_error() {
 #[tokio::test]
 #[ignore = "requires a running gateway server"]
 async fn live_gateway_moderation() {
-    let gw = Otari::from_config(Config::default()).unwrap();
+    let Some(gw) = common::live_client() else {
+        return;
+    };
     let resp = gw
         .moderation(ModerationParams::new(
             "openai:omni-moderation-latest",
