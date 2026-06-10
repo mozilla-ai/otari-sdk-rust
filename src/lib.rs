@@ -119,6 +119,14 @@
 //! - `GATEWAY_API_BASE`: Base URL of the gateway. Legacy alias: `OTARI_API_BASE`.
 //!   In platform mode this defaults to `https://api.otari.ai` when unset.
 
+// OpenAPI-generated typed core (every endpoint + control plane), produced by
+// the otari codegen pipeline and inlined as a private module so the crate
+// publishes to crates.io as a single unit (no path dependency). The generated
+// code refers to its own modules as `crate::models` / `crate::apis`, so those
+// are re-exported at the crate root below.
+mod _client;
+pub(crate) use _client::{apis, models};
+
 pub mod api;
 pub mod client;
 pub mod config;

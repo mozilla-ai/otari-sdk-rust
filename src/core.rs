@@ -1,11 +1,11 @@
 //! Shared glue between the ergonomic [`crate::Otari`] shell and the
-//! OpenAPI-generated typed core in the [`otari_client`] crate.
+//! OpenAPI-generated typed core (the inlined `crate::_client` module).
 //!
 //! Mirroring the Python reference: non-streaming calls go through
 //! the generated per-endpoint API functions (returning typed models such as
-//! [`otari_client::models::ChatCompletion`]); streaming goes through the
+//! [`crate::_client::models::ChatCompletion`]); streaming goes through the
 //! hand-written SSE shim (see [`crate::client::models::stream`]); the
-//! generated [`otari_client::apis::Error`] is mapped to the SDK's typed
+//! generated [`crate::_client::apis::Error`] is mapped to the SDK's typed
 //! [`OtariError`] hierarchy here, in both auth modes.
 //!
 //! The generated functions read auth from `Configuration.client` (a
@@ -14,7 +14,7 @@
 //! reqwest client the [`crate::Otari`] shell already constructs, and reused
 //! both for the generated core and for the streaming shim.
 
-use otari_client::apis::configuration::Configuration;
+use crate::_client::apis::configuration::Configuration;
 
 use crate::error::OtariError;
 
@@ -50,8 +50,8 @@ pub(crate) fn make_configuration(gateway_root: &str, client: reqwest::Client) ->
 ///
 /// Transport / deserialization failures (the non-`ResponseError` variants)
 /// map to the corresponding [`OtariError`] transport variants.
-pub(crate) fn map_error<T>(error: otari_client::apis::Error<T>) -> OtariError {
-    use otari_client::apis::Error;
+pub(crate) fn map_error<T>(error: crate::_client::apis::Error<T>) -> OtariError {
+    use crate::_client::apis::Error;
 
     match error {
         Error::Reqwest(e) => OtariError::from(e),

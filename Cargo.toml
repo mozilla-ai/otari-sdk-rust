@@ -21,21 +21,22 @@ futures = "0.3"
 # Serialization
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+# Used by the generated typed core (src/_client): serde_with field helpers and
+# uuid/url request and response types.
+serde_with = { version = "3", default-features = false, features = ["base64", "std", "macros"] }
+url = "2"
+uuid = { version = "1", default-features = false, features = ["serde"] }
 
-# HTTP client
-reqwest = { version = "0.12", features = ["json", "stream"] }
+# HTTP client (multipart is required by the generated core's file uploads).
+reqwest = { version = "0.12", features = ["json", "stream", "multipart"] }
 reqwest-eventsource = "0.6"
 
 # Error handling
 thiserror = "2"
 
-# Date/time types used in the control-plane query parameters (matches the
-# generated core's chrono dependency).
-chrono = { version = "0.4", default-features = false }
-
-# Generated typed core (every endpoint + control plane), produced by the
-# otari OpenAPI codegen pipeline. Supersedes the old control-plane-only crate.
-otari-client = { path = "client" }
+# Date/time types used in the control-plane query parameters and the generated
+# core; the serde feature is required by the generated models.
+chrono = { version = "0.4", default-features = false, features = ["serde"] }
 
 
 
