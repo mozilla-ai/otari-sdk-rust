@@ -71,8 +71,11 @@ jobs:
   integration-test:
     name: Integration Tests
     runs-on: ubuntu-latest
-    # Only run on main branch or when specifically requested
-    if: github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'run-integration')
+    # Run on main only when a gateway is wired up (the RUN_INTEGRATION repo
+    # variable is set to 'true'), or on a PR labeled 'run-integration'. Without
+    # a configured gateway the live tests self-skip (see tests/common), so this
+    # gate mainly avoids spending CI minutes on a guaranteed no-op.
+    if: (github.ref == 'refs/heads/main' && vars.RUN_INTEGRATION == 'true') || contains(github.event.pull_request.labels.*.name, 'run-integration')
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable

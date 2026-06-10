@@ -7,6 +7,8 @@ use otari::{
 use wiremock::matchers::{header, method, path, query_param};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
+mod common;
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -547,7 +549,9 @@ async fn completion_api_function_works() {
 #[tokio::test]
 #[ignore = "requires a running gateway server"]
 async fn live_gateway_completion() {
-    let gw = Otari::from_config(Config::default()).unwrap();
+    let Some(gw) = common::live_client() else {
+        return;
+    };
 
     let params = otari::CompletionParams::new(
         "openai:gpt-4o-mini",
@@ -721,7 +725,9 @@ async fn test_rerank_api_function() {
 #[tokio::test]
 #[ignore = "requires a running gateway server"]
 async fn live_gateway_streaming() {
-    let gw = Otari::from_config(Config::default()).unwrap();
+    let Some(gw) = common::live_client() else {
+        return;
+    };
 
     let params = otari::CompletionParams::new(
         "openai:gpt-4o-mini",

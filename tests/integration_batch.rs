@@ -3,12 +3,16 @@
 //! These tests require a running gateway server and are gated behind `#[ignore]`.
 //! Run with: `cargo test --test integration_batch -- --ignored`
 
-use otari::{BatchRequestItem, BatchStatus, Config, CreateBatchParams, Otari, OtariError};
+use otari::{BatchRequestItem, BatchStatus, CreateBatchParams, OtariError};
+
+mod common;
 
 #[tokio::test]
 #[ignore = "requires a running gateway server"]
 async fn live_create_and_retrieve_batch() {
-    let gw = Otari::from_config(Config::default()).unwrap();
+    let Some(gw) = common::live_client() else {
+        return;
+    };
 
     let params = CreateBatchParams::new(
         "openai:gpt-4o-mini",
@@ -43,7 +47,9 @@ async fn live_create_and_retrieve_batch() {
 #[tokio::test]
 #[ignore = "requires a running gateway server"]
 async fn live_retrieve_batch_results_not_complete() {
-    let gw = Otari::from_config(Config::default()).unwrap();
+    let Some(gw) = common::live_client() else {
+        return;
+    };
 
     let params = CreateBatchParams::new(
         "openai:gpt-4o-mini",
