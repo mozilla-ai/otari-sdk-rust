@@ -32,11 +32,11 @@
 //! # }
 //! ```
 
-pub use otari_client::apis;
-pub use otari_client::apis::configuration::Configuration;
-pub use otari_client::models;
+pub use crate::_client::apis;
+pub use crate::_client::apis::configuration::Configuration;
+pub use crate::_client::models;
 
-use otari_client::apis::{budgets_api, keys_api, pricing_api, usage_api, users_api, Error};
+use crate::_client::apis::{budgets_api, keys_api, pricing_api, usage_api, users_api, Error};
 
 /// Ergonomic control-plane client wrapping a configured [`Configuration`].
 ///

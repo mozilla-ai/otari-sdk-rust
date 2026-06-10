@@ -36,8 +36,8 @@ use crate::types::{
     ListBatchesOptions, ModerationParams, ModerationResponse, RerankParams, RerankResponse,
 };
 
-use otari_client::apis::models_api;
-use otari_client::models as gen_models;
+use crate::_client::apis::models_api;
+use crate::_client::models as gen_models;
 
 pub mod models;
 
@@ -228,7 +228,7 @@ impl Otari {
     /// Build a generated-core [`Configuration`] for the typed inference and
     /// management endpoints, reusing this client's already-authenticated
     /// `reqwest::Client` (per-mode auth header baked into its default headers).
-    fn gen_config(&self) -> otari_client::apis::configuration::Configuration {
+    fn gen_config(&self) -> crate::_client::apis::configuration::Configuration {
         make_configuration(&self.api_base, self.client.clone())
     }
 
