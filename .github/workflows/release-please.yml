@@ -1,0 +1,50 @@
+name: Release
+
+# Independent release automation for this SDK (decoupled from the gateway's own
+# releases). release-please watches main: each merged conventional commit
+# accumulates into a release PR that bumps the version in Cargo.toml and updates
+# CHANGELOG.md. Merging that release PR tags the release and creates a GitHub
+# Release, and the publish job below ships it to crates.io in the same run (so
+# no PAT is needed to chain a separate workflow off the release event).
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  publish:
+    name: Publish to crates.io
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Run tests
+        run: cargo test --all-features
+
+      # release-please already committed the version bump to Cargo.toml on main,
+      # so publish picks it up with no tag-to-file patching needed.
+      - name: Publish to crates.io
+        run: cargo publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
