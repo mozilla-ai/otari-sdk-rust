@@ -127,6 +127,11 @@
 mod _client;
 pub(crate) use _client::{apis, models};
 
+/// The gateway/spec version the generated core was built from, stamped into the
+/// core by the gateway codegen pipeline. Lets callers tell which gateway spec
+/// this SDK targets.
+pub use _client::spec_version::SPEC_VERSION;
+
 pub mod api;
 pub mod client;
 pub mod config;

@@ -10,3 +10,4 @@
 
 pub mod apis;
 pub mod models;
+pub mod spec_version;
