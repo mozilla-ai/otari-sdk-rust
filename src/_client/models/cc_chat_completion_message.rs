@@ -57,13 +57,14 @@ pub struct CcChatCompletionMessage {
         skip_serializing_if = "Option::is_none"
     )]
     pub tool_calls: Option<Option<Vec<models::CcChatCompletionMessageToolCallsInner>>>,
+    /// Filter models by provider name
     #[serde(
         rename = "reasoning",
         default,
         with = "::serde_with::rust::double_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub reasoning: Option<Option<Box<models::CcReasoning>>>,
+    pub reasoning: Option<Option<String>>,
 }
 
 impl CcChatCompletionMessage {
