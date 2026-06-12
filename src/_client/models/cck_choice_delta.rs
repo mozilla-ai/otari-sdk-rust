@@ -48,13 +48,14 @@ pub struct CckChoiceDelta {
         skip_serializing_if = "Option::is_none"
     )]
     pub tool_calls: Option<Option<Vec<models::CckChoiceDeltaToolCall>>>,
+    /// Filter models by provider name
     #[serde(
         rename = "reasoning",
         default,
         with = "::serde_with::rust::double_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub reasoning: Option<Option<Box<models::CckReasoning>>>,
+    pub reasoning: Option<Option<String>>,
 }
 
 impl CckChoiceDelta {
