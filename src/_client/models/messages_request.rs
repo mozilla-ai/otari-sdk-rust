@@ -1,7 +1,7 @@
 /*
- * otari-gateway
+ * otari
  *
- * A clean FastAPI gateway for otari with API key management
+ * Otari, an OpenAI-compatible LLM gateway with API key management
  *
  * The version of the OpenAPI document: 0.0.0-dev
  *
@@ -11,7 +11,7 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// MessagesRequest : Anthropic Messages API-compatible request.  Gateway-internal fields (``mcp_servers``, ``mcp_server_ids``, ``guardrails``, ``tools_header``, ``max_tool_iterations``) opt the request into gateway-managed MCP / sandbox / web_search / guardrails without changing the upstream wire shape. They're stripped before the request is forwarded.
+/// MessagesRequest : Anthropic Messages API-compatible request.  The wire fields are derived from any-llm's ``MessagesParams`` (see ``_schema_derive``) so the schema cannot silently drop a param any-llm forwards. Gateway-internal fields (``mcp_servers``, ``mcp_server_ids``, ``guardrails``, ``tools_header``, ``max_tool_iterations``) opt the request into gateway-managed MCP / sandbox / web_search / guardrails without changing the upstream wire shape. They're stripped before the request is forwarded.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MessagesRequest {
     #[serde(
@@ -77,7 +77,7 @@ pub struct MessagesRequest {
         with = "::serde_with::rust::double_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub system: Option<Option<Box<models::System1>>>,
+    pub system: Option<Option<Box<models::System>>>,
     #[serde(
         rename = "temperature",
         default,
@@ -130,7 +130,7 @@ pub struct MessagesRequest {
 }
 
 impl MessagesRequest {
-    /// Anthropic Messages API-compatible request.  Gateway-internal fields (``mcp_servers``, ``mcp_server_ids``, ``guardrails``, ``tools_header``, ``max_tool_iterations``) opt the request into gateway-managed MCP / sandbox / web_search / guardrails without changing the upstream wire shape. They're stripped before the request is forwarded.
+    /// Anthropic Messages API-compatible request.  The wire fields are derived from any-llm's ``MessagesParams`` (see ``_schema_derive``) so the schema cannot silently drop a param any-llm forwards. Gateway-internal fields (``mcp_servers``, ``mcp_server_ids``, ``guardrails``, ``tools_header``, ``max_tool_iterations``) opt the request into gateway-managed MCP / sandbox / web_search / guardrails without changing the upstream wire shape. They're stripped before the request is forwarded.
     pub fn new(
         max_tokens: i32,
         messages: Vec<std::collections::HashMap<String, serde_json::Value>>,

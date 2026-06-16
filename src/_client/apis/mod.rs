@@ -118,6 +118,7 @@ pub mod batches_api;
 pub mod budgets_api;
 pub mod chat_api;
 pub mod embeddings_api;
+pub mod files_api;
 pub mod health_api;
 pub mod images_api;
 pub mod keys_api;

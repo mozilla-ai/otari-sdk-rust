@@ -1,7 +1,7 @@
 /*
- * otari-gateway
+ * otari
  *
- * A clean FastAPI gateway for otari with API key management
+ * Otari, an OpenAI-compatible LLM gateway with API key management
  *
  * The version of the OpenAPI document: 0.0.0-dev
  *
@@ -11,7 +11,7 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// AudioSpeechRequest : OpenAI-compatible audio speech (TTS) request.
+/// AudioSpeechRequest : OpenAI-compatible audio speech (TTS) request.  The speech fields are derived from any-llm's ``AudioSpeechParams`` (see ``_schema_derive``) so the schema cannot silently drop a param any-llm forwards. ``user`` is gateway-only (billing / auth scoping); it is not an any-llm param and is stripped before the request is forwarded.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AudioSpeechRequest {
     #[serde(rename = "input")]
@@ -51,7 +51,7 @@ pub struct AudioSpeechRequest {
 }
 
 impl AudioSpeechRequest {
-    /// OpenAI-compatible audio speech (TTS) request.
+    /// OpenAI-compatible audio speech (TTS) request.  The speech fields are derived from any-llm's ``AudioSpeechParams`` (see ``_schema_derive``) so the schema cannot silently drop a param any-llm forwards. ``user`` is gateway-only (billing / auth scoping); it is not an any-llm param and is stripped before the request is forwarded.
     pub fn new(input: String, model: String, voice: String) -> AudioSpeechRequest {
         AudioSpeechRequest {
             input,

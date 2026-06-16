@@ -1,7 +1,7 @@
 /*
- * otari-gateway
+ * otari
  *
- * A clean FastAPI gateway for otari with API key management
+ * Otari, an OpenAI-compatible LLM gateway with API key management
  *
  * The version of the OpenAPI document: 0.0.0-dev
  *
@@ -11,9 +11,30 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// ResponsesRequest : OpenAI Responses API-compatible request.  Gateway-internal fields (``mcp_servers``, ``mcp_server_ids``, ``guardrails``, ``tools_header``, ``max_tool_iterations``) opt the request into gateway-managed MCP / sandbox / web_search / guardrails without changing the upstream wire shape. They're stripped before the request is forwarded.
+/// ResponsesRequest : OpenAI Responses API-compatible request.  The wire fields are derived from any-llm's ``ResponsesParams`` (see ``_schema_derive``) so the schema cannot silently drop a param any-llm forwards. Gateway-internal fields (``mcp_servers``, ``mcp_server_ids``, ``guardrails``, ``tools_header``, ``max_tool_iterations``) opt the request into gateway-managed MCP / sandbox / web_search / guardrails without changing the upstream wire shape. They're stripped before the request is forwarded.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ResponsesRequest {
+    #[serde(
+        rename = "background",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub background: Option<Option<bool>>,
+    #[serde(
+        rename = "conversation",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub conversation: Option<Option<Box<models::Conversation>>>,
+    #[serde(
+        rename = "frequency_penalty",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub frequency_penalty: Option<Option<f64>>,
     #[serde(
         rename = "guardrails",
         default,
@@ -21,8 +42,36 @@ pub struct ResponsesRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub guardrails: Option<Option<Vec<models::GuardrailConfig>>>,
+    #[serde(
+        rename = "include",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub include: Option<Option<Vec<String>>>,
     #[serde(rename = "input", deserialize_with = "Option::deserialize")]
     pub input: Option<serde_json::Value>,
+    #[serde(
+        rename = "instructions",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub instructions: Option<Option<String>>,
+    #[serde(
+        rename = "max_output_tokens",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub max_output_tokens: Option<Option<i32>>,
+    #[serde(
+        rename = "max_tool_calls",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub max_tool_calls: Option<Option<i32>>,
     #[serde(
         rename = "max_tool_iterations",
         default,
@@ -44,10 +93,115 @@ pub struct ResponsesRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub mcp_servers: Option<Option<Vec<models::McpServerConfig>>>,
+    #[serde(
+        rename = "metadata",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub metadata: Option<Option<std::collections::HashMap<String, String>>>,
     #[serde(rename = "model")]
     pub model: String,
+    #[serde(
+        rename = "parallel_tool_calls",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub parallel_tool_calls: Option<Option<bool>>,
+    #[serde(
+        rename = "presence_penalty",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub presence_penalty: Option<Option<f64>>,
+    #[serde(
+        rename = "previous_response_id",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub previous_response_id: Option<Option<String>>,
+    #[serde(
+        rename = "prompt_cache_key",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub prompt_cache_key: Option<Option<String>>,
+    #[serde(
+        rename = "prompt_cache_retention",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub prompt_cache_retention: Option<Option<String>>,
+    #[serde(
+        rename = "reasoning",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub reasoning: Option<Option<std::collections::HashMap<String, serde_json::Value>>>,
+    #[serde(
+        rename = "response_format",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub response_format: Option<Option<std::collections::HashMap<String, serde_json::Value>>>,
+    #[serde(
+        rename = "safety_identifier",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub safety_identifier: Option<Option<String>>,
+    #[serde(
+        rename = "service_tier",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub service_tier: Option<Option<String>>,
+    #[serde(
+        rename = "store",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub store: Option<Option<bool>>,
     #[serde(rename = "stream", skip_serializing_if = "Option::is_none")]
     pub stream: Option<bool>,
+    #[serde(
+        rename = "stream_options",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub stream_options: Option<Option<std::collections::HashMap<String, serde_json::Value>>>,
+    #[serde(
+        rename = "temperature",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub temperature: Option<Option<f64>>,
+    #[serde(
+        rename = "text",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub text: Option<Option<std::collections::HashMap<String, serde_json::Value>>>,
+    #[serde(
+        rename = "tool_choice",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub tool_choice: Option<Option<Box<models::ToolChoice1>>>,
     #[serde(
         rename = "tools",
         default,
@@ -63,6 +217,27 @@ pub struct ResponsesRequest {
     )]
     pub tools_header: Option<Option<String>>,
     #[serde(
+        rename = "top_logprobs",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub top_logprobs: Option<Option<i32>>,
+    #[serde(
+        rename = "top_p",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub top_p: Option<Option<f64>>,
+    #[serde(
+        rename = "truncation",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub truncation: Option<Option<String>>,
+    #[serde(
         rename = "user",
         default,
         with = "::serde_with::rust::double_option",
@@ -72,18 +247,43 @@ pub struct ResponsesRequest {
 }
 
 impl ResponsesRequest {
-    /// OpenAI Responses API-compatible request.  Gateway-internal fields (``mcp_servers``, ``mcp_server_ids``, ``guardrails``, ``tools_header``, ``max_tool_iterations``) opt the request into gateway-managed MCP / sandbox / web_search / guardrails without changing the upstream wire shape. They're stripped before the request is forwarded.
+    /// OpenAI Responses API-compatible request.  The wire fields are derived from any-llm's ``ResponsesParams`` (see ``_schema_derive``) so the schema cannot silently drop a param any-llm forwards. Gateway-internal fields (``mcp_servers``, ``mcp_server_ids``, ``guardrails``, ``tools_header``, ``max_tool_iterations``) opt the request into gateway-managed MCP / sandbox / web_search / guardrails without changing the upstream wire shape. They're stripped before the request is forwarded.
     pub fn new(input: Option<serde_json::Value>, model: String) -> ResponsesRequest {
         ResponsesRequest {
+            background: None,
+            conversation: None,
+            frequency_penalty: None,
             guardrails: None,
+            include: None,
             input,
+            instructions: None,
+            max_output_tokens: None,
+            max_tool_calls: None,
             max_tool_iterations: None,
             mcp_server_ids: None,
             mcp_servers: None,
+            metadata: None,
             model,
+            parallel_tool_calls: None,
+            presence_penalty: None,
+            previous_response_id: None,
+            prompt_cache_key: None,
+            prompt_cache_retention: None,
+            reasoning: None,
+            response_format: None,
+            safety_identifier: None,
+            service_tier: None,
+            store: None,
             stream: None,
+            stream_options: None,
+            temperature: None,
+            text: None,
+            tool_choice: None,
             tools: None,
             tools_header: None,
+            top_logprobs: None,
+            top_p: None,
+            truncation: None,
             user: None,
         }
     }
