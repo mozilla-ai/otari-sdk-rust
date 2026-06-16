@@ -27,9 +27,13 @@ serde_with = { version = "3", default-features = false, features = ["base64", "s
 url = "2"
 uuid = { version = "1", default-features = false, features = ["serde"] }
 
-# HTTP client (multipart is required by the generated core's file uploads).
+# HTTP client (multipart is required by the generated core's file uploads and
+# by the hand-written audio transcription upload).
 reqwest = { version = "0.12", features = ["json", "stream", "multipart"] }
 reqwest-eventsource = "0.6"
+# Binary response bodies (text-to-speech audio) are returned as `bytes::Bytes`,
+# the same type `reqwest::Response::bytes` yields.
+bytes = "1"
 
 # Error handling
 thiserror = "2"

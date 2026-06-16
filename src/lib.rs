@@ -149,9 +149,9 @@ pub use types::{
     Batch, BatchRequestCounts, BatchRequestItem, BatchResult, BatchResultError, BatchResultItem,
     BatchStatus, ChatCompletion, ChatCompletionChunk, ChatCompletionMessage, Choice, ChoiceDelta,
     ChunkAccumulator, ChunkChoice, CompletionParams, CompletionStream, CompletionUsage, Content,
-    ContentPart, CreateBatchParams, Function, ImageUrl, ListBatchesOptions, Message,
-    ModerationContentPart, ModerationImageUrl, ModerationInput, ModerationParams,
+    ContentPart, CreateBatchParams, Function, ImageGenerationParams, ImageUrl, ListBatchesOptions,
+    Message, ModerationContentPart, ModerationImageUrl, ModerationInput, ModerationParams,
     ModerationResponse, ModerationResult, Reasoning, ReasoningEffort, RerankMeta, RerankParams,
-    RerankResponse, RerankResult, RerankUsage, Role, StopSequence, Tool, ToolCall, ToolCallDelta,
-    ToolChoice, ToolFunction,
+    RerankResponse, RerankResult, RerankUsage, Role, SpeechParams, StopSequence, Tool, ToolCall,
+    ToolCallDelta, ToolChoice, ToolFunction, TranscriptionParams,
 };
