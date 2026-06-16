@@ -35,7 +35,7 @@ fn self_hosted_config(base: &str) -> Config {
 // ---------------------------------------------------------------------------
 
 #[tokio::test]
-async fn image_generation_returns_json_payload() {
+async fn image_generation_returns_typed_response() {
     let server = MockServer::start().await;
     let response_json = serde_json::json!({
         "created": 1_700_000_000,
@@ -60,8 +60,12 @@ async fn image_generation_returns_json_payload() {
         .await
         .unwrap();
 
-    assert_eq!(result, response_json);
-    assert_eq!(result["data"][0]["url"], "https://example.com/image.png");
+    assert_eq!(result.created, 1_700_000_000);
+    let data = result.data.flatten().expect("data array present");
+    assert_eq!(
+        data[0].url.clone().flatten().as_deref(),
+        Some("https://example.com/image.png")
+    );
 }
 
 #[tokio::test]
@@ -70,7 +74,10 @@ async fn image_generation_sends_platform_bearer_header() {
     Mock::given(method("POST"))
         .and(path("/v1/images/generations"))
         .and(header("authorization", "Bearer tk_test_token"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({"data": []})))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(serde_json::json!({"created": 1_700_000_000, "data": []})),
+        )
         .mount(&server)
         .await;
 
@@ -297,5 +304,5 @@ async fn live_gateway_image_generation() {
         ))
         .await
         .unwrap();
-    assert!(result.get("data").is_some());
+    assert!(result.data.is_some());
 }

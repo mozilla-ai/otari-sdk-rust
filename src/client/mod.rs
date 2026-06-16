@@ -426,16 +426,19 @@ impl Otari {
 
     /// Generate images from a text prompt (`POST /v1/images/generations`).
     ///
-    /// Returns the gateway's OpenAI-compatible image payload as a raw
-    /// [`serde_json::Value`] (`{"created": ..., "data": [...]}`). The generated
-    /// core models this response as an opaque object, so the parsed JSON is
-    /// returned unchanged. This goes through the generated [`images_api`]
+    /// Returns the generated typed [`gen_models::ImagesResponse`]
+    /// (`created`, `data: Option<Option<Vec<ImgImage>>>`, plus the optional
+    /// `background` / `output_format` / `quality` / `size` / `usage` fields).
+    /// Each [`gen_models::ImgImage`] carries `url` / `b64_json` /
+    /// `revised_prompt`. The regenerated core now types this response, so the
+    /// parsed JSON is deserialized into the model rather than returned as a raw
+    /// [`serde_json::Value`]. This goes through the generated [`images_api`]
     /// function, reusing this client's already-authenticated `reqwest::Client`
     /// (auth headers apply in both modes).
     pub async fn image_generation(
         &self,
         params: ImageGenerationParams,
-    ) -> Result<serde_json::Value> {
+    ) -> Result<gen_models::ImagesResponse> {
         let mut request =
             gen_models::ImageGenerationRequest::new(params.model.clone(), params.prompt.clone());
         request.n = params.n.map(Some);

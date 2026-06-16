@@ -300,9 +300,9 @@ for result in &response.results {
 ### Image generation
 
 Generate images with `client.image_generation(...)`, which calls
-`POST /v1/images/generations` and returns the gateway's OpenAI-compatible
-payload as a raw `serde_json::Value` (the generated core models this response as
-an opaque object):
+`POST /v1/images/generations` and returns the typed `ImagesResponse` from the
+generated core (`created` plus `data: Option<Option<Vec<ImgImage>>>`, where each
+`ImgImage` carries `url` / `b64_json` / `revised_prompt`):
 
 ```rust
 use otari::{Config, ImageGenerationParams, Otari};
@@ -316,7 +316,11 @@ let result = client
     )
     .await?;
 
-println!("{}", result["data"][0]["url"]);
+if let Some(image) = result.data.flatten().and_then(|data| data.into_iter().next()) {
+    if let Some(url) = image.url.flatten() {
+        println!("{url}");
+    }
+}
 ```
 
 ### Audio (speech and transcription)
