@@ -34,7 +34,7 @@ use crate::error::{OtariError, Result};
 use crate::types::{
     Batch, BatchResult, ChatCompletion, CompletionParams, CompletionStream, CreateBatchParams,
     ImageGenerationParams, ListBatchesOptions, ModerationParams, ModerationResponse, RerankParams,
-    RerankResponse, SpeechParams, TranscriptionParams,
+    RerankResponse, SpeechParams, TranscriptionParams, TranscriptionResult,
 };
 
 use crate::_client::apis::{images_api, models_api};
@@ -497,10 +497,11 @@ impl Otari {
     /// this posts a `reqwest::multipart::Form` over the same authenticated raw
     /// client used by the streaming path.
     ///
-    /// Returns the parsed JSON for JSON response formats (the default), or a
-    /// JSON string for the `text` / `srt` / `vtt` formats (the gateway returns
-    /// those as `text/plain`, surfaced here as a [`serde_json::Value::String`]).
-    pub async fn transcription(&self, params: TranscriptionParams) -> Result<serde_json::Value> {
+    /// Returns a [`TranscriptionResult`] whose populated field is chosen by the
+    /// response content type: `json` for JSON response formats (the default
+    /// `json` / `verbose_json`), or `text` for the plain `text` / `srt` / `vtt`
+    /// formats (the gateway returns those as `text/plain`).
+    pub async fn transcription(&self, params: TranscriptionParams) -> Result<TranscriptionResult> {
         let file_part = reqwest::multipart::Part::bytes(params.file).file_name(params.filename);
         let mut form = reqwest::multipart::Form::new()
             .text("model", params.model)
@@ -535,10 +536,18 @@ impl Otari {
 
         let bytes = response.bytes().await?;
         if is_json {
-            serde_json::from_slice::<serde_json::Value>(&bytes).map_err(OtariError::from)
+            let json =
+                serde_json::from_slice::<serde_json::Value>(&bytes).map_err(OtariError::from)?;
+            Ok(TranscriptionResult {
+                json: Some(json),
+                text: None,
+            })
         } else {
             let text = String::from_utf8_lossy(&bytes).into_owned();
-            Ok(serde_json::Value::String(text))
+            Ok(TranscriptionResult {
+                json: None,
+                text: Some(text),
+            })
         }
     }
 

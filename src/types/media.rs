@@ -88,6 +88,21 @@ impl ImageGenerationParams {
     }
 }
 
+/// Result of an audio transcription request
+/// (`POST /v1/audio/transcriptions`).
+///
+/// Exactly one field is populated, chosen by the gateway response's content
+/// type: `json` for the default `json` / `verbose_json` formats, `text` for the
+/// plain `text` / `srt` / `vtt` formats.
+#[derive(Debug, Clone, Default)]
+pub struct TranscriptionResult {
+    /// Parsed JSON response, for `json` / `verbose_json` formats.
+    pub json: Option<serde_json::Value>,
+
+    /// Raw text response, for `text` / `srt` / `vtt` formats.
+    pub text: Option<String>,
+}
+
 /// Parameters for a text-to-speech request (`POST /v1/audio/speech`).
 ///
 /// The gateway returns binary audio (no JSON model), so [`crate::Otari::speech`]

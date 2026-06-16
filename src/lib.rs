@@ -153,5 +153,5 @@ pub use types::{
     Message, ModerationContentPart, ModerationImageUrl, ModerationInput, ModerationParams,
     ModerationResponse, ModerationResult, Reasoning, ReasoningEffort, RerankMeta, RerankParams,
     RerankResponse, RerankResult, RerankUsage, Role, SpeechParams, StopSequence, Tool, ToolCall,
-    ToolCallDelta, ToolChoice, ToolFunction, TranscriptionParams,
+    ToolCallDelta, ToolChoice, ToolFunction, TranscriptionParams, TranscriptionResult,
 };

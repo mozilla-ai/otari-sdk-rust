@@ -338,8 +338,10 @@ std::fs::write("speech.mp3", &audio)?;
 
 `client.transcription(...)` transcribes audio (`POST /v1/audio/transcriptions`).
 The audio bytes are uploaded as multipart form data, and the result is returned
-as a `serde_json::Value`: the parsed JSON for JSON formats, or a JSON string for
-the `text` / `srt` / `vtt` formats.
+as a `TranscriptionResult` with exactly one field populated, chosen by the
+response content type: `json` (parsed JSON) for the default `json` /
+`verbose_json` formats, or `text` (a string) for the `text` / `srt` / `vtt`
+formats.
 
 ```rust
 use otari::{Config, Otari, TranscriptionParams};
@@ -353,7 +355,11 @@ let result = client
     )
     .await?;
 
-println!("{}", result["text"]);
+if let Some(json) = result.json {
+    println!("{}", json["text"]);
+} else if let Some(text) = result.text {
+    println!("{text}");
+}
 ```
 
 ### Batch operations

@@ -227,7 +227,8 @@ async fn transcription_sends_multipart_and_returns_json() {
         .await
         .unwrap();
 
-    assert_eq!(result, response_json);
+    assert_eq!(result.json, Some(response_json));
+    assert_eq!(result.text, None);
 }
 
 #[tokio::test]
@@ -252,10 +253,8 @@ async fn transcription_text_format_returns_string_value() {
         .await
         .unwrap();
 
-    assert_eq!(
-        result,
-        serde_json::Value::String("just the words".to_string())
-    );
+    assert_eq!(result.text, Some("just the words".to_string()));
+    assert_eq!(result.json, None);
 }
 
 #[tokio::test]
