@@ -1,7 +1,7 @@
 /*
- * otari-gateway
+ * otari
  *
- * A clean FastAPI gateway for otari with API key management
+ * Otari, an OpenAI-compatible LLM gateway with API key management
  *
  * The version of the OpenAPI document: 0.0.0-dev
  *
@@ -25,7 +25,7 @@ pub enum CreateImageV1ImagesGenerationsPostError {
 pub async fn create_image_v1_images_generations_post(
     configuration: &configuration::Configuration,
     image_generation_request: models::ImageGenerationRequest,
-) -> Result<serde_json::Value, Error<CreateImageV1ImagesGenerationsPostError>> {
+) -> Result<models::ImagesResponse, Error<CreateImageV1ImagesGenerationsPostError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_image_generation_request = image_generation_request;
 
@@ -54,8 +54,8 @@ pub async fn create_image_v1_images_generations_post(
         let content = resp.text().await?;
         match content_type {
             ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `serde_json::Value`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `serde_json::Value`")))),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::ImagesResponse`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::ImagesResponse`")))),
         }
     } else {
         let content = resp.text().await?;

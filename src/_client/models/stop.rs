@@ -1,7 +1,7 @@
 /*
- * otari-gateway
+ * otari
  *
- * A clean FastAPI gateway for otari with API key management
+ * Otari, an OpenAI-compatible LLM gateway with API key management
  *
  * The version of the OpenAPI document: 0.0.0-dev
  *
@@ -12,10 +12,10 @@ use crate::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct System1 {}
+pub struct Stop {}
 
-impl System1 {
-    pub fn new() -> System1 {
-        System1 {}
+impl Stop {
+    pub fn new() -> Stop {
+        Stop {}
     }
 }
