@@ -1,7 +1,7 @@
 /*
- * otari-gateway
+ * otari
  *
- * A clean FastAPI gateway for otari with API key management
+ * Otari, an OpenAI-compatible LLM gateway with API key management
  *
  * The version of the OpenAPI document: 0.0.0-dev
  *
@@ -11,7 +11,7 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// ImageGenerationRequest : OpenAI-compatible image generation request.
+/// ImageGenerationRequest : OpenAI-compatible image generation request.  Fields are derived from any-llm's ``ImageGenerationParams`` (see ``_schema_derive``) so the schema cannot silently drop a param any-llm forwards.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ImageGenerationRequest {
     #[serde(rename = "model")]
@@ -63,7 +63,7 @@ pub struct ImageGenerationRequest {
 }
 
 impl ImageGenerationRequest {
-    /// OpenAI-compatible image generation request.
+    /// OpenAI-compatible image generation request.  Fields are derived from any-llm's ``ImageGenerationParams`` (see ``_schema_derive``) so the schema cannot silently drop a param any-llm forwards.
     pub fn new(model: String, prompt: String) -> ImageGenerationRequest {
         ImageGenerationRequest {
             model,

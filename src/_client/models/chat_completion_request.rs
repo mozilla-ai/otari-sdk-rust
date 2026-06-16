@@ -1,7 +1,7 @@
 /*
- * otari-gateway
+ * otari
  *
- * A clean FastAPI gateway for otari with API key management
+ * Otari, an OpenAI-compatible LLM gateway with API key management
  *
  * The version of the OpenAPI document: 0.0.0-dev
  *
@@ -11,9 +11,16 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// ChatCompletionRequest : OpenAI-compatible chat completion request.
+/// ChatCompletionRequest : OpenAI-compatible chat completion request.  The completion-param fields are derived from any-llm's ``CompletionParams`` (see ``_schema_derive``) so the schema cannot silently drop a param any-llm forwards. Fields below either tighten a derived field (``messages``, ``response_format``) or add gateway-internal behavior (``mcp_servers``, ``mcp_server_ids``, ``guardrails``, ``tools_header``, ``max_tool_iterations``) that is stripped before the request is forwarded upstream.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ChatCompletionRequest {
+    #[serde(
+        rename = "frequency_penalty",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub frequency_penalty: Option<Option<f64>>,
     #[serde(
         rename = "guardrails",
         default,
@@ -21,6 +28,20 @@ pub struct ChatCompletionRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub guardrails: Option<Option<Vec<models::GuardrailConfig>>>,
+    #[serde(
+        rename = "logit_bias",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub logit_bias: Option<Option<std::collections::HashMap<String, f64>>>,
+    #[serde(
+        rename = "logprobs",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub logprobs: Option<Option<bool>>,
     #[serde(
         rename = "max_completion_tokens",
         default,
@@ -61,12 +82,54 @@ pub struct ChatCompletionRequest {
     #[serde(rename = "model")]
     pub model: String,
     #[serde(
+        rename = "n",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub n: Option<Option<i32>>,
+    #[serde(
+        rename = "parallel_tool_calls",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub parallel_tool_calls: Option<Option<bool>>,
+    #[serde(
+        rename = "presence_penalty",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub presence_penalty: Option<Option<f64>>,
+    #[serde(
+        rename = "reasoning_effort",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub reasoning_effort: Option<Option<ReasoningEffort>>,
+    #[serde(
         rename = "response_format",
         default,
         with = "::serde_with::rust::double_option",
         skip_serializing_if = "Option::is_none"
     )]
     pub response_format: Option<Option<std::collections::HashMap<String, serde_json::Value>>>,
+    #[serde(
+        rename = "seed",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub seed: Option<Option<i32>>,
+    #[serde(
+        rename = "stop",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub stop: Option<Option<Box<models::Stop>>>,
     #[serde(rename = "stream", skip_serializing_if = "Option::is_none")]
     pub stream: Option<bool>,
     #[serde(
@@ -96,8 +159,8 @@ pub struct ChatCompletionRequest {
         with = "::serde_with::rust::double_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub tools: Option<Option<Vec<std::collections::HashMap<String, serde_json::Value>>>>,
-    /// Optional override for the lead-in that the gateway prepends before the per-tool hint block in the system message. Useful for expressing global tool-selection policy (e.g. 'prefer MCP tools over code_execution'). Falls back to GATEWAY_TOOLS_HEADER env, then to the built-in default.
+    pub tools: Option<Option<Vec<models::ChatCompletionRequestToolsInner>>>,
+    /// Optional override for the lead-in that the gateway prepends before the per-tool hint block in the system message. Useful for expressing global tool-selection policy (e.g. 'prefer MCP tools over code_execution'). Falls back to OTARI_TOOLS_HEADER env, then to the built-in default.
     #[serde(
         rename = "tools_header",
         default,
@@ -105,6 +168,13 @@ pub struct ChatCompletionRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub tools_header: Option<Option<String>>,
+    #[serde(
+        rename = "top_logprobs",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub top_logprobs: Option<Option<i32>>,
     #[serde(
         rename = "top_p",
         default,
@@ -122,10 +192,13 @@ pub struct ChatCompletionRequest {
 }
 
 impl ChatCompletionRequest {
-    /// OpenAI-compatible chat completion request.
+    /// OpenAI-compatible chat completion request.  The completion-param fields are derived from any-llm's ``CompletionParams`` (see ``_schema_derive``) so the schema cannot silently drop a param any-llm forwards. Fields below either tighten a derived field (``messages``, ``response_format``) or add gateway-internal behavior (``mcp_servers``, ``mcp_server_ids``, ``guardrails``, ``tools_header``, ``max_tool_iterations``) that is stripped before the request is forwarded upstream.
     pub fn new(messages: Vec<models::ChatMessageInput>, model: String) -> ChatCompletionRequest {
         ChatCompletionRequest {
+            frequency_penalty: None,
             guardrails: None,
+            logit_bias: None,
+            logprobs: None,
             max_completion_tokens: None,
             max_tokens: None,
             max_tool_iterations: None,
@@ -133,15 +206,48 @@ impl ChatCompletionRequest {
             mcp_servers: None,
             messages,
             model,
+            n: None,
+            parallel_tool_calls: None,
+            presence_penalty: None,
+            reasoning_effort: None,
             response_format: None,
+            seed: None,
+            stop: None,
             stream: None,
             stream_options: None,
             temperature: None,
             tool_choice: None,
             tools: None,
             tools_header: None,
+            top_logprobs: None,
             top_p: None,
             user: None,
         }
+    }
+}
+///
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
+pub enum ReasoningEffort {
+    #[serde(rename = "none")]
+    None,
+    #[serde(rename = "minimal")]
+    Minimal,
+    #[serde(rename = "low")]
+    Low,
+    #[serde(rename = "medium")]
+    Medium,
+    #[serde(rename = "high")]
+    High,
+    #[serde(rename = "xhigh")]
+    Xhigh,
+    #[serde(rename = "max")]
+    Max,
+    #[serde(rename = "auto")]
+    Auto,
+}
+
+impl Default for ReasoningEffort {
+    fn default() -> ReasoningEffort {
+        Self::None
     }
 }
