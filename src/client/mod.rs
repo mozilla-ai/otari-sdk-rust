@@ -29,14 +29,15 @@ use reqwest_eventsource::EventSource;
 use serde::Deserialize;
 
 use crate::config::Config;
-use crate::core::{make_configuration, map_error};
+use crate::core::{make_configuration, map_error, map_response};
 use crate::error::{OtariError, Result};
 use crate::types::{
     Batch, BatchResult, ChatCompletion, CompletionParams, CompletionStream, CreateBatchParams,
-    ListBatchesOptions, ModerationParams, ModerationResponse, RerankParams, RerankResponse,
+    ImageGenerationParams, ListBatchesOptions, ModerationParams, ModerationResponse, RerankParams,
+    RerankResponse, SpeechParams, TranscriptionParams, TranscriptionResult,
 };
 
-use crate::_client::apis::models_api;
+use crate::_client::apis::{images_api, models_api};
 use crate::_client::models as gen_models;
 
 pub mod models;
@@ -419,6 +420,171 @@ impl Otari {
 
         let body_bytes = response.bytes().await?;
         serde_json::from_slice::<ModerationResponse>(&body_bytes).map_err(OtariError::from)
+    }
+
+    // ----- Images -----
+
+    /// Generate images from a text prompt (`POST /v1/images/generations`).
+    ///
+    /// Returns the generated typed [`gen_models::ImagesResponse`]
+    /// (`created`, `data: Option<Option<Vec<ImgImage>>>`, plus the optional
+    /// `background` / `output_format` / `quality` / `size` / `usage` fields).
+    /// Each [`gen_models::ImgImage`] carries `url` / `b64_json` /
+    /// `revised_prompt`. The regenerated core now types this response, so the
+    /// parsed JSON is deserialized into the model rather than returned as a raw
+    /// [`serde_json::Value`]. This goes through the generated [`images_api`]
+    /// function, reusing this client's already-authenticated `reqwest::Client`
+    /// (auth headers apply in both modes).
+    pub async fn image_generation(
+        &self,
+        params: ImageGenerationParams,
+    ) -> Result<gen_models::ImagesResponse> {
+        let mut request =
+            gen_models::ImageGenerationRequest::new(params.model.clone(), params.prompt.clone());
+        request.n = params.n.map(Some);
+        request.quality = params.quality.map(Some);
+        request.response_format = params.response_format.map(Some);
+        request.size = params.size.map(Some);
+        request.style = params.style.map(Some);
+        request.user = params.user.map(Some);
+
+        images_api::create_image_v1_images_generations_post(&self.gen_config(), request)
+            .await
+            .map_err(map_error)
+    }
+
+    // ----- Audio -----
+
+    /// Synthesize speech (text-to-speech), returning raw audio bytes
+    /// (`POST /v1/audio/speech`).
+    ///
+    /// The gateway returns binary audio (`audio/mpeg` by default) with no JSON
+    /// response model, so the generated core (which only decodes JSON) cannot
+    /// handle it. This posts over the same raw `reqwest::Client` used by the
+    /// streaming path, with the per-mode auth header already baked in, and
+    /// returns the response body bytes. Non-2xx responses map through the shared
+    /// error table.
+    pub async fn speech(&self, params: SpeechParams) -> Result<bytes::Bytes> {
+        let mut body = serde_json::json!({
+            "model": params.model,
+            "input": params.input,
+            "voice": params.voice,
+        });
+        let obj = body.as_object_mut().expect("body is an object");
+        if let Some(response_format) = params.response_format {
+            obj.insert("response_format".to_string(), response_format.into());
+        }
+        if let Some(speed) = params.speed {
+            obj.insert("speed".to_string(), speed.into());
+        }
+        if let Some(instructions) = params.instructions {
+            obj.insert("instructions".to_string(), instructions.into());
+        }
+        if let Some(user) = params.user {
+            obj.insert("user".to_string(), user.into());
+        }
+
+        let request = self
+            .client
+            .post(format!("{}/v1/audio/speech", self.api_base))
+            .json(&body);
+        let response = self.send_raw(request).await?;
+        response.bytes().await.map_err(OtariError::from)
+    }
+
+    /// Transcribe audio to text (`POST /v1/audio/transcriptions`).
+    ///
+    /// `params.file` is uploaded as multipart form data (the `file` part); the
+    /// model and other parameters are sent as form fields. The generated core
+    /// types the file as a `String`, so it cannot perform this upload; instead
+    /// this posts a `reqwest::multipart::Form` over the same authenticated raw
+    /// client used by the streaming path.
+    ///
+    /// Returns a [`TranscriptionResult`] whose populated field is chosen by the
+    /// response content type: `json` for JSON response formats (the default
+    /// `json` / `verbose_json`), or `text` for the plain `text` / `srt` / `vtt`
+    /// formats (the gateway returns those as `text/plain`).
+    pub async fn transcription(&self, params: TranscriptionParams) -> Result<TranscriptionResult> {
+        let file_part = reqwest::multipart::Part::bytes(params.file).file_name(params.filename);
+        let mut form = reqwest::multipart::Form::new()
+            .text("model", params.model)
+            .part("file", file_part);
+        if let Some(language) = params.language {
+            form = form.text("language", language);
+        }
+        if let Some(prompt) = params.prompt {
+            form = form.text("prompt", prompt);
+        }
+        if let Some(response_format) = params.response_format {
+            form = form.text("response_format", response_format);
+        }
+        if let Some(temperature) = params.temperature {
+            form = form.text("temperature", temperature.to_string());
+        }
+        if let Some(user) = params.user {
+            form = form.text("user", user);
+        }
+
+        let request = self
+            .client
+            .post(format!("{}/v1/audio/transcriptions", self.api_base))
+            .multipart(form);
+        let response = self.send_raw(request).await?;
+
+        let is_json = response
+            .headers()
+            .get(reqwest::header::CONTENT_TYPE)
+            .and_then(|v| v.to_str().ok())
+            .is_some_and(|ct| ct.contains("application/json"));
+
+        let bytes = response.bytes().await?;
+        if is_json {
+            let json =
+                serde_json::from_slice::<serde_json::Value>(&bytes).map_err(OtariError::from)?;
+            Ok(TranscriptionResult {
+                json: Some(json),
+                text: None,
+            })
+        } else {
+            let text = String::from_utf8_lossy(&bytes).into_owned();
+            Ok(TranscriptionResult {
+                json: None,
+                text: Some(text),
+            })
+        }
+    }
+
+    /// Send a pre-built raw request, mapping non-2xx responses through the
+    /// shared error table (`x-correlation-id` / `retry-after` honored).
+    ///
+    /// Used by the audio endpoints (binary speech, multipart transcription),
+    /// which do not fit the generated JSON core but still reuse the same
+    /// authenticated `reqwest::Client` and error mapping as the rest of the SDK.
+    async fn send_raw(&self, request: reqwest::RequestBuilder) -> Result<reqwest::Response> {
+        let response = request.send().await?;
+
+        let status = response.status().as_u16();
+        if (200..300).contains(&status) {
+            return Ok(response);
+        }
+
+        let correlation_id = response
+            .headers()
+            .get("x-correlation-id")
+            .and_then(|v| v.to_str().ok())
+            .map(String::from);
+        let retry_after = response
+            .headers()
+            .get("retry-after")
+            .and_then(|v| v.to_str().ok())
+            .map(String::from);
+        let text = response.text().await.unwrap_or_default();
+        Err(map_response(
+            status,
+            &text,
+            correlation_id.as_deref(),
+            retry_after.as_deref(),
+        ))
     }
 
     // ----- Generated-core typed endpoints -----

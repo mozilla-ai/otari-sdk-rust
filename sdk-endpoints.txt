@@ -21,6 +21,11 @@ POST /v1/embeddings
 POST /v1/moderations
 POST /v1/rerank
 GET /v1/models
+# Images
+POST /v1/images/generations
+# Audio
+POST /v1/audio/speech
+POST /v1/audio/transcriptions
 # Batches
 POST /v1/batches
 GET /v1/batches
@@ -56,9 +61,6 @@ DELETE /v1/pricing/{model_key}
 GET /v1/usage
 
 [excluded]
-POST /v1/audio/speech          # binary, not yet wrapped
-POST /v1/audio/transcriptions  # binary, not yet wrapped
-POST /v1/images/generations    # binary, not yet wrapped
 GET /v1/models/{model_id}      # redundant, list_models covers discovery
 # Files
 POST /v1/files                 # not yet wrapped
