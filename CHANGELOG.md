@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/mozilla-ai/otari-sdk-rust/compare/otari-0.1.1...otari-0.2.0) (2026-06-16)
+
+
+### Features
+
+* add image generation and audio (speech/transcription) methods ([#43](https://github.com/mozilla-ai/otari-sdk-rust/issues/43)) ([3372ef6](https://github.com/mozilla-ai/otari-sdk-rust/commit/3372ef65ba76b423c4ca83bb2b50c3cadc7ddcc1))
+
 ## [0.1.1](https://github.com/mozilla-ai/otari-sdk-rust/compare/otari-0.1.0...otari-0.1.1) (2026-06-12)
 
 
