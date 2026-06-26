@@ -461,3 +461,89 @@ async fn control_plane_sends_admin_bearer() {
         .unwrap();
     assert!(raw.is_empty());
 }
+
+/// Mount a 401 `{"detail": "boom"}` for `GET <path>` and return a wired client.
+///
+/// The returned `MockServer` must be kept alive for the duration of the request.
+async fn control_plane_401(path_str: &str) -> (MockServer, Otari) {
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path(path_str.to_string()))
+        .respond_with(ResponseTemplate::new(401).set_body_json(json!({"detail": "boom"})))
+        .mount(&server)
+        .await;
+    let client = key_client(&server.uri());
+    (server, client)
+}
+
+/// A generated `Error::ResponseError` (HTTP 401) on the control plane must map
+/// to the typed `OtariError::Authentication`, matching the inference path —
+/// not surface the raw generated `Error<T>`. Covers one method per resource.
+#[tokio::test]
+async fn control_plane_maps_response_error_to_typed_error() {
+    // Keys
+    let (_server, client) = control_plane_401("/v1/keys").await;
+    let err = client
+        .control_plane("master")
+        .keys()
+        .list(None, None)
+        .await
+        .unwrap_err();
+    assert!(
+        matches!(err, OtariError::Authentication { .. }),
+        "keys: {err:?}"
+    );
+    assert!(err.to_string().contains("boom"), "keys: {err}");
+
+    // Users
+    let (_server, client) = control_plane_401("/v1/users").await;
+    let err = client
+        .control_plane("master")
+        .users()
+        .list(None, None)
+        .await
+        .unwrap_err();
+    assert!(
+        matches!(err, OtariError::Authentication { .. }),
+        "users: {err:?}"
+    );
+
+    // Budgets
+    let (_server, client) = control_plane_401("/v1/budgets").await;
+    let err = client
+        .control_plane("master")
+        .budgets()
+        .list(None, None)
+        .await
+        .unwrap_err();
+    assert!(
+        matches!(err, OtariError::Authentication { .. }),
+        "budgets: {err:?}"
+    );
+
+    // Pricing
+    let (_server, client) = control_plane_401("/v1/pricing").await;
+    let err = client
+        .control_plane("master")
+        .pricing()
+        .list(None, None)
+        .await
+        .unwrap_err();
+    assert!(
+        matches!(err, OtariError::Authentication { .. }),
+        "pricing: {err:?}"
+    );
+
+    // Usage
+    let (_server, client) = control_plane_401("/v1/usage").await;
+    let err = client
+        .control_plane("master")
+        .usage()
+        .list(None, None, None, None, None)
+        .await
+        .unwrap_err();
+    assert!(
+        matches!(err, OtariError::Authentication { .. }),
+        "usage: {err:?}"
+    );
+}
