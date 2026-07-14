@@ -62,6 +62,14 @@ pub struct MessagesRequest {
     pub metadata: Option<Option<std::collections::HashMap<String, serde_json::Value>>>,
     #[serde(rename = "model")]
     pub model: String,
+    /// Optional caller-supplied label for cost attribution (per run, experiment, or conversation). In hybrid mode it is forwarded onto the platform usage report so spend can be sliced by session without standing up OpenTelemetry. Stripped before the request is forwarded upstream to the provider. Has no effect in standalone mode, where there is no platform to report it to.
+    #[serde(
+        rename = "session_label",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub session_label: Option<Option<String>>,
     #[serde(
         rename = "stop_sequences",
         default,
@@ -146,6 +154,7 @@ impl MessagesRequest {
             messages,
             metadata: None,
             model,
+            session_label: None,
             stop_sequences: None,
             stream: None,
             system: None,

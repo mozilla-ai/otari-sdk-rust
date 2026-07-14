@@ -45,6 +45,14 @@ pub async fn create_speech_v1_audio_speech_post(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
     req_builder = req_builder.json(&p_body_audio_speech_request);
 
     let req = req_builder.build()?;
@@ -105,6 +113,14 @@ pub async fn create_transcription_v1_audio_transcriptions_post(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
     let mut multipart_form = reqwest::multipart::Form::new();
     multipart_form = multipart_form.text("file", p_form_file.to_string());
     if let Some(param_value) = p_form_language {

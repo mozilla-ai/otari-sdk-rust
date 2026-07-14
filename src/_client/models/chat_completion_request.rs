@@ -123,6 +123,14 @@ pub struct ChatCompletionRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub seed: Option<Option<i32>>,
+    /// Optional caller-supplied label for cost attribution (per run, experiment, or conversation). In hybrid mode it is forwarded onto the platform usage report so spend can be sliced by session without standing up OpenTelemetry. Stripped before the request is forwarded upstream to the provider. Has no effect in standalone mode, where there is no platform to report it to.
+    #[serde(
+        rename = "session_label",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub session_label: Option<Option<String>>,
     #[serde(
         rename = "stop",
         default,
@@ -212,6 +220,7 @@ impl ChatCompletionRequest {
             reasoning_effort: None,
             response_format: None,
             seed: None,
+            session_label: None,
             stop: None,
             stream: None,
             stream_options: None,

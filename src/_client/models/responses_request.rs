@@ -165,6 +165,14 @@ pub struct ResponsesRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub service_tier: Option<Option<String>>,
+    /// Optional caller-supplied label for cost attribution (per run, experiment, or conversation). In hybrid mode it is forwarded onto the platform usage report so spend can be sliced by session without standing up OpenTelemetry. Stripped before the request is forwarded upstream to the provider. Has no effect in standalone mode, where there is no platform to report it to.
+    #[serde(
+        rename = "session_label",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub session_label: Option<Option<String>>,
     #[serde(
         rename = "store",
         default,
@@ -273,6 +281,7 @@ impl ResponsesRequest {
             response_format: None,
             safety_identifier: None,
             service_tier: None,
+            session_label: None,
             store: None,
             stream: None,
             stream_options: None,
