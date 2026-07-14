@@ -29,7 +29,7 @@ pub enum CreateMessageV1MessagesPostError {
     UnknownValue(serde_json::Value),
 }
 
-/// Anthropic ``/v1/messages/count_tokens``-compatible endpoint.  Returns ``{\"input_tokens\": N}`` without contacting an upstream provider: counting is local, so there is no budget reservation, pricing, or usage logging. Authentication mirrors :func:`create_message` — platform mode resolves the caller's token against the platform, standalone mode validates the API key — so the endpoint is not an open token-counting oracle.
+/// Anthropic ``/v1/messages/count_tokens``-compatible endpoint.  Returns ``{\"input_tokens\": N}`` without contacting an upstream provider: counting is local, so there is no budget reservation, pricing, or usage logging. Authentication mirrors :func:`create_message` — hybrid mode resolves the caller's token against the platform, standalone mode validates the API key — so the endpoint is not an open token-counting oracle.
 pub async fn count_message_tokens_v1_messages_count_tokens_post(
     configuration: &configuration::Configuration,
     count_tokens_request: models::CountTokensRequest,
@@ -45,6 +45,14 @@ pub async fn count_message_tokens_v1_messages_count_tokens_post(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
     req_builder = req_builder.json(&p_body_count_tokens_request);
 
     let req = req_builder.build()?;
@@ -77,7 +85,7 @@ pub async fn count_message_tokens_v1_messages_count_tokens_post(
     }
 }
 
-/// Anthropic Messages API-compatible endpoint.  Supports MCP tool-use loops, sandboxed code execution, and SearXNG web_search in both standalone mode and platform mode. Platform-mode requests resolve credentials via the platform service and (for non-tool-loop requests) get multi-attempt fallback across the resolved route. Tool-loop requests collapse to a single attempt — once ``on_first_response`` lock-in plumbing lands across the codebase, a follow-up will enable pre-lock-in fallback for tool-loop requests too.
+/// Anthropic Messages API-compatible endpoint.  Supports MCP tool-use loops, sandboxed code execution, and SearXNG web_search in both standalone mode and hybrid mode. Hybrid-mode requests resolve credentials via the platform service and (for non-tool-loop requests) get multi-attempt fallback across the resolved route. Tool-loop requests collapse to a single attempt — once ``on_first_response`` lock-in plumbing lands across the codebase, a follow-up will enable pre-lock-in fallback for tool-loop requests too.
 pub async fn create_message_v1_messages_post(
     configuration: &configuration::Configuration,
     messages_request: models::MessagesRequest,
@@ -93,6 +101,14 @@ pub async fn create_message_v1_messages_post(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
     req_builder = req_builder.json(&p_body_messages_request);
 
     let req = req_builder.build()?;

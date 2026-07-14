@@ -69,6 +69,14 @@ pub async fn create_budget_v1_budgets_post(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
     req_builder = req_builder.json(&p_body_create_budget_request);
 
     let req = req_builder.build()?;
@@ -120,6 +128,14 @@ pub async fn delete_budget_v1_budgets_budget_id_delete(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
@@ -158,6 +174,14 @@ pub async fn get_budget_v1_budgets_budget_id_get(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
@@ -211,6 +235,14 @@ pub async fn list_budgets_v1_budgets_get(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
@@ -263,6 +295,14 @@ pub async fn update_budget_v1_budgets_budget_id_patch(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
     req_builder = req_builder.json(&p_body_update_budget_request);
 
     let req = req_builder.build()?;

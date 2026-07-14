@@ -69,6 +69,14 @@ pub async fn create_key_v1_keys_post(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
     req_builder = req_builder.json(&p_body_create_key_request);
 
     let req = req_builder.build()?;
@@ -120,6 +128,14 @@ pub async fn delete_key_v1_keys_key_id_delete(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
@@ -157,6 +173,14 @@ pub async fn get_key_v1_keys_key_id_get(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
@@ -209,6 +233,14 @@ pub async fn list_keys_v1_keys_get(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
@@ -261,6 +293,14 @@ pub async fn update_key_v1_keys_key_id_patch(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
     req_builder = req_builder.json(&p_body_update_key_request);
 
     let req = req_builder.build()?;

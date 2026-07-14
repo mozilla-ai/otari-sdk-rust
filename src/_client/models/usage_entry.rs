@@ -16,6 +16,13 @@ use serde::{Deserialize, Serialize};
 pub struct UsageEntry {
     #[serde(rename = "api_key_id", deserialize_with = "Option::deserialize")]
     pub api_key_id: Option<String>,
+    #[serde(rename = "cache_read_tokens", deserialize_with = "Option::deserialize")]
+    pub cache_read_tokens: Option<i32>,
+    #[serde(
+        rename = "cache_write_tokens",
+        deserialize_with = "Option::deserialize"
+    )]
+    pub cache_write_tokens: Option<i32>,
     #[serde(rename = "completion_tokens", deserialize_with = "Option::deserialize")]
     pub completion_tokens: Option<i32>,
     #[serde(rename = "cost", deserialize_with = "Option::deserialize")]
@@ -46,6 +53,8 @@ impl UsageEntry {
     /// A single usage log entry.
     pub fn new(
         api_key_id: Option<String>,
+        cache_read_tokens: Option<i32>,
+        cache_write_tokens: Option<i32>,
         completion_tokens: Option<i32>,
         cost: Option<f64>,
         endpoint: String,
@@ -61,6 +70,8 @@ impl UsageEntry {
     ) -> UsageEntry {
         UsageEntry {
             api_key_id,
+            cache_read_tokens,
+            cache_write_tokens,
             completion_tokens,
             cost,
             endpoint,
