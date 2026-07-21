@@ -68,3 +68,31 @@ GET /v1/files                  # not yet wrapped
 GET /v1/files/{file_id}        # not yet wrapped
 GET /v1/files/{file_id}/content # not yet wrapped
 DELETE /v1/files/{file_id}     # not yet wrapped
+
+# Dashboard / admin management surface: present in the gateway spec, not yet
+# wrapped by any SDK shell. Deferred here so the drift gate stays green; move to
+# [covered] when a shell surfaces them. Kept identical across all four SDKs.
+# Model aliases
+GET /v1/aliases                                 # not yet wrapped
+POST /v1/aliases                                # not yet wrapped
+DELETE /v1/aliases/{name}                       # not yet wrapped
+# Provider credentials (runtime provider management)
+GET /v1/provider-credentials                    # not yet wrapped
+POST /v1/provider-credentials                   # not yet wrapped
+POST /v1/provider-credentials/test              # not yet wrapped
+PATCH /v1/provider-credentials/{instance}       # not yet wrapped
+DELETE /v1/provider-credentials/{instance}      # not yet wrapped
+POST /v1/provider-credentials/{instance}/test   # not yet wrapped
+# Providers catalogue
+GET /v1/providers                               # not yet wrapped
+GET /v1/providers/catalog                       # not yet wrapped
+# Runtime settings
+GET /v1/settings                                # not yet wrapped
+PATCH /v1/settings                              # not yet wrapped
+# Model discovery / metadata
+GET /v1/models/discoverable                     # not yet wrapped
+GET /v1/models/metadata                         # not yet wrapped
+# Other control-plane extensions of already-covered resources
+GET /v1/usage/count                             # not yet wrapped
+POST /v1/keys/{key_id}/rotate                   # not yet wrapped
+GET /v1/budgets/{budget_id}/reset-logs          # not yet wrapped
