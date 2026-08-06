@@ -1,20 +1,22 @@
-//! Endpoint-coverage drift gate.
+//! Endpoint-coverage manifest checks.
 //!
-//! Fetches the canonical otari gateway OpenAPI spec and asserts that every API
-//! endpoint it exposes is accounted for in `sdk-endpoints.txt` -- either wrapped
-//! by this SDK's public surface (`[covered]`) or deliberately deferred
-//! (`[excluded]`). A new gateway endpoint in neither section fails this test, so
-//! a future endpoint (as `/messages` once was) cannot silently go unsurfaced.
+//! `sdk-endpoints.txt` records which gateway endpoints this SDK surfaces
+//! (`[covered]`) and which it deliberately does not (`[excluded]`). The file is
+//! a generated artifact: the gateway's codegen workflow pushes it here alongside
+//! the generated core, from the canonical copy at
+//! `scripts/sdk_codegen/sdk-endpoints.txt` in `mozilla-ai/otari`.
 //!
-//! The fetch uses `reqwest` (already a dependency). Offline it is a soft pass
-//! (logged and skipped) unless `CI` is set, where the network is available and a
-//! fetch failure is a hard error. `OTARI_SKIP_NETWORK_TESTS=1` forces the skip.
+//! The drift gate itself lives in the gateway, where the manifest is validated
+//! against `docs/public/openapi.json` from the same commit. It used to live here
+//! and fetch the spec from `main` over the network at test time, which made the
+//! result depend on when the test ran rather than on what the commit contained:
+//! an unchanged commit passed one day and failed the next, and because CI only
+//! runs on push and pull_request, `main` sat red unnoticed for over two weeks
+//! (mozilla-ai/otari#438). What remains here is offline and deterministic.
 
 use std::collections::BTreeSet;
 
-const SPEC_URL: &str =
-    "https://raw.githubusercontent.com/mozilla-ai/otari/main/docs/public/openapi.json";
-const HTTP_METHODS: [&str; 5] = ["get", "post", "put", "patch", "delete"];
+const HTTP_METHODS: [&str; 5] = ["GET", "POST", "PUT", "PATCH", "DELETE"];
 
 /// Parse the manifest into `(covered, excluded)` endpoint sets.
 fn parse_manifest() -> (BTreeSet<String>, BTreeSet<String>) {
@@ -53,94 +55,38 @@ fn parse_manifest() -> (BTreeSet<String>, BTreeSet<String>) {
     (covered, excluded)
 }
 
-/// Whether the suite should treat an unreachable spec URL as a hard failure.
-/// True in CI (where the network is available); a soft skip locally/offline.
-fn require_network() -> bool {
-    std::env::var("OTARI_SKIP_NETWORK_TESTS").as_deref() != Ok("1") && std::env::var("CI").is_ok()
-}
-
-/// Fetch the spec and return its `METHOD /path` set, dropping `/health*` routes.
-/// `Ok(None)` means "could not fetch, soft skip"; `Err` means "hard failure".
-fn fetch_spec_endpoints() -> Result<Option<BTreeSet<String>>, String> {
-    if std::env::var("OTARI_SKIP_NETWORK_TESTS").as_deref() == Ok("1") {
-        eprintln!("OTARI_SKIP_NETWORK_TESTS=1: skipping endpoint-coverage network fetch");
-        return Ok(None);
-    }
-    let runtime = tokio::runtime::Runtime::new().map_err(|e| format!("tokio runtime: {e}"))?;
-    let fetched = runtime.block_on(async {
-        let resp = reqwest::get(SPEC_URL).await?.error_for_status()?;
-        resp.text().await
-    });
-    let body = match fetched {
-        Ok(text) => text,
-        Err(e) => {
-            let msg = format!("could not fetch otari OpenAPI spec from {SPEC_URL}: {e}");
-            if require_network() {
-                return Err(msg);
-            }
-            eprintln!("{msg} (offline soft-skip)");
-            return Ok(None);
-        }
-    };
-    let doc: serde_json::Value =
-        serde_json::from_str(&body).map_err(|e| format!("parsing spec JSON: {e}"))?;
-    let paths = doc
-        .get("paths")
-        .and_then(serde_json::Value::as_object)
-        .ok_or("spec has no `paths` object")?;
-    let mut eps = BTreeSet::new();
-    for (path, methods) in paths {
-        if path == "/health" || path.starts_with("/health/") {
-            continue;
-        }
-        if let Some(obj) = methods.as_object() {
-            for method in obj.keys() {
-                if HTTP_METHODS.contains(&method.to_lowercase().as_str()) {
-                    eps.insert(format!("{} {path}", method.to_uppercase()));
-                }
-            }
-        }
-    }
-    Ok(Some(eps))
-}
-
 #[test]
-fn manifest_parses_non_empty_and_disjoint() {
+fn manifest_sections_are_non_empty() {
     let (covered, excluded) = parse_manifest();
     assert!(!covered.is_empty(), "manifest [covered] section is empty");
-    let overlap: Vec<_> = covered.intersection(&excluded).collect();
+    assert!(!excluded.is_empty(), "manifest [excluded] section is empty");
+}
+
+#[test]
+fn manifest_sections_are_disjoint() {
+    let (covered, excluded) = parse_manifest();
+    let both: Vec<_> = covered.intersection(&excluded).cloned().collect();
     assert!(
-        overlap.is_empty(),
-        "endpoints in both sections: {overlap:?}"
+        both.is_empty(),
+        "endpoint(s) in both [covered] and [excluded]: {both:?}"
     );
 }
 
 #[test]
-fn spec_endpoints_are_accounted_for() {
+fn manifest_entries_are_well_formed() {
     let (covered, excluded) = parse_manifest();
-    let Some(spec) = fetch_spec_endpoints().expect("spec fetch") else {
-        return; // soft skip offline
-    };
-    let accounted: BTreeSet<_> = covered.union(&excluded).cloned().collect();
-    let unaccounted: Vec<_> = spec.difference(&accounted).cloned().collect();
+    let malformed: Vec<_> = covered
+        .union(&excluded)
+        .filter(|entry| {
+            let mut parts = entry.splitn(2, ' ');
+            let method = parts.next().unwrap_or("");
+            let path = parts.next().unwrap_or("");
+            !HTTP_METHODS.contains(&method) || !path.starts_with('/')
+        })
+        .cloned()
+        .collect();
     assert!(
-        unaccounted.is_empty(),
-        "Gateway OpenAPI exposes endpoint(s) the SDK does not account for: {unaccounted:?}. \
-         Add a public wrapper and list under [covered], or defer it under [excluded] \
-         with a reason, in sdk-endpoints.txt."
+        malformed.is_empty(),
+        "manifest entries are not \"METHOD /path\": {malformed:?}"
     );
-}
-
-#[test]
-fn manifest_has_no_stale_entries() {
-    let (covered, excluded) = parse_manifest();
-    let Some(spec) = fetch_spec_endpoints().expect("spec fetch") else {
-        return; // soft skip offline
-    };
-    let accounted: BTreeSet<_> = covered.union(&excluded).cloned().collect();
-    let stale: Vec<_> = accounted.difference(&spec).cloned().collect();
-    if !stale.is_empty() {
-        // Warn-only: stale entries do not fail the build.
-        eprintln!("manifest entries not present in current spec (review): {stale:?}");
-    }
 }
