@@ -22,6 +22,14 @@ pub struct CreateUserRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub alias: Option<Option<String>>,
+    /// Default model access-list this user's keys inherit; null = unrestricted, [] = deny all
+    #[serde(
+        rename = "allowed_models",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub allowed_models: Option<Option<Vec<String>>>,
     /// Whether user is blocked
     #[serde(rename = "blocked", skip_serializing_if = "Option::is_none")]
     pub blocked: Option<bool>,
@@ -46,6 +54,7 @@ impl CreateUserRequest {
     pub fn new(user_id: String) -> CreateUserRequest {
         CreateUserRequest {
             alias: None,
+            allowed_models: None,
             blocked: None,
             budget_id: None,
             metadata: None,

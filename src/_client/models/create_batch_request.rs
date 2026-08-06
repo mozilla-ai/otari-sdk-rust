@@ -26,6 +26,13 @@ pub struct CreateBatchRequest {
     pub model: String,
     #[serde(rename = "requests")]
     pub requests: Vec<models::BatchRequestItem>,
+    #[serde(
+        rename = "user",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub user: Option<Option<String>>,
 }
 
 impl CreateBatchRequest {
@@ -35,6 +42,7 @@ impl CreateBatchRequest {
             metadata: None,
             model,
             requests,
+            user: None,
         }
     }
 }

@@ -84,6 +84,14 @@ pub async fn cancel_batch_v1_batches_batch_id_cancel_post(
             Some(ref prefix) => format!("{} {}", prefix, key),
             None => key,
         };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
         req_builder = req_builder.header("Otari-Key", value);
     };
 
@@ -117,7 +125,7 @@ pub async fn cancel_batch_v1_batches_batch_id_cancel_post(
     }
 }
 
-/// Create a batch of LLM requests for asynchronous processing.
+/// Create a batch of LLM requests for asynchronous processing.  Authentication modes: - Master key + user field: Use specified user (must exist) - API key + user field: Use specified user (must exist) - API key without user field: Use the shared \"default\" user
 pub async fn create_batch_v1_batches_post(
     configuration: &configuration::Configuration,
     create_batch_request: models::CreateBatchRequest,
@@ -133,6 +141,14 @@ pub async fn create_batch_v1_batches_post(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
     if let Some(ref apikey) = configuration.api_key {
         let key = apikey.key.clone();
         let value = match apikey.prefix {
@@ -172,7 +188,7 @@ pub async fn create_batch_v1_batches_post(
     }
 }
 
-/// List batches for a provider.
+/// List batches for a provider.  Non-master keys only see batches they own (plus legacy batches without an ownership marker); the page is filtered after the provider call, so a page may contain fewer than ``limit`` items.
 pub async fn list_batches_v1_batches_get(
     configuration: &configuration::Configuration,
     provider: &str,
@@ -197,6 +213,14 @@ pub async fn list_batches_v1_batches_get(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
     if let Some(ref apikey) = configuration.api_key {
         let key = apikey.key.clone();
         let value = match apikey.prefix {
@@ -262,6 +286,14 @@ pub async fn retrieve_batch_results_v1_batches_batch_id_results_get(
             Some(ref prefix) => format!("{} {}", prefix, key),
             None => key,
         };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
         req_builder = req_builder.header("Otari-Key", value);
     };
 
@@ -316,6 +348,14 @@ pub async fn retrieve_batch_v1_batches_batch_id_get(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
     if let Some(ref apikey) = configuration.api_key {
         let key = apikey.key.clone();
         let value = match apikey.prefix {

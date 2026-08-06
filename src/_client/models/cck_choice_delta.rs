@@ -48,7 +48,7 @@ pub struct CckChoiceDelta {
         skip_serializing_if = "Option::is_none"
     )]
     pub tool_calls: Option<Option<Vec<models::CckChoiceDeltaToolCall>>>,
-    /// Filter models by provider name
+    /// Delete the alias scoped to this user. Omit to delete the global alias of that name.
     #[serde(
         rename = "reasoning",
         default,
@@ -56,6 +56,13 @@ pub struct CckChoiceDelta {
         skip_serializing_if = "Option::is_none"
     )]
     pub reasoning: Option<Option<String>>,
+    #[serde(
+        rename = "extra_content",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub extra_content: Option<Option<std::collections::HashMap<String, serde_json::Value>>>,
 }
 
 impl CckChoiceDelta {
@@ -67,6 +74,7 @@ impl CckChoiceDelta {
             role: None,
             tool_calls: None,
             reasoning: None,
+            extra_content: None,
         }
     }
 }

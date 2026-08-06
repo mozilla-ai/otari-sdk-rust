@@ -140,6 +140,7 @@ pub struct ChatCompletionRequest {
     pub stop: Option<Option<Box<models::Stop>>>,
     #[serde(rename = "stream", skip_serializing_if = "Option::is_none")]
     pub stream: Option<bool>,
+    /// An unsaved policy body to explain.
     #[serde(
         rename = "stream_options",
         default,

@@ -45,6 +45,14 @@ pub enum ListKeysV1KeysGetError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`rotate_key_v1_keys_key_id_rotate_post`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum RotateKeyV1KeysKeyIdRotatePostError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`update_key_v1_keys_key_id_patch`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -53,7 +61,7 @@ pub enum UpdateKeyV1KeysKeyIdPatchError {
     UnknownValue(serde_json::Value),
 }
 
-/// Create a new API key.  Requires master key authentication.  If user_id is provided, the key will be associated with that user (creates user if it doesn't exist). If user_id is not provided, a new user will be created automatically and the key will be associated with it.
+/// Create a new API key.  Requires master key authentication.  If user_id is provided, the key will be associated with that user (creates user if it doesn't exist). If user_id is not provided, the key is associated with the shared \"default\" user, which is created on first use. Keys without an explicit owner therefore share one identity, and so share budget, usage, and files.
 pub async fn create_key_v1_keys_post(
     configuration: &configuration::Configuration,
     create_key_request: models::CreateKeyRequest,
@@ -69,6 +77,14 @@ pub async fn create_key_v1_keys_post(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
     if let Some(ref apikey) = configuration.api_key {
         let key = apikey.key.clone();
         let value = match apikey.prefix {
@@ -134,6 +150,14 @@ pub async fn delete_key_v1_keys_key_id_delete(
             Some(ref prefix) => format!("{} {}", prefix, key),
             None => key,
         };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
         req_builder = req_builder.header("Otari-Key", value);
     };
 
@@ -173,6 +197,14 @@ pub async fn get_key_v1_keys_key_id_get(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
     if let Some(ref apikey) = configuration.api_key {
         let key = apikey.key.clone();
         let value = match apikey.prefix {
@@ -239,6 +271,14 @@ pub async fn list_keys_v1_keys_get(
             Some(ref prefix) => format!("{} {}", prefix, key),
             None => key,
         };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
         req_builder = req_builder.header("Otari-Key", value);
     };
 
@@ -271,6 +311,73 @@ pub async fn list_keys_v1_keys_get(
     }
 }
 
+/// Rotate an API key's secret in place.  Requires master key authentication.  Generates a new secret for the same key row (id, user, name, expiry, and metadata are preserved) and returns the new raw key once, using the same response shape as key creation. The previous secret stops authenticating immediately; there is no grace window.
+pub async fn rotate_key_v1_keys_key_id_rotate_post(
+    configuration: &configuration::Configuration,
+    key_id: &str,
+) -> Result<models::CreateKeyResponse, Error<RotateKeyV1KeysKeyIdRotatePostError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_key_id = key_id;
+
+    let uri_str = format!(
+        "{}/v1/keys/{key_id}/rotate",
+        configuration.base_path,
+        key_id = crate::apis::urlencode(p_path_key_id)
+    );
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::CreateKeyResponse`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::CreateKeyResponse`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<RotateKeyV1KeysKeyIdRotatePostError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
 /// Update an API key.  Requires master key authentication.
 pub async fn update_key_v1_keys_key_id_patch(
     configuration: &configuration::Configuration,
@@ -293,6 +400,14 @@ pub async fn update_key_v1_keys_key_id_patch(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
     if let Some(ref apikey) = configuration.api_key {
         let key = apikey.key.clone();
         let value = match apikey.prefix {

@@ -11,9 +11,17 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// CountTokensRequest : Anthropic ``/v1/messages/count_tokens`` request.  A subset of :class:`MessagesRequest`: the input fields that affect the token count, minus ``max_tokens`` and the streaming/sampling controls, since the endpoint only counts input tokens. Clients such as Claude Code call this on every turn to keep their prompt within the model's context window.
+/// CountTokensRequest : Anthropic ``/v1/messages/count_tokens`` request.  A subset of :class:`MessagesRequest`: the input fields that affect the token count, minus ``max_tokens`` and the streaming/sampling controls, since the endpoint only counts input tokens. ``context_management`` and ``betas`` are accepted for wire compatibility, but the local estimate does not apply provider-side context edits. Clients such as Claude Code call this on every turn to keep their prompt within the model's context window.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct CountTokensRequest {
+    #[serde(
+        rename = "betas",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub betas: Option<Option<Vec<String>>>,
+    /// An unsaved policy body to explain.
     #[serde(
         rename = "cache_control",
         default,
@@ -21,8 +29,17 @@ pub struct CountTokensRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub cache_control: Option<Option<std::collections::HashMap<String, serde_json::Value>>>,
+    /// An unsaved policy body to explain.
+    #[serde(
+        rename = "context_management",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub context_management: Option<Option<std::collections::HashMap<String, serde_json::Value>>>,
     #[serde(rename = "messages")]
     pub messages: Vec<std::collections::HashMap<String, serde_json::Value>>,
+    /// An unsaved policy body to explain.
     #[serde(
         rename = "metadata",
         default,
@@ -39,6 +56,7 @@ pub struct CountTokensRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub system: Option<Option<Box<models::System>>>,
+    /// An unsaved policy body to explain.
     #[serde(
         rename = "thinking",
         default,
@@ -46,6 +64,7 @@ pub struct CountTokensRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub thinking: Option<Option<std::collections::HashMap<String, serde_json::Value>>>,
+    /// An unsaved policy body to explain.
     #[serde(
         rename = "tool_choice",
         default,
@@ -63,13 +82,15 @@ pub struct CountTokensRequest {
 }
 
 impl CountTokensRequest {
-    /// Anthropic ``/v1/messages/count_tokens`` request.  A subset of :class:`MessagesRequest`: the input fields that affect the token count, minus ``max_tokens`` and the streaming/sampling controls, since the endpoint only counts input tokens. Clients such as Claude Code call this on every turn to keep their prompt within the model's context window.
+    /// Anthropic ``/v1/messages/count_tokens`` request.  A subset of :class:`MessagesRequest`: the input fields that affect the token count, minus ``max_tokens`` and the streaming/sampling controls, since the endpoint only counts input tokens. ``context_management`` and ``betas`` are accepted for wire compatibility, but the local estimate does not apply provider-side context edits. Clients such as Claude Code call this on every turn to keep their prompt within the model's context window.
     pub fn new(
         messages: Vec<std::collections::HashMap<String, serde_json::Value>>,
         model: String,
     ) -> CountTokensRequest {
         CountTokensRequest {
+            betas: None,
             cache_control: None,
+            context_management: None,
             messages,
             metadata: None,
             model,

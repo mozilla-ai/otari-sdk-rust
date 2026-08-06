@@ -11,6 +11,7 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
+/// CckChoiceDeltaToolCall : Streaming counterpart of ``ChatCompletionMessageFunctionToolCall``.  Adds the same ``extra_content`` field so provider-specific tool-call metadata (e.g. Gemini's ``thought_signature``) can be carried on streaming deltas, not just on the final non-streaming tool call.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct CckChoiceDeltaToolCall {
     #[serde(rename = "index")]
@@ -36,15 +37,24 @@ pub struct CckChoiceDeltaToolCall {
         skip_serializing_if = "Option::is_none"
     )]
     pub r#type: Option<Option<Type>>,
+    #[serde(
+        rename = "extra_content",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub extra_content: Option<Option<std::collections::HashMap<String, serde_json::Value>>>,
 }
 
 impl CckChoiceDeltaToolCall {
+    /// Streaming counterpart of ``ChatCompletionMessageFunctionToolCall``.  Adds the same ``extra_content`` field so provider-specific tool-call metadata (e.g. Gemini's ``thought_signature``) can be carried on streaming deltas, not just on the final non-streaming tool call.
     pub fn new(index: i32) -> CckChoiceDeltaToolCall {
         CckChoiceDeltaToolCall {
             index,
             id: None,
             function: None,
             r#type: None,
+            extra_content: None,
         }
     }
 }

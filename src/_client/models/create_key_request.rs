@@ -14,6 +14,20 @@ use serde::{Deserialize, Serialize};
 /// CreateKeyRequest : Request model for creating a new API key.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct CreateKeyRequest {
+    /// Model allow-list: null = any model, [] = deny all, or canonical instance:model entries (with instance:* / instance:prefix* wildcards).
+    #[serde(
+        rename = "allowed_models",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub allowed_models: Option<Option<Vec<String>>>,
+    /// When true, requests on this key are logged with cost but never reserved, reconciled into the user's spend, or gated by budget.
+    #[serde(
+        rename = "exclude_from_budget",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub exclude_from_budget: Option<bool>,
     /// Optional expiration timestamp
     #[serde(
         rename = "expires_at",
@@ -33,6 +47,14 @@ pub struct CreateKeyRequest {
     /// Optional metadata
     #[serde(rename = "metadata", skip_serializing_if = "Option::is_none")]
     pub metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
+    /// Per-key override of the deployment-wide reject_user_mismatch setting: null (default) inherits it, true always rejects a request naming a different 'user', false always accepts it. Spend binds to this key's own user either way.
+    #[serde(
+        rename = "reject_user_mismatch",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub reject_user_mismatch: Option<Option<bool>>,
     /// Optional user ID to associate with this key
     #[serde(
         rename = "user_id",
@@ -47,9 +69,12 @@ impl CreateKeyRequest {
     /// Request model for creating a new API key.
     pub fn new() -> CreateKeyRequest {
         CreateKeyRequest {
+            allowed_models: None,
+            exclude_from_budget: None,
             expires_at: None,
             key_name: None,
             metadata: None,
+            reject_user_mismatch: None,
             user_id: None,
         }
     }

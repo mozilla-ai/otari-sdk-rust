@@ -22,6 +22,14 @@ pub struct ResponsesRequest {
     )]
     pub background: Option<Option<bool>>,
     #[serde(
+        rename = "context_management",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub context_management:
+        Option<Option<Vec<std::collections::HashMap<String, serde_json::Value>>>>,
+    #[serde(
         rename = "conversation",
         default,
         with = "::serde_with::rust::double_option",
@@ -137,6 +145,7 @@ pub struct ResponsesRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub prompt_cache_retention: Option<Option<String>>,
+    /// An unsaved policy body to explain.
     #[serde(
         rename = "reasoning",
         default,
@@ -259,6 +268,7 @@ impl ResponsesRequest {
     pub fn new(input: Option<serde_json::Value>, model: String) -> ResponsesRequest {
         ResponsesRequest {
             background: None,
+            context_management: None,
             conversation: None,
             frequency_penalty: None,
             guardrails: None,

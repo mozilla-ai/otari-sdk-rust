@@ -12,17 +12,17 @@ use crate::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct Content9Inner {
-    #[serde(rename = "citations", skip_serializing_if = "Option::is_none")]
-    pub citations: Option<Vec<models::MrTextBlockCitationsInner>>,
-    #[serde(rename = "text")]
-    pub text: String,
-    #[serde(rename = "type")]
-    pub r#type: Type,
+pub struct Content16Inner {
     #[serde(rename = "signature")]
     pub signature: String,
     #[serde(rename = "thinking")]
     pub thinking: String,
+    #[serde(rename = "type")]
+    pub r#type: Type,
+    #[serde(rename = "citations", skip_serializing_if = "Option::is_none")]
+    pub citations: Option<Vec<models::MrBetaTextBlockCitationsInner>>,
+    #[serde(rename = "text")]
+    pub text: String,
     #[serde(rename = "data")]
     pub data: String,
     #[serde(rename = "id")]
@@ -37,53 +37,61 @@ pub struct Content9Inner {
     #[serde(rename = "input")]
     pub input: std::collections::HashMap<String, serde_json::Value>,
     #[serde(rename = "name")]
-    pub name: Name,
+    pub name: String,
     #[serde(rename = "content")]
-    pub content: Box<models::Content6>,
+    pub content: String,
     #[serde(rename = "tool_use_id")]
     pub tool_use_id: String,
     #[serde(rename = "file_id")]
     pub file_id: String,
+    #[serde(rename = "server_name")]
+    pub server_name: String,
+    #[serde(rename = "is_error")]
+    pub is_error: bool,
 }
 
-impl Content9Inner {
+impl Content16Inner {
     pub fn new(
-        text: String,
-        r#type: Type,
         signature: String,
         thinking: String,
+        r#type: Type,
+        text: String,
         data: String,
         id: String,
         input: std::collections::HashMap<String, serde_json::Value>,
-        name: Name,
-        content: models::Content6,
+        name: String,
+        content: String,
         tool_use_id: String,
         file_id: String,
-    ) -> Content9Inner {
-        Content9Inner {
-            citations: None,
-            text,
-            r#type,
+        server_name: String,
+        is_error: bool,
+    ) -> Content16Inner {
+        Content16Inner {
             signature,
             thinking,
+            r#type,
+            citations: None,
+            text,
             data,
             id,
             caller: None,
             input,
             name,
-            content: Box::new(content),
+            content,
             tool_use_id,
             file_id,
+            server_name,
+            is_error,
         }
     }
 }
 ///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Type {
-    #[serde(rename = "text")]
-    Text,
     #[serde(rename = "thinking")]
     Thinking,
+    #[serde(rename = "text")]
+    Text,
     #[serde(rename = "redacted_thinking")]
     RedactedThinking,
     #[serde(rename = "tool_use")]
@@ -104,34 +112,16 @@ pub enum Type {
     ToolSearchToolResult,
     #[serde(rename = "container_upload")]
     ContainerUpload,
+    #[serde(rename = "mcp_tool_use")]
+    McpToolUse,
+    #[serde(rename = "mcp_tool_result")]
+    McpToolResult,
+    #[serde(rename = "compaction")]
+    Compaction,
 }
 
 impl Default for Type {
     fn default() -> Type {
-        Self::Text
-    }
-}
-///
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
-pub enum Name {
-    #[serde(rename = "web_search")]
-    WebSearch,
-    #[serde(rename = "web_fetch")]
-    WebFetch,
-    #[serde(rename = "code_execution")]
-    CodeExecution,
-    #[serde(rename = "bash_code_execution")]
-    BashCodeExecution,
-    #[serde(rename = "text_editor_code_execution")]
-    TextEditorCodeExecution,
-    #[serde(rename = "tool_search_tool_regex")]
-    ToolSearchToolRegex,
-    #[serde(rename = "tool_search_tool_bm25")]
-    ToolSearchToolBm25,
-}
-
-impl Default for Name {
-    fn default() -> Name {
-        Self::WebSearch
+        Self::Thinking
     }
 }

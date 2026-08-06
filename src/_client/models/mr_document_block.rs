@@ -21,7 +21,7 @@ pub struct MrDocumentBlock {
     )]
     pub citations: Option<Option<models::MrCitationsConfig>>,
     #[serde(rename = "source")]
-    pub source: Box<models::Source>,
+    pub source: Box<models::Source1>,
     #[serde(
         rename = "title",
         default,
@@ -34,7 +34,7 @@ pub struct MrDocumentBlock {
 }
 
 impl MrDocumentBlock {
-    pub fn new(source: models::Source, r#type: Type) -> MrDocumentBlock {
+    pub fn new(source: models::Source1, r#type: Type) -> MrDocumentBlock {
         MrDocumentBlock {
             citations: None,
             source: Box::new(source),

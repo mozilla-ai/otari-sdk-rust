@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 /// RerankResponse : Normalized rerank response, provider-agnostic.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct RerankResponse {
-    /// Filter models by provider name
+    /// Delete the alias scoped to this user. Omit to delete the global alias of that name.
     #[serde(
         rename = "id",
         default,

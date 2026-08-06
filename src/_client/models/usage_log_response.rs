@@ -26,6 +26,8 @@ pub struct UsageLogResponse {
     pub error_message: Option<String>,
     #[serde(rename = "id")]
     pub id: String,
+    #[serde(rename = "latency_ms", deserialize_with = "Option::deserialize")]
+    pub latency_ms: Option<i32>,
     #[serde(rename = "model")]
     pub model: String,
     #[serde(rename = "prompt_tokens", deserialize_with = "Option::deserialize")]
@@ -51,6 +53,7 @@ impl UsageLogResponse {
         endpoint: String,
         error_message: Option<String>,
         id: String,
+        latency_ms: Option<i32>,
         model: String,
         prompt_tokens: Option<i32>,
         provider: Option<String>,
@@ -66,6 +69,7 @@ impl UsageLogResponse {
             endpoint,
             error_message,
             id,
+            latency_ms,
             model,
             prompt_tokens,
             provider,

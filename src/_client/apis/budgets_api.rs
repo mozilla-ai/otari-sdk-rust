@@ -37,6 +37,14 @@ pub enum GetBudgetV1BudgetsBudgetIdGetError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`list_budget_reset_logs_v1_budgets_budget_id_reset_logs_get`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ListBudgetResetLogsV1BudgetsBudgetIdResetLogsGetError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`list_budgets_v1_budgets_get`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -69,6 +77,14 @@ pub async fn create_budget_v1_budgets_post(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
     if let Some(ref apikey) = configuration.api_key {
         let key = apikey.key.clone();
         let value = match apikey.prefix {
@@ -134,6 +150,14 @@ pub async fn delete_budget_v1_budgets_budget_id_delete(
             Some(ref prefix) => format!("{} {}", prefix, key),
             None => key,
         };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
         req_builder = req_builder.header("Otari-Key", value);
     };
 
@@ -180,6 +204,14 @@ pub async fn get_budget_v1_budgets_budget_id_get(
             Some(ref prefix) => format!("{} {}", prefix, key),
             None => key,
         };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
         req_builder = req_builder.header("Otari-Key", value);
     };
 
@@ -213,6 +245,84 @@ pub async fn get_budget_v1_budgets_budget_id_get(
     }
 }
 
+/// List per-user reset events for a budget, newest first.
+pub async fn list_budget_reset_logs_v1_budgets_budget_id_reset_logs_get(
+    configuration: &configuration::Configuration,
+    budget_id: &str,
+    skip: Option<i32>,
+    limit: Option<i32>,
+) -> Result<
+    Vec<models::BudgetResetLogResponse>,
+    Error<ListBudgetResetLogsV1BudgetsBudgetIdResetLogsGetError>,
+> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_budget_id = budget_id;
+    let p_query_skip = skip;
+    let p_query_limit = limit;
+
+    let uri_str = format!(
+        "{}/v1/budgets/{budget_id}/reset-logs",
+        configuration.base_path,
+        budget_id = crate::apis::urlencode(p_path_budget_id)
+    );
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref param_value) = p_query_skip {
+        req_builder = req_builder.query(&[("skip", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_limit {
+        req_builder = req_builder.query(&[("limit", &param_value.to_string())]);
+    }
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `Vec&lt;models::BudgetResetLogResponse&gt;`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `Vec&lt;models::BudgetResetLogResponse&gt;`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<ListBudgetResetLogsV1BudgetsBudgetIdResetLogsGetError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
 /// List all budgets with pagination.
 pub async fn list_budgets_v1_budgets_get(
     configuration: &configuration::Configuration,
@@ -235,6 +345,14 @@ pub async fn list_budgets_v1_budgets_get(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
     if let Some(ref apikey) = configuration.api_key {
         let key = apikey.key.clone();
         let value = match apikey.prefix {
@@ -295,6 +413,14 @@ pub async fn update_budget_v1_budgets_budget_id_patch(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
     if let Some(ref apikey) = configuration.api_key {
         let key = apikey.key.clone();
         let value = match apikey.prefix {

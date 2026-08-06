@@ -21,7 +21,7 @@ pub struct MrRefusalStopDetails {
         skip_serializing_if = "Option::is_none"
     )]
     pub category: Option<Option<Category>>,
-    /// Filter models by provider name
+    /// Delete the alias scoped to this user. Omit to delete the global alias of that name.
     #[serde(
         rename = "explanation",
         default,

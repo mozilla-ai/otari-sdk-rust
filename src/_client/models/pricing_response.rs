@@ -14,6 +14,21 @@ use serde::{Deserialize, Serialize};
 /// PricingResponse : Response model for model pricing.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PricingResponse {
+    #[serde(
+        rename = "cache_read_price_per_million",
+        deserialize_with = "Option::deserialize"
+    )]
+    pub cache_read_price_per_million: Option<f64>,
+    #[serde(
+        rename = "cache_write_1h_price_per_million",
+        deserialize_with = "Option::deserialize"
+    )]
+    pub cache_write_1h_price_per_million: Option<f64>,
+    #[serde(
+        rename = "cache_write_price_per_million",
+        deserialize_with = "Option::deserialize"
+    )]
+    pub cache_write_price_per_million: Option<f64>,
     #[serde(rename = "created_at")]
     pub created_at: String,
     #[serde(rename = "effective_at")]
@@ -24,6 +39,8 @@ pub struct PricingResponse {
     pub model_key: String,
     #[serde(rename = "output_price_per_million")]
     pub output_price_per_million: f64,
+    #[serde(rename = "pricing_tiers")]
+    pub pricing_tiers: Vec<models::PricingTier>,
     #[serde(rename = "updated_at")]
     pub updated_at: String,
 }
@@ -31,19 +48,27 @@ pub struct PricingResponse {
 impl PricingResponse {
     /// Response model for model pricing.
     pub fn new(
+        cache_read_price_per_million: Option<f64>,
+        cache_write_1h_price_per_million: Option<f64>,
+        cache_write_price_per_million: Option<f64>,
         created_at: String,
         effective_at: String,
         input_price_per_million: f64,
         model_key: String,
         output_price_per_million: f64,
+        pricing_tiers: Vec<models::PricingTier>,
         updated_at: String,
     ) -> PricingResponse {
         PricingResponse {
+            cache_read_price_per_million,
+            cache_write_1h_price_per_million,
+            cache_write_price_per_million,
             created_at,
             effective_at,
             input_price_per_million,
             model_key,
             output_price_per_million,
+            pricing_tiers,
             updated_at,
         }
     }

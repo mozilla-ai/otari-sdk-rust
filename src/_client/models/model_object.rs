@@ -14,6 +14,13 @@ use serde::{Deserialize, Serialize};
 /// ModelObject : OpenAI-compatible model object.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ModelObject {
+    #[serde(
+        rename = "context_window",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub context_window: Option<Option<i32>>,
     #[serde(rename = "created")]
     pub created: i32,
     #[serde(rename = "id")]
@@ -29,17 +36,21 @@ pub struct ModelObject {
         skip_serializing_if = "Option::is_none"
     )]
     pub pricing: Option<Option<Box<models::ModelPricingInfo>>>,
+    #[serde(rename = "pricing_source", skip_serializing_if = "Option::is_none")]
+    pub pricing_source: Option<String>,
 }
 
 impl ModelObject {
     /// OpenAI-compatible model object.
     pub fn new(created: i32, id: String, owned_by: String) -> ModelObject {
         ModelObject {
+            context_window: None,
             created,
             id,
             object: None,
             owned_by,
             pricing: None,
+            pricing_source: None,
         }
     }
 }

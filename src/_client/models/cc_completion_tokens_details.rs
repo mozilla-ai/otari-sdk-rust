@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 /// CcCompletionTokensDetails : Breakdown of tokens used in a completion.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct CcCompletionTokensDetails {
+    /// Filter to a single failure status code (e.g. 429 for provider rate limits, 402 for missing-pricing rejections). Only error rows carry one, so this filter also restricts to status='error' unless 'status' is given explicitly
     #[serde(
         rename = "accepted_prediction_tokens",
         default,
@@ -28,6 +29,7 @@ pub struct CcCompletionTokensDetails {
         skip_serializing_if = "Option::is_none"
     )]
     pub audio_tokens: Option<Option<i32>>,
+    /// Filter to a single failure status code (e.g. 429 for provider rate limits, 402 for missing-pricing rejections). Only error rows carry one, so this filter also restricts to status='error' unless 'status' is given explicitly
     #[serde(
         rename = "reasoning_tokens",
         default,
@@ -35,6 +37,7 @@ pub struct CcCompletionTokensDetails {
         skip_serializing_if = "Option::is_none"
     )]
     pub reasoning_tokens: Option<Option<i32>>,
+    /// Filter to a single failure status code (e.g. 429 for provider rate limits, 402 for missing-pricing rejections). Only error rows carry one, so this filter also restricts to status='error' unless 'status' is given explicitly
     #[serde(
         rename = "rejected_prediction_tokens",
         default,

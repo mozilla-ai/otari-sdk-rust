@@ -16,8 +16,30 @@ use serde::{Deserialize, Serialize};
 pub struct UsageEntry {
     #[serde(rename = "api_key_id", deserialize_with = "Option::deserialize")]
     pub api_key_id: Option<String>,
+    #[serde(
+        rename = "attempt_count",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub attempt_count: Option<Option<i32>>,
+    #[serde(
+        rename = "attempt_position",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub attempt_position: Option<Option<i32>>,
+    /// An unsaved policy body to explain.
+    #[serde(rename = "billing_meters", deserialize_with = "Option::deserialize")]
+    pub billing_meters: Option<std::collections::HashMap<String, serde_json::Value>>,
     #[serde(rename = "cache_read_tokens", deserialize_with = "Option::deserialize")]
     pub cache_read_tokens: Option<i32>,
+    #[serde(
+        rename = "cache_write_1h_tokens",
+        deserialize_with = "Option::deserialize"
+    )]
+    pub cache_write_1h_tokens: Option<i32>,
     #[serde(
         rename = "cache_write_tokens",
         deserialize_with = "Option::deserialize"
@@ -27,20 +49,55 @@ pub struct UsageEntry {
     pub completion_tokens: Option<i32>,
     #[serde(rename = "cost", deserialize_with = "Option::deserialize")]
     pub cost: Option<f64>,
+    #[serde(rename = "counts_toward_budget")]
+    pub counts_toward_budget: bool,
     #[serde(rename = "endpoint")]
     pub endpoint: String,
     #[serde(rename = "error_message", deserialize_with = "Option::deserialize")]
     pub error_message: Option<String>,
     #[serde(rename = "id")]
     pub id: String,
+    #[serde(rename = "latency_ms", deserialize_with = "Option::deserialize")]
+    pub latency_ms: Option<i32>,
     #[serde(rename = "model")]
     pub model: String,
+    #[serde(
+        rename = "policy_name",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub policy_name: Option<Option<String>>,
+    #[serde(rename = "pricing_breakdown", deserialize_with = "Option::deserialize")]
+    pub pricing_breakdown: Option<
+        Vec<std::collections::HashMap<String, models::UsageEntryPricingBreakdownInnerValue>>,
+    >,
     #[serde(rename = "prompt_tokens", deserialize_with = "Option::deserialize")]
     pub prompt_tokens: Option<i32>,
     #[serde(rename = "provider", deserialize_with = "Option::deserialize")]
     pub provider: Option<String>,
+    #[serde(
+        rename = "request_group_id",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub request_group_id: Option<Option<String>>,
+    #[serde(
+        rename = "selection_reason",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub selection_reason: Option<Option<String>>,
+    #[serde(rename = "source")]
+    pub source: String,
+    #[serde(rename = "source_label", deserialize_with = "Option::deserialize")]
+    pub source_label: Option<String>,
     #[serde(rename = "status")]
     pub status: String,
+    #[serde(rename = "status_code", deserialize_with = "Option::deserialize")]
+    pub status_code: Option<i32>,
     #[serde(rename = "timestamp")]
     pub timestamp: String,
     #[serde(rename = "total_tokens", deserialize_with = "Option::deserialize")]
@@ -53,34 +110,57 @@ impl UsageEntry {
     /// A single usage log entry.
     pub fn new(
         api_key_id: Option<String>,
+        billing_meters: Option<std::collections::HashMap<String, serde_json::Value>>,
         cache_read_tokens: Option<i32>,
+        cache_write_1h_tokens: Option<i32>,
         cache_write_tokens: Option<i32>,
         completion_tokens: Option<i32>,
         cost: Option<f64>,
+        counts_toward_budget: bool,
         endpoint: String,
         error_message: Option<String>,
         id: String,
+        latency_ms: Option<i32>,
         model: String,
+        pricing_breakdown: Option<
+            Vec<std::collections::HashMap<String, models::UsageEntryPricingBreakdownInnerValue>>,
+        >,
         prompt_tokens: Option<i32>,
         provider: Option<String>,
+        source: String,
+        source_label: Option<String>,
         status: String,
+        status_code: Option<i32>,
         timestamp: String,
         total_tokens: Option<i32>,
         user_id: Option<String>,
     ) -> UsageEntry {
         UsageEntry {
             api_key_id,
+            attempt_count: None,
+            attempt_position: None,
+            billing_meters,
             cache_read_tokens,
+            cache_write_1h_tokens,
             cache_write_tokens,
             completion_tokens,
             cost,
+            counts_toward_budget,
             endpoint,
             error_message,
             id,
+            latency_ms,
             model,
+            policy_name: None,
+            pricing_breakdown,
             prompt_tokens,
             provider,
+            request_group_id: None,
+            selection_reason: None,
+            source,
+            source_label,
             status,
+            status_code,
             timestamp,
             total_tokens,
             user_id,

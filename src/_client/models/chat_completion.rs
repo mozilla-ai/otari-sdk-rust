@@ -30,7 +30,7 @@ pub struct ChatCompletion {
         skip_serializing_if = "Option::is_none"
     )]
     pub service_tier: Option<Option<String>>,
-    /// Filter models by provider name
+    /// Delete the alias scoped to this user. Omit to delete the global alias of that name.
     #[serde(
         rename = "system_fingerprint",
         default,

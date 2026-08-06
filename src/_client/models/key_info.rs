@@ -14,8 +14,12 @@ use serde::{Deserialize, Serialize};
 /// KeyInfo : Response model for key information.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct KeyInfo {
+    #[serde(rename = "allowed_models", deserialize_with = "Option::deserialize")]
+    pub allowed_models: Option<Vec<String>>,
     #[serde(rename = "created_at")]
     pub created_at: String,
+    #[serde(rename = "exclude_from_budget")]
+    pub exclude_from_budget: bool,
     #[serde(rename = "expires_at", deserialize_with = "Option::deserialize")]
     pub expires_at: Option<String>,
     #[serde(rename = "id")]
@@ -24,10 +28,17 @@ pub struct KeyInfo {
     pub is_active: bool,
     #[serde(rename = "key_name", deserialize_with = "Option::deserialize")]
     pub key_name: Option<String>,
+    #[serde(rename = "key_prefix", deserialize_with = "Option::deserialize")]
+    pub key_prefix: Option<String>,
     #[serde(rename = "last_used_at", deserialize_with = "Option::deserialize")]
     pub last_used_at: Option<String>,
     #[serde(rename = "metadata")]
     pub metadata: std::collections::HashMap<String, serde_json::Value>,
+    #[serde(
+        rename = "reject_user_mismatch",
+        deserialize_with = "Option::deserialize"
+    )]
+    pub reject_user_mismatch: Option<bool>,
     #[serde(rename = "user_id", deserialize_with = "Option::deserialize")]
     pub user_id: Option<String>,
 }
@@ -35,23 +46,31 @@ pub struct KeyInfo {
 impl KeyInfo {
     /// Response model for key information.
     pub fn new(
+        allowed_models: Option<Vec<String>>,
         created_at: String,
+        exclude_from_budget: bool,
         expires_at: Option<String>,
         id: String,
         is_active: bool,
         key_name: Option<String>,
+        key_prefix: Option<String>,
         last_used_at: Option<String>,
         metadata: std::collections::HashMap<String, serde_json::Value>,
+        reject_user_mismatch: Option<bool>,
         user_id: Option<String>,
     ) -> KeyInfo {
         KeyInfo {
+            allowed_models,
             created_at,
+            exclude_from_budget,
             expires_at,
             id,
             is_active,
             key_name,
+            key_prefix,
             last_used_at,
             metadata,
+            reject_user_mismatch,
             user_id,
         }
     }

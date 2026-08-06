@@ -21,7 +21,7 @@ pub struct MrServerToolUseBlock {
         with = "::serde_with::rust::double_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub caller: Option<Option<Box<models::Caller>>>,
+    pub caller: Option<Option<Box<models::Caller1>>>,
     #[serde(rename = "input")]
     pub input: std::collections::HashMap<String, serde_json::Value>,
     #[serde(rename = "name")]
