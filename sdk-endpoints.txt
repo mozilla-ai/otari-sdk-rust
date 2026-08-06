@@ -96,3 +96,39 @@ GET /v1/models/metadata                         # not yet wrapped
 GET /v1/usage/count                             # not yet wrapped
 POST /v1/keys/{key_id}/rotate                   # not yet wrapped
 GET /v1/budgets/{budget_id}/reset-logs          # not yet wrapped
+
+# --- Second wave of gateway endpoints (added after the initial manifest) ---
+# Dashboard session auth: browser cookie flow for the admin UI, not an SDK surface.
+POST /v1/auth/session                           # dashboard-only
+DELETE /v1/auth/session                         # dashboard-only
+# OTLP ingest: OpenTelemetry collector receivers, not an SDK surface.
+POST /v1/logs                                   # otel ingest
+POST /v1/traces                                 # otel ingest
+# Usage analytics and maintenance
+GET /v1/usage/summary                           # not yet wrapped
+GET /v1/usage/summary.csv                       # not yet wrapped
+GET /v1/usage/series                            # not yet wrapped
+DELETE /v1/usage                                # not yet wrapped
+POST /v1/usage/external-events                  # not yet wrapped
+POST /v1/usage/set-price                        # not yet wrapped
+# Routing policies
+GET /v1/routing/policies                        # not yet wrapped
+POST /v1/routing/policies                       # not yet wrapped
+DELETE /v1/routing/policies/{name}              # not yet wrapped
+POST /v1/routing/policies/explain               # not yet wrapped
+# Pricing refresh workflow
+POST /v1/pricing/refresh                        # not yet wrapped
+POST /v1/pricing/refresh/confirm                # not yet wrapped
+POST /v1/pricing/refresh/reject                 # not yet wrapped
+# Providers
+GET /v1/providers/catalog/{provider_id}         # not yet wrapped
+GET /v1/providers/health                        # not yet wrapped
+POST /v1/provider-credentials/reencrypt         # not yet wrapped
+# Built-in tool settings and search
+GET /v1/tool-settings                           # not yet wrapped
+PATCH /v1/tool-settings                         # not yet wrapped
+POST /v1/tool-settings/{service}/test           # not yet wrapped
+POST /v1/search                                 # not yet wrapped
+POST /v1/search/{search_tool_name}              # not yet wrapped
+# Settings
+POST /v1/settings/master-key/rotate             # not yet wrapped
