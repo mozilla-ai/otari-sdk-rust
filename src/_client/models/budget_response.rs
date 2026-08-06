@@ -11,7 +11,7 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// BudgetResponse : Response model for budget information.
+/// BudgetResponse : Response model for budget information.  ``max_budget`` is the per-user spending limit, and multiple users can share one budget, so the usage rollup is an aggregate over the users assigned to this budget: how many there are and their combined ``spend`` / ``reserved``. Assigning users to a budget is done through the users API (dashboard support lands with user management), so a fresh gateway reports zeros here.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct BudgetResponse {
     #[serde(
@@ -25,17 +25,26 @@ pub struct BudgetResponse {
     pub created_at: String,
     #[serde(rename = "max_budget", deserialize_with = "Option::deserialize")]
     pub max_budget: Option<f64>,
+    #[serde(rename = "name", deserialize_with = "Option::deserialize")]
+    pub name: Option<String>,
+    #[serde(rename = "total_reserved", skip_serializing_if = "Option::is_none")]
+    pub total_reserved: Option<f64>,
+    #[serde(rename = "total_spend", skip_serializing_if = "Option::is_none")]
+    pub total_spend: Option<f64>,
     #[serde(rename = "updated_at")]
     pub updated_at: String,
+    #[serde(rename = "user_count", skip_serializing_if = "Option::is_none")]
+    pub user_count: Option<i32>,
 }
 
 impl BudgetResponse {
-    /// Response model for budget information.
+    /// Response model for budget information.  ``max_budget`` is the per-user spending limit, and multiple users can share one budget, so the usage rollup is an aggregate over the users assigned to this budget: how many there are and their combined ``spend`` / ``reserved``. Assigning users to a budget is done through the users API (dashboard support lands with user management), so a fresh gateway reports zeros here.
     pub fn new(
         budget_duration_sec: Option<i32>,
         budget_id: String,
         created_at: String,
         max_budget: Option<f64>,
+        name: Option<String>,
         updated_at: String,
     ) -> BudgetResponse {
         BudgetResponse {
@@ -43,7 +52,11 @@ impl BudgetResponse {
             budget_id,
             created_at,
             max_budget,
+            name,
+            total_reserved: None,
+            total_spend: None,
             updated_at,
+            user_count: None,
         }
     }
 }

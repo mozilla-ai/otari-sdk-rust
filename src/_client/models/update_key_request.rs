@@ -15,6 +15,20 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct UpdateKeyRequest {
     #[serde(
+        rename = "allowed_models",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub allowed_models: Option<Option<Vec<String>>>,
+    #[serde(
+        rename = "exclude_from_budget",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub exclude_from_budget: Option<Option<bool>>,
+    #[serde(
         rename = "expires_at",
         default,
         with = "::serde_with::rust::double_option",
@@ -42,16 +56,26 @@ pub struct UpdateKeyRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub metadata: Option<Option<std::collections::HashMap<String, serde_json::Value>>>,
+    #[serde(
+        rename = "reject_user_mismatch",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub reject_user_mismatch: Option<Option<bool>>,
 }
 
 impl UpdateKeyRequest {
     /// Request model for updating a key.
     pub fn new() -> UpdateKeyRequest {
         UpdateKeyRequest {
+            allowed_models: None,
+            exclude_from_budget: None,
             expires_at: None,
             is_active: None,
             key_name: None,
             metadata: None,
+            reject_user_mismatch: None,
         }
     }
 }

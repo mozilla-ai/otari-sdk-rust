@@ -15,7 +15,6 @@ use serde::{Deserialize, Serialize};
 pub struct MrWebFetchBlock {
     #[serde(rename = "content")]
     pub content: models::MrDocumentBlock,
-    /// Filter models by provider name
     #[serde(
         rename = "retrieved_at",
         default,

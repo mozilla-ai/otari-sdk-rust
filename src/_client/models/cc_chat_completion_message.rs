@@ -57,7 +57,7 @@ pub struct CcChatCompletionMessage {
         skip_serializing_if = "Option::is_none"
     )]
     pub tool_calls: Option<Option<Vec<models::CcChatCompletionMessageToolCallsInner>>>,
-    /// Filter models by provider name
+    /// Delete the alias scoped to this user. Omit to delete the global alias of that name.
     #[serde(
         rename = "reasoning",
         default,
@@ -65,6 +65,14 @@ pub struct CcChatCompletionMessage {
         skip_serializing_if = "Option::is_none"
     )]
     pub reasoning: Option<Option<String>>,
+    /// An unsaved policy body to explain.
+    #[serde(
+        rename = "extra_content",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub extra_content: Option<Option<std::collections::HashMap<String, serde_json::Value>>>,
 }
 
 impl CcChatCompletionMessage {
@@ -78,6 +86,7 @@ impl CcChatCompletionMessage {
             function_call: None,
             tool_calls: None,
             reasoning: None,
+            extra_content: None,
         }
     }
 }

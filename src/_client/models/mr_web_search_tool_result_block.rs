@@ -19,9 +19,9 @@ pub struct MrWebSearchToolResultBlock {
         with = "::serde_with::rust::double_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub caller: Option<Option<Box<models::Caller>>>,
+    pub caller: Option<Option<Box<models::Caller1>>>,
     #[serde(rename = "content")]
-    pub content: Box<models::Content8>,
+    pub content: Box<models::Content15>,
     #[serde(rename = "tool_use_id")]
     pub tool_use_id: String,
     #[serde(rename = "type")]
@@ -30,7 +30,7 @@ pub struct MrWebSearchToolResultBlock {
 
 impl MrWebSearchToolResultBlock {
     pub fn new(
-        content: models::Content8,
+        content: models::Content15,
         tool_use_id: String,
         r#type: Type,
     ) -> MrWebSearchToolResultBlock {

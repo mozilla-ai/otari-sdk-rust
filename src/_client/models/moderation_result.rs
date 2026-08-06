@@ -28,6 +28,7 @@ pub struct ModerationResult {
     pub category_scores: Option<std::collections::HashMap<String, f64>>,
     #[serde(rename = "flagged")]
     pub flagged: bool,
+    /// An unsaved policy body to explain.
     #[serde(
         rename = "provider_raw",
         default,

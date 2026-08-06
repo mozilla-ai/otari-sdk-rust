@@ -113,7 +113,9 @@ impl From<&str> for ContentType {
     }
 }
 
+pub mod aliases_api;
 pub mod audio_api;
+pub mod auth_api;
 pub mod batches_api;
 pub mod budgets_api;
 pub mod chat_api;
@@ -125,9 +127,15 @@ pub mod keys_api;
 pub mod messages_api;
 pub mod models_api;
 pub mod moderations_api;
+pub mod otel_api;
 pub mod pricing_api;
+pub mod providers_api;
 pub mod rerank_api;
 pub mod responses_api;
+pub mod routing_api;
+pub mod search_api;
+pub mod settings_api;
+pub mod tool_settings_api;
 pub mod usage_api;
 pub mod users_api;
 

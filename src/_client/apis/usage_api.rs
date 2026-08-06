@@ -13,6 +13,30 @@ use crate::{apis::ResponseContent, models};
 use reqwest;
 use serde::{de::Error as _, Deserialize, Serialize};
 
+/// struct for typed errors of method [`count_usage_v1_usage_count_get`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum CountUsageV1UsageCountGetError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`delete_usage_rows_v1_usage_delete`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum DeleteUsageRowsV1UsageDeleteError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`ingest_external_usage_v1_usage_external_events_post`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum IngestExternalUsageV1UsageExternalEventsPostError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`list_usage_v1_usage_get`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -21,12 +45,333 @@ pub enum ListUsageV1UsageGetError {
     UnknownValue(serde_json::Value),
 }
 
-/// List usage logs ordered by timestamp (most recent first).  Supports optional filters for time range and user. Paginated via skip/limit. Timestamps accept either ISO 8601 strings or Unix epoch seconds (numeric).
+/// struct for typed errors of method [`set_usage_price_rows_v1_usage_set_price_post`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum SetUsagePriceRowsV1UsageSetPricePostError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`usage_series_v1_usage_series_get`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum UsageSeriesV1UsageSeriesGetError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`usage_summary_csv_v1_usage_summary_csv_get`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum UsageSummaryCsvV1UsageSummaryCsvGetError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`usage_summary_v1_usage_summary_get`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum UsageSummaryV1UsageSummaryGetError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
+/// Total number of usage logs matching the given filters.  Serves the dashboard paginator's \"N of M\" total without changing the bare array contract of ``GET /v1/usage``. Runs only when the client asks (a separate request), so the ``COUNT(*)`` is not paid on every page load. With ``counts_toward_budget=false`` it also backs the \"select all N matching this filter\" affordance for bulk delete / set-price, which touch imported rows only.
+pub async fn count_usage_v1_usage_count_get(
+    configuration: &configuration::Configuration,
+    start_date: Option<chrono::DateTime<chrono::FixedOffset>>,
+    end_date: Option<chrono::DateTime<chrono::FixedOffset>>,
+    user_id: Option<&str>,
+    status: Option<&str>,
+    status_code: Option<i32>,
+    model: Option<&str>,
+    endpoint: Option<&str>,
+    provider: Option<&str>,
+    source: Option<&str>,
+    source_label: Option<&str>,
+    api_key_id: Option<&str>,
+    priced: Option<bool>,
+    tool: Option<&str>,
+    counts_toward_budget: Option<bool>,
+    request_group_id: Option<Vec<String>>,
+) -> Result<models::UsageCount, Error<CountUsageV1UsageCountGetError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_start_date = start_date;
+    let p_query_end_date = end_date;
+    let p_query_user_id = user_id;
+    let p_query_status = status;
+    let p_query_status_code = status_code;
+    let p_query_model = model;
+    let p_query_endpoint = endpoint;
+    let p_query_provider = provider;
+    let p_query_source = source;
+    let p_query_source_label = source_label;
+    let p_query_api_key_id = api_key_id;
+    let p_query_priced = priced;
+    let p_query_tool = tool;
+    let p_query_counts_toward_budget = counts_toward_budget;
+    let p_query_request_group_id = request_group_id;
+
+    let uri_str = format!("{}/v1/usage/count", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref param_value) = p_query_start_date {
+        req_builder = req_builder.query(&[("start_date", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_end_date {
+        req_builder = req_builder.query(&[("end_date", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_user_id {
+        req_builder = req_builder.query(&[("user_id", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_status {
+        req_builder = req_builder.query(&[("status", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_status_code {
+        req_builder = req_builder.query(&[("status_code", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_model {
+        req_builder = req_builder.query(&[("model", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_endpoint {
+        req_builder = req_builder.query(&[("endpoint", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_provider {
+        req_builder = req_builder.query(&[("provider", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_source {
+        req_builder = req_builder.query(&[("source", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_source_label {
+        req_builder = req_builder.query(&[("source_label", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_api_key_id {
+        req_builder = req_builder.query(&[("api_key_id", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_priced {
+        req_builder = req_builder.query(&[("priced", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_tool {
+        req_builder = req_builder.query(&[("tool", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_counts_toward_budget {
+        req_builder = req_builder.query(&[("counts_toward_budget", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_request_group_id {
+        req_builder = match "multi" {
+            "multi" => req_builder.query(
+                &param_value
+                    .into_iter()
+                    .map(|p| ("request_group_id".to_owned(), p.to_string()))
+                    .collect::<Vec<(std::string::String, std::string::String)>>(),
+            ),
+            _ => req_builder.query(&[(
+                "request_group_id",
+                &param_value
+                    .into_iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",")
+                    .to_string(),
+            )]),
+        };
+    }
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::UsageCount`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::UsageCount`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<CountUsageV1UsageCountGetError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Delete imported usage rows by explicit ids or by filter (standalone).  Target either the current selection (``ids``) or everything matching a filter (``by_filter: true`` plus optional ``source`` / ``model`` / ``user_id`` / ``status`` / date range / ``priced``). Only imported rows (``counts_toward_budget = false``) are ever removed: enforced gateway rows and the spend ledger (``users.spend``) are untouched, so a delete can never desync a budget. Master-key only.
+pub async fn delete_usage_rows_v1_usage_delete(
+    configuration: &configuration::Configuration,
+    usage_delete_request: models::UsageDeleteRequest,
+) -> Result<models::UsageDeleteResult, Error<DeleteUsageRowsV1UsageDeleteError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_usage_delete_request = usage_delete_request;
+
+    let uri_str = format!("{}/v1/usage", configuration.base_path);
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::DELETE, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+    req_builder = req_builder.json(&p_body_usage_delete_request);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::UsageDeleteResult`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::UsageDeleteResult`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<DeleteUsageRowsV1UsageDeleteError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Ingest a batch of externally-observed usage events (standalone).  Authenticated with either an API key or the master key. Usage binds to the authenticated principal: an API key attributes to its own user (and stamps its id on the rows); the master key may name any user via ``user_id``. Records subscription-backed usage (e.g. Claude Code) as usage-log rows tagged with their ``source``, priced at the effective API rate for each event's timestamp. Imported usage is real cost, but never counts toward budgets or mutates ``users.spend`` (it is retrospective, so it cannot be reserved). Idempotent by ``(source, source_event_id)``. The payload is content-free; any prompt/completion/tool field is rejected (422), not stored.
+pub async fn ingest_external_usage_v1_usage_external_events_post(
+    configuration: &configuration::Configuration,
+    external_events_request: models::ExternalEventsRequest,
+) -> Result<models::ExternalIngestResult, Error<IngestExternalUsageV1UsageExternalEventsPostError>>
+{
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_external_events_request = external_events_request;
+
+    let uri_str = format!("{}/v1/usage/external-events", configuration.base_path);
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+    req_builder = req_builder.json(&p_body_external_events_request);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::ExternalIngestResult`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::ExternalIngestResult`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<IngestExternalUsageV1UsageExternalEventsPostError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// List usage logs ordered by timestamp (most recent first).  Supports optional filters for time range, user, status, failure status code, model, endpoint, provider, source, session (``source_label``), and request group (``request_group_id``, repeatable, which returns a routed request's whole attempt plan). Paginated via skip/limit. The return shape is a bare JSON array; external billing/analytics consumers depend on this, so the total row count for a paginated UI is served separately by ``GET /v1/usage/count`` rather than wrapped in an envelope here. Timestamps accept either ISO 8601 strings or Unix epoch seconds (numeric).
 pub async fn list_usage_v1_usage_get(
     configuration: &configuration::Configuration,
     start_date: Option<chrono::DateTime<chrono::FixedOffset>>,
     end_date: Option<chrono::DateTime<chrono::FixedOffset>>,
     user_id: Option<&str>,
+    status: Option<&str>,
+    status_code: Option<i32>,
+    model: Option<&str>,
+    endpoint: Option<&str>,
+    provider: Option<&str>,
+    source: Option<&str>,
+    source_label: Option<&str>,
+    api_key_id: Option<&str>,
+    priced: Option<bool>,
+    tool: Option<&str>,
+    counts_toward_budget: Option<bool>,
+    request_group_id: Option<Vec<String>>,
     skip: Option<i32>,
     limit: Option<i32>,
 ) -> Result<Vec<models::UsageEntry>, Error<ListUsageV1UsageGetError>> {
@@ -34,6 +379,18 @@ pub async fn list_usage_v1_usage_get(
     let p_query_start_date = start_date;
     let p_query_end_date = end_date;
     let p_query_user_id = user_id;
+    let p_query_status = status;
+    let p_query_status_code = status_code;
+    let p_query_model = model;
+    let p_query_endpoint = endpoint;
+    let p_query_provider = provider;
+    let p_query_source = source;
+    let p_query_source_label = source_label;
+    let p_query_api_key_id = api_key_id;
+    let p_query_priced = priced;
+    let p_query_tool = tool;
+    let p_query_counts_toward_budget = counts_toward_budget;
+    let p_query_request_group_id = request_group_id;
     let p_query_skip = skip;
     let p_query_limit = limit;
 
@@ -49,6 +406,58 @@ pub async fn list_usage_v1_usage_get(
     if let Some(ref param_value) = p_query_user_id {
         req_builder = req_builder.query(&[("user_id", &param_value.to_string())]);
     }
+    if let Some(ref param_value) = p_query_status {
+        req_builder = req_builder.query(&[("status", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_status_code {
+        req_builder = req_builder.query(&[("status_code", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_model {
+        req_builder = req_builder.query(&[("model", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_endpoint {
+        req_builder = req_builder.query(&[("endpoint", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_provider {
+        req_builder = req_builder.query(&[("provider", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_source {
+        req_builder = req_builder.query(&[("source", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_source_label {
+        req_builder = req_builder.query(&[("source_label", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_api_key_id {
+        req_builder = req_builder.query(&[("api_key_id", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_priced {
+        req_builder = req_builder.query(&[("priced", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_tool {
+        req_builder = req_builder.query(&[("tool", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_counts_toward_budget {
+        req_builder = req_builder.query(&[("counts_toward_budget", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_request_group_id {
+        req_builder = match "multi" {
+            "multi" => req_builder.query(
+                &param_value
+                    .into_iter()
+                    .map(|p| ("request_group_id".to_owned(), p.to_string()))
+                    .collect::<Vec<(std::string::String, std::string::String)>>(),
+            ),
+            _ => req_builder.query(&[(
+                "request_group_id",
+                &param_value
+                    .into_iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",")
+                    .to_string(),
+            )]),
+        };
+    }
     if let Some(ref param_value) = p_query_skip {
         req_builder = req_builder.query(&[("skip", &param_value.to_string())]);
     }
@@ -58,6 +467,14 @@ pub async fn list_usage_v1_usage_get(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
     if let Some(ref apikey) = configuration.api_key {
         let key = apikey.key.clone();
         let value = match apikey.prefix {
@@ -88,6 +505,490 @@ pub async fn list_usage_v1_usage_get(
     } else {
         let content = resp.text().await?;
         let entity: Option<ListUsageV1UsageGetError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Set the cost of imported usage rows from manual per-1M rates (standalone).  Target either the current selection (``ids``) or everything matching a filter (``by_filter: true``). Cost / billing meters / pricing breakdown are recomputed from each row's own token counts at the supplied ``input`` / ``output`` / ``cache_read`` / ``cache_write`` per-1M rates (manual rates, not a recompute from configured pricing). Only imported rows (``counts_toward_budget = false``) are touched, so ``users.spend`` is never affected. Master-key only.
+pub async fn set_usage_price_rows_v1_usage_set_price_post(
+    configuration: &configuration::Configuration,
+    usage_set_price_request: models::UsageSetPriceRequest,
+) -> Result<models::UsageSetPriceResult, Error<SetUsagePriceRowsV1UsageSetPricePostError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_usage_set_price_request = usage_set_price_request;
+
+    let uri_str = format!("{}/v1/usage/set-price", configuration.base_path);
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+    req_builder = req_builder.json(&p_body_usage_set_price_request);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::UsageSetPriceResult`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::UsageSetPriceResult`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<SetUsagePriceRowsV1UsageSetPricePostError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Time series split by one dimension, for the dashboard's stacked charts.  Same filters and window bounds as ``/summary`` (kept in lockstep: the dashboard serializes one filter object for both, and a filter this endpoint silently ignored would make the stacked chart disagree with the tiles beside it). The window's top groups by spend are returned as their own series; everything past the top eight folds into a single ``other`` series per bucket, so the stack always reconciles with the summary totals. Points are sparse (populated cells only); the bucket grid is bounded like ``/summary``'s series, so an hourly bucket over a too-wide window is rejected rather than ballooning the payload.
+pub async fn usage_series_v1_usage_series_get(
+    configuration: &configuration::Configuration,
+    group_by: &str,
+    start_date: Option<chrono::DateTime<chrono::FixedOffset>>,
+    end_date: Option<chrono::DateTime<chrono::FixedOffset>>,
+    user_id: Option<&str>,
+    status: Option<&str>,
+    status_code: Option<i32>,
+    model: Option<&str>,
+    endpoint: Option<&str>,
+    provider: Option<&str>,
+    source: Option<&str>,
+    source_label: Option<&str>,
+    api_key_id: Option<&str>,
+    priced: Option<bool>,
+    tool: Option<&str>,
+    counts_toward_budget: Option<bool>,
+    bucket: Option<&str>,
+) -> Result<models::UsageGroupedSeries, Error<UsageSeriesV1UsageSeriesGetError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_group_by = group_by;
+    let p_query_start_date = start_date;
+    let p_query_end_date = end_date;
+    let p_query_user_id = user_id;
+    let p_query_status = status;
+    let p_query_status_code = status_code;
+    let p_query_model = model;
+    let p_query_endpoint = endpoint;
+    let p_query_provider = provider;
+    let p_query_source = source;
+    let p_query_source_label = source_label;
+    let p_query_api_key_id = api_key_id;
+    let p_query_priced = priced;
+    let p_query_tool = tool;
+    let p_query_counts_toward_budget = counts_toward_budget;
+    let p_query_bucket = bucket;
+
+    let uri_str = format!("{}/v1/usage/series", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    req_builder = req_builder.query(&[("group_by", &p_query_group_by.to_string())]);
+    if let Some(ref param_value) = p_query_start_date {
+        req_builder = req_builder.query(&[("start_date", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_end_date {
+        req_builder = req_builder.query(&[("end_date", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_user_id {
+        req_builder = req_builder.query(&[("user_id", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_status {
+        req_builder = req_builder.query(&[("status", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_status_code {
+        req_builder = req_builder.query(&[("status_code", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_model {
+        req_builder = req_builder.query(&[("model", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_endpoint {
+        req_builder = req_builder.query(&[("endpoint", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_provider {
+        req_builder = req_builder.query(&[("provider", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_source {
+        req_builder = req_builder.query(&[("source", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_source_label {
+        req_builder = req_builder.query(&[("source_label", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_api_key_id {
+        req_builder = req_builder.query(&[("api_key_id", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_priced {
+        req_builder = req_builder.query(&[("priced", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_tool {
+        req_builder = req_builder.query(&[("tool", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_counts_toward_budget {
+        req_builder = req_builder.query(&[("counts_toward_budget", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_bucket {
+        req_builder = req_builder.query(&[("bucket", &param_value.to_string())]);
+    }
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::UsageGroupedSeries`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::UsageGroupedSeries`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<UsageSeriesV1UsageSeriesGetError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Download every breakdown the summary reports, as one CSV.  One row per (dimension, key): model, user, API key, source, session (``source_label``), endpoint, and provider. A dedicated route rather than a ``format=csv`` flag on ``/summary`` so that endpoint keeps a single JSON response model and a clean OpenAPI schema. The export is **uncapped** (no top-N fold): finance wants every row. ``tokens`` is the billed total (fresh input, both cache buckets, and output), matching the dashboard's analytics. Kept separate from the bare-array ``/v1/usage`` contract, which is untouched.
+pub async fn usage_summary_csv_v1_usage_summary_csv_get(
+    configuration: &configuration::Configuration,
+    start_date: Option<chrono::DateTime<chrono::FixedOffset>>,
+    end_date: Option<chrono::DateTime<chrono::FixedOffset>>,
+    user_id: Option<&str>,
+    status: Option<&str>,
+    status_code: Option<i32>,
+    model: Option<&str>,
+    endpoint: Option<&str>,
+    provider: Option<&str>,
+    source: Option<&str>,
+    source_label: Option<&str>,
+    api_key_id: Option<&str>,
+    priced: Option<bool>,
+    tool: Option<&str>,
+    counts_toward_budget: Option<bool>,
+) -> Result<serde_json::Value, Error<UsageSummaryCsvV1UsageSummaryCsvGetError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_start_date = start_date;
+    let p_query_end_date = end_date;
+    let p_query_user_id = user_id;
+    let p_query_status = status;
+    let p_query_status_code = status_code;
+    let p_query_model = model;
+    let p_query_endpoint = endpoint;
+    let p_query_provider = provider;
+    let p_query_source = source;
+    let p_query_source_label = source_label;
+    let p_query_api_key_id = api_key_id;
+    let p_query_priced = priced;
+    let p_query_tool = tool;
+    let p_query_counts_toward_budget = counts_toward_budget;
+
+    let uri_str = format!("{}/v1/usage/summary.csv", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref param_value) = p_query_start_date {
+        req_builder = req_builder.query(&[("start_date", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_end_date {
+        req_builder = req_builder.query(&[("end_date", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_user_id {
+        req_builder = req_builder.query(&[("user_id", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_status {
+        req_builder = req_builder.query(&[("status", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_status_code {
+        req_builder = req_builder.query(&[("status_code", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_model {
+        req_builder = req_builder.query(&[("model", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_endpoint {
+        req_builder = req_builder.query(&[("endpoint", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_provider {
+        req_builder = req_builder.query(&[("provider", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_source {
+        req_builder = req_builder.query(&[("source", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_source_label {
+        req_builder = req_builder.query(&[("source_label", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_api_key_id {
+        req_builder = req_builder.query(&[("api_key_id", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_priced {
+        req_builder = req_builder.query(&[("priced", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_tool {
+        req_builder = req_builder.query(&[("tool", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_counts_toward_budget {
+        req_builder = req_builder.query(&[("counts_toward_budget", &param_value.to_string())]);
+    }
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `serde_json::Value`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `serde_json::Value`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<UsageSummaryCsvV1UsageSummaryCsvGetError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Aggregate spend, tokens, and request volume for the dashboard Usage page.  Range-bounded (default last 30 days, hard-capped): unlike the raw ``/v1/usage`` list, every aggregate is scoped to a bounded window so it stays served by the timestamp index. Returns grand totals, breakdowns by model / user / API key / source / session (``source_label``) / endpoint / provider (top rows plus a reconciling ``other`` fold, billed token counts), the error taxonomy grouped by failure status code, and a UTC-bucketed time series carrying each bucket's error count and billed token composition (input incl. cache, cache read/write, output).  Each breakdown is its own ``GROUP BY`` pass, so a caller that reads only the totals or the series should narrow ``dimensions`` rather than pay for all eight (the dashboard's tiles, timeline context, and model typeahead all do). Omitting the parameter keeps the full set.
+pub async fn usage_summary_v1_usage_summary_get(
+    configuration: &configuration::Configuration,
+    start_date: Option<chrono::DateTime<chrono::FixedOffset>>,
+    end_date: Option<chrono::DateTime<chrono::FixedOffset>>,
+    user_id: Option<&str>,
+    status: Option<&str>,
+    status_code: Option<i32>,
+    model: Option<&str>,
+    endpoint: Option<&str>,
+    provider: Option<&str>,
+    source: Option<&str>,
+    source_label: Option<&str>,
+    api_key_id: Option<&str>,
+    priced: Option<bool>,
+    tool: Option<&str>,
+    counts_toward_budget: Option<bool>,
+    bucket: Option<&str>,
+    dimensions: Option<Vec<String>>,
+) -> Result<models::UsageSummary, Error<UsageSummaryV1UsageSummaryGetError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_start_date = start_date;
+    let p_query_end_date = end_date;
+    let p_query_user_id = user_id;
+    let p_query_status = status;
+    let p_query_status_code = status_code;
+    let p_query_model = model;
+    let p_query_endpoint = endpoint;
+    let p_query_provider = provider;
+    let p_query_source = source;
+    let p_query_source_label = source_label;
+    let p_query_api_key_id = api_key_id;
+    let p_query_priced = priced;
+    let p_query_tool = tool;
+    let p_query_counts_toward_budget = counts_toward_budget;
+    let p_query_bucket = bucket;
+    let p_query_dimensions = dimensions;
+
+    let uri_str = format!("{}/v1/usage/summary", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref param_value) = p_query_start_date {
+        req_builder = req_builder.query(&[("start_date", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_end_date {
+        req_builder = req_builder.query(&[("end_date", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_user_id {
+        req_builder = req_builder.query(&[("user_id", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_status {
+        req_builder = req_builder.query(&[("status", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_status_code {
+        req_builder = req_builder.query(&[("status_code", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_model {
+        req_builder = req_builder.query(&[("model", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_endpoint {
+        req_builder = req_builder.query(&[("endpoint", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_provider {
+        req_builder = req_builder.query(&[("provider", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_source {
+        req_builder = req_builder.query(&[("source", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_source_label {
+        req_builder = req_builder.query(&[("source_label", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_api_key_id {
+        req_builder = req_builder.query(&[("api_key_id", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_priced {
+        req_builder = req_builder.query(&[("priced", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_tool {
+        req_builder = req_builder.query(&[("tool", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_counts_toward_budget {
+        req_builder = req_builder.query(&[("counts_toward_budget", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_bucket {
+        req_builder = req_builder.query(&[("bucket", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_dimensions {
+        req_builder = match "multi" {
+            "multi" => req_builder.query(
+                &param_value
+                    .into_iter()
+                    .map(|p| ("dimensions".to_owned(), p.to_string()))
+                    .collect::<Vec<(std::string::String, std::string::String)>>(),
+            ),
+            _ => req_builder.query(&[(
+                "dimensions",
+                &param_value
+                    .into_iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",")
+                    .to_string(),
+            )]),
+        };
+    }
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::UsageSummary`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::UsageSummary`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<UsageSummaryV1UsageSummaryGetError> =
+            serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent {
             status,
             content,

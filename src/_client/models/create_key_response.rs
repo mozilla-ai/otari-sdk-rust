@@ -14,8 +14,12 @@ use serde::{Deserialize, Serialize};
 /// CreateKeyResponse : Response model for creating a new API key.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct CreateKeyResponse {
+    #[serde(rename = "allowed_models", deserialize_with = "Option::deserialize")]
+    pub allowed_models: Option<Vec<String>>,
     #[serde(rename = "created_at")]
     pub created_at: String,
+    #[serde(rename = "exclude_from_budget")]
+    pub exclude_from_budget: bool,
     #[serde(rename = "expires_at", deserialize_with = "Option::deserialize")]
     pub expires_at: Option<String>,
     #[serde(rename = "id")]
@@ -26,8 +30,15 @@ pub struct CreateKeyResponse {
     pub key: String,
     #[serde(rename = "key_name", deserialize_with = "Option::deserialize")]
     pub key_name: Option<String>,
+    #[serde(rename = "key_prefix", deserialize_with = "Option::deserialize")]
+    pub key_prefix: Option<String>,
     #[serde(rename = "metadata")]
     pub metadata: std::collections::HashMap<String, serde_json::Value>,
+    #[serde(
+        rename = "reject_user_mismatch",
+        deserialize_with = "Option::deserialize"
+    )]
+    pub reject_user_mismatch: Option<bool>,
     #[serde(rename = "user_id", deserialize_with = "Option::deserialize")]
     pub user_id: Option<String>,
 }
@@ -35,23 +46,31 @@ pub struct CreateKeyResponse {
 impl CreateKeyResponse {
     /// Response model for creating a new API key.
     pub fn new(
+        allowed_models: Option<Vec<String>>,
         created_at: String,
+        exclude_from_budget: bool,
         expires_at: Option<String>,
         id: String,
         is_active: bool,
         key: String,
         key_name: Option<String>,
+        key_prefix: Option<String>,
         metadata: std::collections::HashMap<String, serde_json::Value>,
+        reject_user_mismatch: Option<bool>,
         user_id: Option<String>,
     ) -> CreateKeyResponse {
         CreateKeyResponse {
+            allowed_models,
             created_at,
+            exclude_from_budget,
             expires_at,
             id,
             is_active,
             key,
             key_name,
+            key_prefix,
             metadata,
+            reject_user_mismatch,
             user_id,
         }
     }

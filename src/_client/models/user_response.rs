@@ -16,6 +16,8 @@ use serde::{Deserialize, Serialize};
 pub struct UserResponse {
     #[serde(rename = "alias", deserialize_with = "Option::deserialize")]
     pub alias: Option<String>,
+    #[serde(rename = "allowed_models", deserialize_with = "Option::deserialize")]
+    pub allowed_models: Option<Vec<String>>,
     #[serde(rename = "blocked")]
     pub blocked: bool,
     #[serde(rename = "budget_id", deserialize_with = "Option::deserialize")]
@@ -45,6 +47,7 @@ impl UserResponse {
     /// Response model for user information.
     pub fn new(
         alias: Option<String>,
+        allowed_models: Option<Vec<String>>,
         blocked: bool,
         budget_id: Option<String>,
         budget_started_at: Option<String>,
@@ -58,6 +61,7 @@ impl UserResponse {
     ) -> UserResponse {
         UserResponse {
             alias,
+            allowed_models,
             blocked,
             budget_id,
             budget_started_at,

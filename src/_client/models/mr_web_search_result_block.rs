@@ -15,7 +15,6 @@ use serde::{Deserialize, Serialize};
 pub struct MrWebSearchResultBlock {
     #[serde(rename = "encrypted_content")]
     pub encrypted_content: String,
-    /// Filter models by provider name
     #[serde(
         rename = "page_age",
         default,

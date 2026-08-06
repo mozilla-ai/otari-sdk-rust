@@ -18,6 +18,8 @@ pub struct GuardrailConfig {
     pub mode: Option<Mode>,
     #[serde(rename = "on", skip_serializing_if = "Option::is_none")]
     pub on: Option<Vec<On>>,
+    #[serde(rename = "on_unavailable", skip_serializing_if = "Option::is_none")]
+    pub on_unavailable: Option<OnUnavailable>,
     #[serde(rename = "profile")]
     pub profile: String,
     #[serde(
@@ -37,6 +39,7 @@ impl GuardrailConfig {
         GuardrailConfig {
             mode: None,
             on: None,
+            on_unavailable: None,
             profile,
             url: None,
             validate_kwargs: None,
@@ -69,5 +72,19 @@ pub enum On {
 impl Default for On {
     fn default() -> On {
         Self::Input
+    }
+}
+///
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
+pub enum OnUnavailable {
+    #[serde(rename = "block")]
+    Block,
+    #[serde(rename = "monitor")]
+    Monitor,
+}
+
+impl Default for OnUnavailable {
+    fn default() -> OnUnavailable {
+        Self::Block
     }
 }

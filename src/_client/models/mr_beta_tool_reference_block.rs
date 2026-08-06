@@ -12,33 +12,27 @@ use crate::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct MrThinkingBlock {
-    #[serde(rename = "signature")]
-    pub signature: String,
-    #[serde(rename = "thinking")]
-    pub thinking: String,
+pub struct MrBetaToolReferenceBlock {
+    #[serde(rename = "tool_name")]
+    pub tool_name: String,
     #[serde(rename = "type")]
     pub r#type: Type,
 }
 
-impl MrThinkingBlock {
-    pub fn new(signature: String, thinking: String, r#type: Type) -> MrThinkingBlock {
-        MrThinkingBlock {
-            signature,
-            thinking,
-            r#type,
-        }
+impl MrBetaToolReferenceBlock {
+    pub fn new(tool_name: String, r#type: Type) -> MrBetaToolReferenceBlock {
+        MrBetaToolReferenceBlock { tool_name, r#type }
     }
 }
 ///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Type {
-    #[serde(rename = "thinking")]
-    Thinking,
+    #[serde(rename = "tool_reference")]
+    ToolReference,
 }
 
 impl Default for Type {
     fn default() -> Type {
-        Self::Thinking
+        Self::ToolReference
     }
 }

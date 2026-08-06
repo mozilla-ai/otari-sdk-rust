@@ -22,6 +22,13 @@ pub struct UpdateUserRequest {
     )]
     pub alias: Option<Option<String>>,
     #[serde(
+        rename = "allowed_models",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub allowed_models: Option<Option<Vec<String>>>,
+    #[serde(
         rename = "blocked",
         default,
         with = "::serde_with::rust::double_option",
@@ -49,6 +56,7 @@ impl UpdateUserRequest {
     pub fn new() -> UpdateUserRequest {
         UpdateUserRequest {
             alias: None,
+            allowed_models: None,
             blocked: None,
             budget_id: None,
             metadata: None,

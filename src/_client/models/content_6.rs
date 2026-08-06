@@ -12,60 +12,10 @@ use crate::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct Content6 {
-    #[serde(rename = "error_code")]
-    pub error_code: ErrorCode,
-    #[serde(rename = "error_message", skip_serializing_if = "Option::is_none")]
-    pub error_message: Option<String>,
-    #[serde(rename = "type")]
-    pub r#type: Type,
-    #[serde(rename = "tool_references")]
-    pub tool_references: Vec<models::MrToolReferenceBlock>,
-}
+pub struct Content6 {}
 
 impl Content6 {
-    pub fn new(
-        error_code: ErrorCode,
-        r#type: Type,
-        tool_references: Vec<models::MrToolReferenceBlock>,
-    ) -> Content6 {
-        Content6 {
-            error_code,
-            error_message: None,
-            r#type,
-            tool_references,
-        }
-    }
-}
-///
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
-pub enum ErrorCode {
-    #[serde(rename = "invalid_tool_input")]
-    InvalidToolInput,
-    #[serde(rename = "unavailable")]
-    Unavailable,
-    #[serde(rename = "too_many_requests")]
-    TooManyRequests,
-    #[serde(rename = "execution_time_exceeded")]
-    ExecutionTimeExceeded,
-}
-
-impl Default for ErrorCode {
-    fn default() -> ErrorCode {
-        Self::InvalidToolInput
-    }
-}
-///
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
-pub enum Type {
-    #[serde(rename = "tool_search_tool_result_error")]
-    ToolSearchToolResultError,
-    #[serde(rename = "tool_search_tool_search_result")]
-    ToolSearchToolSearchResult,
-}
-
-impl Default for Type {
-    fn default() -> Type {
-        Self::ToolSearchToolResultError
+    pub fn new() -> Content6 {
+        Content6 {}
     }
 }

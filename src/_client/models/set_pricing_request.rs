@@ -11,9 +11,33 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// SetPricingRequest : Request model for setting model pricing.
+/// SetPricingRequest : Create a versioned per-model price, with optional cache and context tiers.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SetPricingRequest {
+    /// Price per 1M cached-input tokens
+    #[serde(
+        rename = "cache_read_price_per_million",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub cache_read_price_per_million: Option<Option<f64>>,
+    /// Price per 1M Anthropic 1-hour cache-write tokens
+    #[serde(
+        rename = "cache_write_1h_price_per_million",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub cache_write_1h_price_per_million: Option<Option<f64>>,
+    /// Price per 1M cache-write (creation) tokens
+    #[serde(
+        rename = "cache_write_price_per_million",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub cache_write_price_per_million: Option<Option<f64>>,
     /// ISO 8601 datetime from which this price applies. Defaults to now if omitted.
     #[serde(
         rename = "effective_at",
@@ -31,20 +55,32 @@ pub struct SetPricingRequest {
     /// Price per 1M output tokens
     #[serde(rename = "output_price_per_million")]
     pub output_price_per_million: f64,
+    /// Whole-request context thresholds. Fields omitted by a tier inherit the base rate.
+    #[serde(
+        rename = "pricing_tiers",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub pricing_tiers: Option<Option<Vec<models::PricingTier>>>,
 }
 
 impl SetPricingRequest {
-    /// Request model for setting model pricing.
+    /// Create a versioned per-model price, with optional cache and context tiers.
     pub fn new(
         input_price_per_million: f64,
         model_key: String,
         output_price_per_million: f64,
     ) -> SetPricingRequest {
         SetPricingRequest {
+            cache_read_price_per_million: None,
+            cache_write_1h_price_per_million: None,
+            cache_write_price_per_million: None,
             effective_at: None,
             input_price_per_million,
             model_key,
             output_price_per_million,
+            pricing_tiers: None,
         }
     }
 }

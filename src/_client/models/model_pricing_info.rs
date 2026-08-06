@@ -14,18 +14,46 @@ use serde::{Deserialize, Serialize};
 /// ModelPricingInfo : Pricing information for a model.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ModelPricingInfo {
+    #[serde(
+        rename = "cache_read_price_per_million",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub cache_read_price_per_million: Option<Option<f64>>,
+    #[serde(
+        rename = "cache_write_1h_price_per_million",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub cache_write_1h_price_per_million: Option<Option<f64>>,
+    #[serde(
+        rename = "cache_write_price_per_million",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub cache_write_price_per_million: Option<Option<f64>>,
     #[serde(rename = "input_price_per_million")]
     pub input_price_per_million: f64,
     #[serde(rename = "output_price_per_million")]
     pub output_price_per_million: f64,
+    #[serde(rename = "pricing_tiers", skip_serializing_if = "Option::is_none")]
+    pub pricing_tiers:
+        Option<Vec<std::collections::HashMap<String, models::PricingTiersInnerValue>>>,
 }
 
 impl ModelPricingInfo {
     /// Pricing information for a model.
     pub fn new(input_price_per_million: f64, output_price_per_million: f64) -> ModelPricingInfo {
         ModelPricingInfo {
+            cache_read_price_per_million: None,
+            cache_write_1h_price_per_million: None,
+            cache_write_price_per_million: None,
             input_price_per_million,
             output_price_per_million,
+            pricing_tiers: None,
         }
     }
 }

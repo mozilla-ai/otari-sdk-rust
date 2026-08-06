@@ -11,18 +11,17 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// MrContainer : Information about the container used in the request (for the code execution tool)
+/// SessionResponse : A freshly minted dashboard session (the token travels only in the cookie).
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct MrContainer {
-    #[serde(rename = "id")]
-    pub id: String,
+pub struct SessionResponse {
+    /// When the session cookie stops being accepted.
     #[serde(rename = "expires_at")]
     pub expires_at: chrono::DateTime<chrono::FixedOffset>,
 }
 
-impl MrContainer {
-    /// Information about the container used in the request (for the code execution tool)
-    pub fn new(id: String, expires_at: chrono::DateTime<chrono::FixedOffset>) -> MrContainer {
-        MrContainer { id, expires_at }
+impl SessionResponse {
+    /// A freshly minted dashboard session (the token travels only in the cookie).
+    pub fn new(expires_at: chrono::DateTime<chrono::FixedOffset>) -> SessionResponse {
+        SessionResponse { expires_at }
     }
 }

@@ -21,6 +21,7 @@ pub struct CcPromptTokensDetails {
         skip_serializing_if = "Option::is_none"
     )]
     pub audio_tokens: Option<Option<i32>>,
+    /// Filter to a single failure status code (e.g. 429 for provider rate limits, 402 for missing-pricing rejections). Only error rows carry one, so this filter also restricts to status='error' unless 'status' is given explicitly
     #[serde(
         rename = "cached_tokens",
         default,

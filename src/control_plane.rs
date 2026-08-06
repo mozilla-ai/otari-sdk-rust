@@ -327,8 +327,30 @@ impl Usage<'_> {
         skip: Option<i32>,
         limit: Option<i32>,
     ) -> Result<Vec<models::UsageEntry>> {
-        usage_api::list_usage_v1_usage_get(self.config, start_date, end_date, user_id, skip, limit)
-            .await
-            .map_err(map_error)
+        usage_api::list_usage_v1_usage_get(
+            self.config,
+            start_date,
+            end_date,
+            user_id,
+            // status, status_code, model, endpoint, provider, source, source_label,
+            // api_key_id, priced, tool, counts_toward_budget, request_group_id:
+            // filters the generated core gained that this alias does not surface yet.
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            skip,
+            limit,
+        )
+        .await
+        .map_err(map_error)
     }
 }

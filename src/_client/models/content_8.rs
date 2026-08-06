@@ -15,13 +15,26 @@ use serde::{Deserialize, Serialize};
 pub struct Content8 {
     #[serde(rename = "error_code")]
     pub error_code: ErrorCode,
+    #[serde(rename = "error_message", skip_serializing_if = "Option::is_none")]
+    pub error_message: Option<String>,
     #[serde(rename = "type")]
     pub r#type: Type,
+    #[serde(rename = "tool_references")]
+    pub tool_references: Vec<models::MrBetaToolReferenceBlock>,
 }
 
 impl Content8 {
-    pub fn new(error_code: ErrorCode, r#type: Type) -> Content8 {
-        Content8 { error_code, r#type }
+    pub fn new(
+        error_code: ErrorCode,
+        r#type: Type,
+        tool_references: Vec<models::MrBetaToolReferenceBlock>,
+    ) -> Content8 {
+        Content8 {
+            error_code,
+            error_message: None,
+            r#type,
+            tool_references,
+        }
     }
 }
 ///
@@ -31,14 +44,10 @@ pub enum ErrorCode {
     InvalidToolInput,
     #[serde(rename = "unavailable")]
     Unavailable,
-    #[serde(rename = "max_uses_exceeded")]
-    MaxUsesExceeded,
     #[serde(rename = "too_many_requests")]
     TooManyRequests,
-    #[serde(rename = "query_too_long")]
-    QueryTooLong,
-    #[serde(rename = "request_too_large")]
-    RequestTooLarge,
+    #[serde(rename = "execution_time_exceeded")]
+    ExecutionTimeExceeded,
 }
 
 impl Default for ErrorCode {
@@ -49,12 +58,14 @@ impl Default for ErrorCode {
 ///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Type {
-    #[serde(rename = "web_search_tool_result_error")]
-    WebSearchToolResultError,
+    #[serde(rename = "tool_search_tool_result_error")]
+    ToolSearchToolResultError,
+    #[serde(rename = "tool_search_tool_search_result")]
+    ToolSearchToolSearchResult,
 }
 
 impl Default for Type {
     fn default() -> Type {
-        Self::WebSearchToolResultError
+        Self::ToolSearchToolResultError
     }
 }

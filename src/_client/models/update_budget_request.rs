@@ -28,6 +28,13 @@ pub struct UpdateBudgetRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub max_budget: Option<Option<f64>>,
+    #[serde(
+        rename = "name",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub name: Option<Option<String>>,
 }
 
 impl UpdateBudgetRequest {
@@ -36,6 +43,7 @@ impl UpdateBudgetRequest {
         UpdateBudgetRequest {
             budget_duration_sec: None,
             max_budget: None,
+            name: None,
         }
     }
 }

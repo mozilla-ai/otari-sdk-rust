@@ -12,7 +12,7 @@ use crate::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct MrUsage {
+pub struct MrMessageUsage {
     #[serde(
         rename = "cache_creation",
         default,
@@ -20,6 +20,7 @@ pub struct MrUsage {
         skip_serializing_if = "Option::is_none"
     )]
     pub cache_creation: Option<Option<models::MrCacheCreation>>,
+    /// Filter to a single failure status code (e.g. 429 for provider rate limits, 402 for missing-pricing rejections). Only error rows carry one, so this filter also restricts to status='error' unless 'status' is given explicitly
     #[serde(
         rename = "cache_creation_input_tokens",
         default,
@@ -27,6 +28,7 @@ pub struct MrUsage {
         skip_serializing_if = "Option::is_none"
     )]
     pub cache_creation_input_tokens: Option<Option<i32>>,
+    /// Filter to a single failure status code (e.g. 429 for provider rate limits, 402 for missing-pricing rejections). Only error rows carry one, so this filter also restricts to status='error' unless 'status' is given explicitly
     #[serde(
         rename = "cache_read_input_tokens",
         default,
@@ -34,7 +36,7 @@ pub struct MrUsage {
         skip_serializing_if = "Option::is_none"
     )]
     pub cache_read_input_tokens: Option<Option<i32>>,
-    /// Filter models by provider name
+    /// Delete the alias scoped to this user. Omit to delete the global alias of that name.
     #[serde(
         rename = "inference_geo",
         default,
@@ -60,11 +62,25 @@ pub struct MrUsage {
         skip_serializing_if = "Option::is_none"
     )]
     pub service_tier: Option<Option<ServiceTier>>,
+    #[serde(
+        rename = "iterations",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub iterations: Option<Option<Vec<models::MrMessageUsageIterationsInner>>>,
+    #[serde(
+        rename = "speed",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub speed: Option<Option<Speed>>,
 }
 
-impl MrUsage {
-    pub fn new(input_tokens: i32, output_tokens: i32) -> MrUsage {
-        MrUsage {
+impl MrMessageUsage {
+    pub fn new(input_tokens: i32, output_tokens: i32) -> MrMessageUsage {
+        MrMessageUsage {
             cache_creation: None,
             cache_creation_input_tokens: None,
             cache_read_input_tokens: None,
@@ -73,6 +89,8 @@ impl MrUsage {
             output_tokens,
             server_tool_use: None,
             service_tier: None,
+            iterations: None,
+            speed: None,
         }
     }
 }
@@ -89,6 +107,20 @@ pub enum ServiceTier {
 
 impl Default for ServiceTier {
     fn default() -> ServiceTier {
+        Self::Standard
+    }
+}
+///
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
+pub enum Speed {
+    #[serde(rename = "standard")]
+    Standard,
+    #[serde(rename = "fast")]
+    Fast,
+}
+
+impl Default for Speed {
+    fn default() -> Speed {
         Self::Standard
     }
 }

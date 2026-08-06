@@ -80,6 +80,14 @@ pub async fn create_file_v1_files_post(
             Some(ref prefix) => format!("{} {}", prefix, key),
             None => key,
         };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
         req_builder = req_builder.header("Otari-Key", value);
     };
     let mut multipart_form = reqwest::multipart::Form::new();
@@ -155,6 +163,14 @@ pub async fn delete_file_v1_files_file_id_delete(
             Some(ref prefix) => format!("{} {}", prefix, key),
             None => key,
         };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
         req_builder = req_builder.header("Otari-Key", value);
     };
 
@@ -188,7 +204,7 @@ pub async fn delete_file_v1_files_file_id_delete(
     }
 }
 
-/// Download the raw bytes of a file.
+/// Download the raw bytes of a file, streamed rather than buffered whole.
 pub async fn get_file_content_v1_files_file_id_content_get(
     configuration: &configuration::Configuration,
     file_id: &str,
@@ -211,6 +227,14 @@ pub async fn get_file_content_v1_files_file_id_content_get(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
     if let Some(ref apikey) = configuration.api_key {
         let key = apikey.key.clone();
         let value = match apikey.prefix {
@@ -280,6 +304,14 @@ pub async fn get_file_v1_files_file_id_get(
             Some(ref prefix) => format!("{} {}", prefix, key),
             None => key,
         };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
         req_builder = req_builder.header("Otari-Key", value);
     };
 
@@ -334,6 +366,14 @@ pub async fn list_files_v1_files_get(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
     if let Some(ref apikey) = configuration.api_key {
         let key = apikey.key.clone();
         let value = match apikey.prefix {

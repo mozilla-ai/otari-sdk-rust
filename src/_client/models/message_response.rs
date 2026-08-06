@@ -21,9 +21,9 @@ pub struct MessageResponse {
         with = "::serde_with::rust::double_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub container: Option<Option<models::MrContainer>>,
+    pub container: Option<Option<models::MrBetaContainer>>,
     #[serde(rename = "content")]
-    pub content: Vec<models::Content9Inner>,
+    pub content: Vec<models::Content16Inner>,
     #[serde(rename = "model")]
     pub model: Box<models::Model>,
     #[serde(rename = "role")]
@@ -42,7 +42,7 @@ pub struct MessageResponse {
         skip_serializing_if = "Option::is_none"
     )]
     pub stop_reason: Option<Option<StopReason>>,
-    /// Filter models by provider name
+    /// Delete the alias scoped to this user. Omit to delete the global alias of that name.
     #[serde(
         rename = "stop_sequence",
         default,
@@ -53,17 +53,31 @@ pub struct MessageResponse {
     #[serde(rename = "type")]
     pub r#type: Type,
     #[serde(rename = "usage")]
-    pub usage: models::MrUsage,
+    pub usage: models::MrMessageUsage,
+    #[serde(
+        rename = "context_management",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub context_management: Option<Option<models::MrBetaContextManagementResponse>>,
+    #[serde(
+        rename = "diagnostics",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub diagnostics: Option<Option<models::MrBetaDiagnosticsFallback>>,
 }
 
 impl MessageResponse {
     pub fn new(
         id: String,
-        content: Vec<models::Content9Inner>,
+        content: Vec<models::Content16Inner>,
         model: models::Model,
         role: Role,
         r#type: Type,
-        usage: models::MrUsage,
+        usage: models::MrMessageUsage,
     ) -> MessageResponse {
         MessageResponse {
             id,
@@ -76,6 +90,8 @@ impl MessageResponse {
             stop_sequence: None,
             r#type,
             usage,
+            context_management: None,
+            diagnostics: None,
         }
     }
 }
@@ -104,8 +120,12 @@ pub enum StopReason {
     ToolUse,
     #[serde(rename = "pause_turn")]
     PauseTurn,
+    #[serde(rename = "compaction")]
+    Compaction,
     #[serde(rename = "refusal")]
     Refusal,
+    #[serde(rename = "model_context_window_exceeded")]
+    ModelContextWindowExceeded,
 }
 
 impl Default for StopReason {
