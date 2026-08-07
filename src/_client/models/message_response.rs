@@ -25,7 +25,7 @@ pub struct MessageResponse {
     #[serde(rename = "content")]
     pub content: Vec<models::Content16Inner>,
     #[serde(rename = "model")]
-    pub model: Box<models::Model>,
+    pub model: Box<models::Model1>,
     #[serde(rename = "role")]
     pub role: Role,
     #[serde(
@@ -74,7 +74,7 @@ impl MessageResponse {
     pub fn new(
         id: String,
         content: Vec<models::Content16Inner>,
-        model: models::Model,
+        model: models::Model1,
         role: Role,
         r#type: Type,
         usage: models::MrMessageUsage,

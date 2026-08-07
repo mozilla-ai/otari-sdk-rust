@@ -20,7 +20,7 @@ pub struct UsageSetPriceRequest {
         with = "::serde_with::rust::double_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub api_key_id: Option<Option<String>>,
+    pub api_key_id: Option<Option<Box<models::ApiKeyId>>>,
     #[serde(rename = "by_filter", skip_serializing_if = "Option::is_none")]
     pub by_filter: Option<bool>,
     #[serde(
@@ -66,7 +66,7 @@ pub struct UsageSetPriceRequest {
         with = "::serde_with::rust::double_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub model: Option<Option<String>>,
+    pub model: Option<Option<Box<models::Model>>>,
     #[serde(rename = "output_price_per_million")]
     pub output_price_per_million: f64,
     #[serde(
@@ -124,7 +124,7 @@ pub struct UsageSetPriceRequest {
         with = "::serde_with::rust::double_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub user_id: Option<Option<String>>,
+    pub user_id: Option<Option<Box<models::UserId>>>,
 }
 
 impl UsageSetPriceRequest {

@@ -50,6 +50,13 @@ pub struct UpdateToolSettingsRequest {
     )]
     pub web_search_extract: Option<Option<bool>>,
     #[serde(
+        rename = "web_search_intercept",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub web_search_intercept: Option<Option<bool>>,
+    #[serde(
         rename = "web_search_max_results",
         default,
         with = "::serde_with::rust::double_option",
@@ -81,6 +88,7 @@ impl UpdateToolSettingsRequest {
             sandbox_url: None,
             web_search_engines: None,
             web_search_extract: None,
+            web_search_intercept: None,
             web_search_max_results: None,
             web_search_purpose_hint: None,
             web_search_url: None,

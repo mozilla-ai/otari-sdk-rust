@@ -82,15 +82,15 @@ pub async fn count_usage_v1_usage_count_get(
     configuration: &configuration::Configuration,
     start_date: Option<chrono::DateTime<chrono::FixedOffset>>,
     end_date: Option<chrono::DateTime<chrono::FixedOffset>>,
-    user_id: Option<&str>,
+    user_id: Option<Vec<String>>,
     status: Option<&str>,
     status_code: Option<i32>,
-    model: Option<&str>,
+    model: Option<Vec<String>>,
     endpoint: Option<&str>,
     provider: Option<&str>,
     source: Option<&str>,
     source_label: Option<&str>,
-    api_key_id: Option<&str>,
+    api_key_id: Option<Vec<String>>,
     priced: Option<bool>,
     tool: Option<&str>,
     counts_toward_budget: Option<bool>,
@@ -123,7 +123,23 @@ pub async fn count_usage_v1_usage_count_get(
         req_builder = req_builder.query(&[("end_date", &param_value.to_string())]);
     }
     if let Some(ref param_value) = p_query_user_id {
-        req_builder = req_builder.query(&[("user_id", &param_value.to_string())]);
+        req_builder = match "multi" {
+            "multi" => req_builder.query(
+                &param_value
+                    .into_iter()
+                    .map(|p| ("user_id".to_owned(), p.to_string()))
+                    .collect::<Vec<(std::string::String, std::string::String)>>(),
+            ),
+            _ => req_builder.query(&[(
+                "user_id",
+                &param_value
+                    .into_iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",")
+                    .to_string(),
+            )]),
+        };
     }
     if let Some(ref param_value) = p_query_status {
         req_builder = req_builder.query(&[("status", &param_value.to_string())]);
@@ -132,7 +148,23 @@ pub async fn count_usage_v1_usage_count_get(
         req_builder = req_builder.query(&[("status_code", &param_value.to_string())]);
     }
     if let Some(ref param_value) = p_query_model {
-        req_builder = req_builder.query(&[("model", &param_value.to_string())]);
+        req_builder = match "multi" {
+            "multi" => req_builder.query(
+                &param_value
+                    .into_iter()
+                    .map(|p| ("model".to_owned(), p.to_string()))
+                    .collect::<Vec<(std::string::String, std::string::String)>>(),
+            ),
+            _ => req_builder.query(&[(
+                "model",
+                &param_value
+                    .into_iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",")
+                    .to_string(),
+            )]),
+        };
     }
     if let Some(ref param_value) = p_query_endpoint {
         req_builder = req_builder.query(&[("endpoint", &param_value.to_string())]);
@@ -147,7 +179,23 @@ pub async fn count_usage_v1_usage_count_get(
         req_builder = req_builder.query(&[("source_label", &param_value.to_string())]);
     }
     if let Some(ref param_value) = p_query_api_key_id {
-        req_builder = req_builder.query(&[("api_key_id", &param_value.to_string())]);
+        req_builder = match "multi" {
+            "multi" => req_builder.query(
+                &param_value
+                    .into_iter()
+                    .map(|p| ("api_key_id".to_owned(), p.to_string()))
+                    .collect::<Vec<(std::string::String, std::string::String)>>(),
+            ),
+            _ => req_builder.query(&[(
+                "api_key_id",
+                &param_value
+                    .into_iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",")
+                    .to_string(),
+            )]),
+        };
     }
     if let Some(ref param_value) = p_query_priced {
         req_builder = req_builder.query(&[("priced", &param_value.to_string())]);
@@ -359,15 +407,15 @@ pub async fn list_usage_v1_usage_get(
     configuration: &configuration::Configuration,
     start_date: Option<chrono::DateTime<chrono::FixedOffset>>,
     end_date: Option<chrono::DateTime<chrono::FixedOffset>>,
-    user_id: Option<&str>,
+    user_id: Option<Vec<String>>,
     status: Option<&str>,
     status_code: Option<i32>,
-    model: Option<&str>,
+    model: Option<Vec<String>>,
     endpoint: Option<&str>,
     provider: Option<&str>,
     source: Option<&str>,
     source_label: Option<&str>,
-    api_key_id: Option<&str>,
+    api_key_id: Option<Vec<String>>,
     priced: Option<bool>,
     tool: Option<&str>,
     counts_toward_budget: Option<bool>,
@@ -404,7 +452,23 @@ pub async fn list_usage_v1_usage_get(
         req_builder = req_builder.query(&[("end_date", &param_value.to_string())]);
     }
     if let Some(ref param_value) = p_query_user_id {
-        req_builder = req_builder.query(&[("user_id", &param_value.to_string())]);
+        req_builder = match "multi" {
+            "multi" => req_builder.query(
+                &param_value
+                    .into_iter()
+                    .map(|p| ("user_id".to_owned(), p.to_string()))
+                    .collect::<Vec<(std::string::String, std::string::String)>>(),
+            ),
+            _ => req_builder.query(&[(
+                "user_id",
+                &param_value
+                    .into_iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",")
+                    .to_string(),
+            )]),
+        };
     }
     if let Some(ref param_value) = p_query_status {
         req_builder = req_builder.query(&[("status", &param_value.to_string())]);
@@ -413,7 +477,23 @@ pub async fn list_usage_v1_usage_get(
         req_builder = req_builder.query(&[("status_code", &param_value.to_string())]);
     }
     if let Some(ref param_value) = p_query_model {
-        req_builder = req_builder.query(&[("model", &param_value.to_string())]);
+        req_builder = match "multi" {
+            "multi" => req_builder.query(
+                &param_value
+                    .into_iter()
+                    .map(|p| ("model".to_owned(), p.to_string()))
+                    .collect::<Vec<(std::string::String, std::string::String)>>(),
+            ),
+            _ => req_builder.query(&[(
+                "model",
+                &param_value
+                    .into_iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",")
+                    .to_string(),
+            )]),
+        };
     }
     if let Some(ref param_value) = p_query_endpoint {
         req_builder = req_builder.query(&[("endpoint", &param_value.to_string())]);
@@ -428,7 +508,23 @@ pub async fn list_usage_v1_usage_get(
         req_builder = req_builder.query(&[("source_label", &param_value.to_string())]);
     }
     if let Some(ref param_value) = p_query_api_key_id {
-        req_builder = req_builder.query(&[("api_key_id", &param_value.to_string())]);
+        req_builder = match "multi" {
+            "multi" => req_builder.query(
+                &param_value
+                    .into_iter()
+                    .map(|p| ("api_key_id".to_owned(), p.to_string()))
+                    .collect::<Vec<(std::string::String, std::string::String)>>(),
+            ),
+            _ => req_builder.query(&[(
+                "api_key_id",
+                &param_value
+                    .into_iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",")
+                    .to_string(),
+            )]),
+        };
     }
     if let Some(ref param_value) = p_query_priced {
         req_builder = req_builder.query(&[("priced", &param_value.to_string())]);
@@ -583,15 +679,15 @@ pub async fn usage_series_v1_usage_series_get(
     group_by: &str,
     start_date: Option<chrono::DateTime<chrono::FixedOffset>>,
     end_date: Option<chrono::DateTime<chrono::FixedOffset>>,
-    user_id: Option<&str>,
+    user_id: Option<Vec<String>>,
     status: Option<&str>,
     status_code: Option<i32>,
-    model: Option<&str>,
+    model: Option<Vec<String>>,
     endpoint: Option<&str>,
     provider: Option<&str>,
     source: Option<&str>,
     source_label: Option<&str>,
-    api_key_id: Option<&str>,
+    api_key_id: Option<Vec<String>>,
     priced: Option<bool>,
     tool: Option<&str>,
     counts_toward_budget: Option<bool>,
@@ -626,7 +722,23 @@ pub async fn usage_series_v1_usage_series_get(
         req_builder = req_builder.query(&[("end_date", &param_value.to_string())]);
     }
     if let Some(ref param_value) = p_query_user_id {
-        req_builder = req_builder.query(&[("user_id", &param_value.to_string())]);
+        req_builder = match "multi" {
+            "multi" => req_builder.query(
+                &param_value
+                    .into_iter()
+                    .map(|p| ("user_id".to_owned(), p.to_string()))
+                    .collect::<Vec<(std::string::String, std::string::String)>>(),
+            ),
+            _ => req_builder.query(&[(
+                "user_id",
+                &param_value
+                    .into_iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",")
+                    .to_string(),
+            )]),
+        };
     }
     if let Some(ref param_value) = p_query_status {
         req_builder = req_builder.query(&[("status", &param_value.to_string())]);
@@ -635,7 +747,23 @@ pub async fn usage_series_v1_usage_series_get(
         req_builder = req_builder.query(&[("status_code", &param_value.to_string())]);
     }
     if let Some(ref param_value) = p_query_model {
-        req_builder = req_builder.query(&[("model", &param_value.to_string())]);
+        req_builder = match "multi" {
+            "multi" => req_builder.query(
+                &param_value
+                    .into_iter()
+                    .map(|p| ("model".to_owned(), p.to_string()))
+                    .collect::<Vec<(std::string::String, std::string::String)>>(),
+            ),
+            _ => req_builder.query(&[(
+                "model",
+                &param_value
+                    .into_iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",")
+                    .to_string(),
+            )]),
+        };
     }
     if let Some(ref param_value) = p_query_endpoint {
         req_builder = req_builder.query(&[("endpoint", &param_value.to_string())]);
@@ -650,7 +778,23 @@ pub async fn usage_series_v1_usage_series_get(
         req_builder = req_builder.query(&[("source_label", &param_value.to_string())]);
     }
     if let Some(ref param_value) = p_query_api_key_id {
-        req_builder = req_builder.query(&[("api_key_id", &param_value.to_string())]);
+        req_builder = match "multi" {
+            "multi" => req_builder.query(
+                &param_value
+                    .into_iter()
+                    .map(|p| ("api_key_id".to_owned(), p.to_string()))
+                    .collect::<Vec<(std::string::String, std::string::String)>>(),
+            ),
+            _ => req_builder.query(&[(
+                "api_key_id",
+                &param_value
+                    .into_iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",")
+                    .to_string(),
+            )]),
+        };
     }
     if let Some(ref param_value) = p_query_priced {
         req_builder = req_builder.query(&[("priced", &param_value.to_string())]);
@@ -718,15 +862,15 @@ pub async fn usage_summary_csv_v1_usage_summary_csv_get(
     configuration: &configuration::Configuration,
     start_date: Option<chrono::DateTime<chrono::FixedOffset>>,
     end_date: Option<chrono::DateTime<chrono::FixedOffset>>,
-    user_id: Option<&str>,
+    user_id: Option<Vec<String>>,
     status: Option<&str>,
     status_code: Option<i32>,
-    model: Option<&str>,
+    model: Option<Vec<String>>,
     endpoint: Option<&str>,
     provider: Option<&str>,
     source: Option<&str>,
     source_label: Option<&str>,
-    api_key_id: Option<&str>,
+    api_key_id: Option<Vec<String>>,
     priced: Option<bool>,
     tool: Option<&str>,
     counts_toward_budget: Option<bool>,
@@ -757,7 +901,23 @@ pub async fn usage_summary_csv_v1_usage_summary_csv_get(
         req_builder = req_builder.query(&[("end_date", &param_value.to_string())]);
     }
     if let Some(ref param_value) = p_query_user_id {
-        req_builder = req_builder.query(&[("user_id", &param_value.to_string())]);
+        req_builder = match "multi" {
+            "multi" => req_builder.query(
+                &param_value
+                    .into_iter()
+                    .map(|p| ("user_id".to_owned(), p.to_string()))
+                    .collect::<Vec<(std::string::String, std::string::String)>>(),
+            ),
+            _ => req_builder.query(&[(
+                "user_id",
+                &param_value
+                    .into_iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",")
+                    .to_string(),
+            )]),
+        };
     }
     if let Some(ref param_value) = p_query_status {
         req_builder = req_builder.query(&[("status", &param_value.to_string())]);
@@ -766,7 +926,23 @@ pub async fn usage_summary_csv_v1_usage_summary_csv_get(
         req_builder = req_builder.query(&[("status_code", &param_value.to_string())]);
     }
     if let Some(ref param_value) = p_query_model {
-        req_builder = req_builder.query(&[("model", &param_value.to_string())]);
+        req_builder = match "multi" {
+            "multi" => req_builder.query(
+                &param_value
+                    .into_iter()
+                    .map(|p| ("model".to_owned(), p.to_string()))
+                    .collect::<Vec<(std::string::String, std::string::String)>>(),
+            ),
+            _ => req_builder.query(&[(
+                "model",
+                &param_value
+                    .into_iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",")
+                    .to_string(),
+            )]),
+        };
     }
     if let Some(ref param_value) = p_query_endpoint {
         req_builder = req_builder.query(&[("endpoint", &param_value.to_string())]);
@@ -781,7 +957,23 @@ pub async fn usage_summary_csv_v1_usage_summary_csv_get(
         req_builder = req_builder.query(&[("source_label", &param_value.to_string())]);
     }
     if let Some(ref param_value) = p_query_api_key_id {
-        req_builder = req_builder.query(&[("api_key_id", &param_value.to_string())]);
+        req_builder = match "multi" {
+            "multi" => req_builder.query(
+                &param_value
+                    .into_iter()
+                    .map(|p| ("api_key_id".to_owned(), p.to_string()))
+                    .collect::<Vec<(std::string::String, std::string::String)>>(),
+            ),
+            _ => req_builder.query(&[(
+                "api_key_id",
+                &param_value
+                    .into_iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",")
+                    .to_string(),
+            )]),
+        };
     }
     if let Some(ref param_value) = p_query_priced {
         req_builder = req_builder.query(&[("priced", &param_value.to_string())]);
@@ -842,20 +1034,20 @@ pub async fn usage_summary_csv_v1_usage_summary_csv_get(
     }
 }
 
-/// Aggregate spend, tokens, and request volume for the dashboard Usage page.  Range-bounded (default last 30 days, hard-capped): unlike the raw ``/v1/usage`` list, every aggregate is scoped to a bounded window so it stays served by the timestamp index. Returns grand totals, breakdowns by model / user / API key / source / session (``source_label``) / endpoint / provider (top rows plus a reconciling ``other`` fold, billed token counts), the error taxonomy grouped by failure status code, and a UTC-bucketed time series carrying each bucket's error count and billed token composition (input incl. cache, cache read/write, output).  Each breakdown is its own ``GROUP BY`` pass, so a caller that reads only the totals or the series should narrow ``dimensions`` rather than pay for all eight (the dashboard's tiles, timeline context, and model typeahead all do). Omitting the parameter keeps the full set.
+/// Aggregate spend, tokens, and request volume for the dashboard Usage page.  Range-bounded (default last 30 days, hard-capped): unlike the raw ``/v1/usage`` list, every aggregate is scoped to a bounded window so it stays served by the timestamp index. Returns grand totals, breakdowns by model / user / API key / source / session (``source_label``) / endpoint / provider (top rows plus a reconciling ``other`` fold, billed token counts), the error taxonomy grouped by failure status code, and a UTC-bucketed time series carrying each bucket's error count and billed token composition (input incl. cache, cache read/write, output).  Each breakdown is its own ``GROUP BY`` pass, so a caller that reads only the totals or the series should narrow ``dimensions`` rather than pay for all eight (the dashboard's tiles, timeline context, and model typeahead all do). Omitting the parameter keeps the full set.  ``model``, ``user_id``, and ``api_key_id`` are repeatable: several values match any of them, so one chart can compare a handful of models, users, or keys.
 pub async fn usage_summary_v1_usage_summary_get(
     configuration: &configuration::Configuration,
     start_date: Option<chrono::DateTime<chrono::FixedOffset>>,
     end_date: Option<chrono::DateTime<chrono::FixedOffset>>,
-    user_id: Option<&str>,
+    user_id: Option<Vec<String>>,
     status: Option<&str>,
     status_code: Option<i32>,
-    model: Option<&str>,
+    model: Option<Vec<String>>,
     endpoint: Option<&str>,
     provider: Option<&str>,
     source: Option<&str>,
     source_label: Option<&str>,
-    api_key_id: Option<&str>,
+    api_key_id: Option<Vec<String>>,
     priced: Option<bool>,
     tool: Option<&str>,
     counts_toward_budget: Option<bool>,
@@ -890,7 +1082,23 @@ pub async fn usage_summary_v1_usage_summary_get(
         req_builder = req_builder.query(&[("end_date", &param_value.to_string())]);
     }
     if let Some(ref param_value) = p_query_user_id {
-        req_builder = req_builder.query(&[("user_id", &param_value.to_string())]);
+        req_builder = match "multi" {
+            "multi" => req_builder.query(
+                &param_value
+                    .into_iter()
+                    .map(|p| ("user_id".to_owned(), p.to_string()))
+                    .collect::<Vec<(std::string::String, std::string::String)>>(),
+            ),
+            _ => req_builder.query(&[(
+                "user_id",
+                &param_value
+                    .into_iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",")
+                    .to_string(),
+            )]),
+        };
     }
     if let Some(ref param_value) = p_query_status {
         req_builder = req_builder.query(&[("status", &param_value.to_string())]);
@@ -899,7 +1107,23 @@ pub async fn usage_summary_v1_usage_summary_get(
         req_builder = req_builder.query(&[("status_code", &param_value.to_string())]);
     }
     if let Some(ref param_value) = p_query_model {
-        req_builder = req_builder.query(&[("model", &param_value.to_string())]);
+        req_builder = match "multi" {
+            "multi" => req_builder.query(
+                &param_value
+                    .into_iter()
+                    .map(|p| ("model".to_owned(), p.to_string()))
+                    .collect::<Vec<(std::string::String, std::string::String)>>(),
+            ),
+            _ => req_builder.query(&[(
+                "model",
+                &param_value
+                    .into_iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",")
+                    .to_string(),
+            )]),
+        };
     }
     if let Some(ref param_value) = p_query_endpoint {
         req_builder = req_builder.query(&[("endpoint", &param_value.to_string())]);
@@ -914,7 +1138,23 @@ pub async fn usage_summary_v1_usage_summary_get(
         req_builder = req_builder.query(&[("source_label", &param_value.to_string())]);
     }
     if let Some(ref param_value) = p_query_api_key_id {
-        req_builder = req_builder.query(&[("api_key_id", &param_value.to_string())]);
+        req_builder = match "multi" {
+            "multi" => req_builder.query(
+                &param_value
+                    .into_iter()
+                    .map(|p| ("api_key_id".to_owned(), p.to_string()))
+                    .collect::<Vec<(std::string::String, std::string::String)>>(),
+            ),
+            _ => req_builder.query(&[(
+                "api_key_id",
+                &param_value
+                    .into_iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",")
+                    .to_string(),
+            )]),
+        };
     }
     if let Some(ref param_value) = p_query_priced {
         req_builder = req_builder.query(&[("priced", &param_value.to_string())]);
