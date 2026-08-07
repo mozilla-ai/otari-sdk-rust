@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0](https://github.com/mozilla-ai/otari-sdk-rust/compare/otari-0.2.0...otari-0.3.0) (2026-08-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* **control-plane:** control-plane methods now return `Result<T, OtariError>` instead of `Result<T, Error<SomeEndpointError>>`. Callers matching the old generated error type must update. The generated core stays reachable via `ControlPlane::config()` for callers needing the raw `Error<T>`.
+
+### Bug Fixes
+
+* **ci:** make the endpoint-coverage check offline and deterministic ([#54](https://github.com/mozilla-ai/otari-sdk-rust/issues/54)) ([02d2677](https://github.com/mozilla-ai/otari-sdk-rust/commit/02d26777be28818652aa22ed90c02d468abdcb68))
+* **control-plane:** map generated errors to typed OtariError (breaking) ([#47](https://github.com/mozilla-ai/otari-sdk-rust/issues/47)) ([f622f64](https://github.com/mozilla-ai/otari-sdk-rust/commit/f622f6445ca9fe3b3788a3d578e71ea239f31299))
+
 ## [0.2.0](https://github.com/mozilla-ai/otari-sdk-rust/compare/otari-0.1.1...otari-0.2.0) (2026-06-16)
 
 
