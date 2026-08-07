@@ -136,6 +136,7 @@ pub mod routing_api;
 pub mod search_api;
 pub mod settings_api;
 pub mod tool_settings_api;
+pub mod tools_api;
 pub mod usage_api;
 pub mod users_api;
 
