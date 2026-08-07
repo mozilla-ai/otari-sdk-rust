@@ -331,7 +331,10 @@ impl Usage<'_> {
             self.config,
             start_date,
             end_date,
-            user_id,
+            // user_id is repeatable upstream (user_id=a&user_id=b, max 50). This
+            // alias keeps its single-user signature and wraps; multi-user
+            // filtering is reachable through the generated core.
+            user_id.map(|u| vec![u.to_string()]),
             // status, status_code, model, endpoint, provider, source, source_label,
             // api_key_id, priced, tool, counts_toward_budget, request_group_id:
             // filters the generated core gained that this alias does not surface yet.
