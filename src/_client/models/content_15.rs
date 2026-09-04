@@ -17,11 +17,28 @@ pub struct Content15 {
     pub error_code: ErrorCode,
     #[serde(rename = "type")]
     pub r#type: Type,
+    #[serde(rename = "content")]
+    pub content: models::MrDocumentBlock,
+    #[serde(rename = "retrieved_at", skip_serializing_if = "Option::is_none")]
+    pub retrieved_at: Option<String>,
+    #[serde(rename = "url")]
+    pub url: String,
 }
 
 impl Content15 {
-    pub fn new(error_code: ErrorCode, r#type: Type) -> Content15 {
-        Content15 { error_code, r#type }
+    pub fn new(
+        error_code: ErrorCode,
+        r#type: Type,
+        content: models::MrDocumentBlock,
+        url: String,
+    ) -> Content15 {
+        Content15 {
+            error_code,
+            r#type,
+            content,
+            retrieved_at: None,
+            url,
+        }
     }
 }
 ///
@@ -29,16 +46,22 @@ impl Content15 {
 pub enum ErrorCode {
     #[serde(rename = "invalid_tool_input")]
     InvalidToolInput,
-    #[serde(rename = "unavailable")]
-    Unavailable,
-    #[serde(rename = "max_uses_exceeded")]
-    MaxUsesExceeded,
+    #[serde(rename = "url_too_long")]
+    UrlTooLong,
+    #[serde(rename = "url_not_allowed")]
+    UrlNotAllowed,
+    #[serde(rename = "url_not_in_prior_context")]
+    UrlNotInPriorContext,
+    #[serde(rename = "url_not_accessible")]
+    UrlNotAccessible,
+    #[serde(rename = "unsupported_content_type")]
+    UnsupportedContentType,
     #[serde(rename = "too_many_requests")]
     TooManyRequests,
-    #[serde(rename = "query_too_long")]
-    QueryTooLong,
-    #[serde(rename = "request_too_large")]
-    RequestTooLarge,
+    #[serde(rename = "max_uses_exceeded")]
+    MaxUsesExceeded,
+    #[serde(rename = "unavailable")]
+    Unavailable,
 }
 
 impl Default for ErrorCode {
@@ -49,12 +72,14 @@ impl Default for ErrorCode {
 ///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Type {
-    #[serde(rename = "web_search_tool_result_error")]
-    WebSearchToolResultError,
+    #[serde(rename = "web_fetch_tool_result_error")]
+    WebFetchToolResultError,
+    #[serde(rename = "web_fetch_result")]
+    WebFetchResult,
 }
 
 impl Default for Type {
     fn default() -> Type {
-        Self::WebSearchToolResultError
+        Self::WebFetchToolResultError
     }
 }

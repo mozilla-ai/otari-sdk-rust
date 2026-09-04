@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 /// RerankResponse : Normalized rerank response, provider-agnostic.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct RerankResponse {
-    /// Delete the alias scoped to this user. Omit to delete the global alias of that name.
+    /// Filter to a single event type or metric name (e.g. 'tool_result', 'claude_code.commit.count')
     #[serde(
         rename = "id",
         default,

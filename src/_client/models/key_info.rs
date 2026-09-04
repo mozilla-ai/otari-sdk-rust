@@ -16,6 +16,11 @@ use serde::{Deserialize, Serialize};
 pub struct KeyInfo {
     #[serde(rename = "allowed_models", deserialize_with = "Option::deserialize")]
     pub allowed_models: Option<Vec<String>>,
+    #[serde(
+        rename = "capture_agent_telemetry",
+        deserialize_with = "Option::deserialize"
+    )]
+    pub capture_agent_telemetry: Option<bool>,
     #[serde(rename = "created_at")]
     pub created_at: String,
     #[serde(rename = "exclude_from_budget")]
@@ -41,12 +46,15 @@ pub struct KeyInfo {
     pub reject_user_mismatch: Option<bool>,
     #[serde(rename = "user_id", deserialize_with = "Option::deserialize")]
     pub user_id: Option<String>,
+    #[serde(rename = "workspace_id")]
+    pub workspace_id: uuid::Uuid,
 }
 
 impl KeyInfo {
     /// Response model for key information.
     pub fn new(
         allowed_models: Option<Vec<String>>,
+        capture_agent_telemetry: Option<bool>,
         created_at: String,
         exclude_from_budget: bool,
         expires_at: Option<String>,
@@ -58,9 +66,11 @@ impl KeyInfo {
         metadata: std::collections::HashMap<String, serde_json::Value>,
         reject_user_mismatch: Option<bool>,
         user_id: Option<String>,
+        workspace_id: uuid::Uuid,
     ) -> KeyInfo {
         KeyInfo {
             allowed_models,
+            capture_agent_telemetry,
             created_at,
             exclude_from_budget,
             expires_at,
@@ -72,6 +82,7 @@ impl KeyInfo {
             metadata,
             reject_user_mismatch,
             user_id,
+            workspace_id,
         }
     }
 }

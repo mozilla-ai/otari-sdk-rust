@@ -29,6 +29,13 @@ pub struct UpdateToolSettingsRequest {
     )]
     pub sandbox_purpose_hint: Option<Option<String>>,
     #[serde(
+        rename = "sandbox_session_image",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub sandbox_session_image: Option<Option<String>>,
+    #[serde(
         rename = "sandbox_url",
         default,
         with = "::serde_with::rust::double_option",
@@ -85,6 +92,7 @@ impl UpdateToolSettingsRequest {
         UpdateToolSettingsRequest {
             guardrails_url: None,
             sandbox_purpose_hint: None,
+            sandbox_session_image: None,
             sandbox_url: None,
             web_search_engines: None,
             web_search_extract: None,

@@ -37,6 +37,13 @@ pub enum IngestExternalUsageV1UsageExternalEventsPostError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`list_in_flight_v1_usage_in_flight_get`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ListInFlightV1UsageInFlightGetError {
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`list_usage_v1_usage_get`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -61,14 +68,6 @@ pub enum UsageSeriesV1UsageSeriesGetError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`usage_summary_csv_v1_usage_summary_csv_get`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum UsageSummaryCsvV1UsageSummaryCsvGetError {
-    Status422(models::HttpValidationError),
-    UnknownValue(serde_json::Value),
-}
-
 /// struct for typed errors of method [`usage_summary_v1_usage_summary_get`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -77,7 +76,7 @@ pub enum UsageSummaryV1UsageSummaryGetError {
     UnknownValue(serde_json::Value),
 }
 
-/// Total number of usage logs matching the given filters.  Serves the dashboard paginator's \"N of M\" total without changing the bare array contract of ``GET /v1/usage``. Runs only when the client asks (a separate request), so the ``COUNT(*)`` is not paid on every page load. With ``counts_toward_budget=false`` it also backs the \"select all N matching this filter\" affordance for bulk delete / set-price, which touch imported rows only.
+/// Total number of usage logs matching the given filters.  Serves the dashboard paginator's \"N of M\" total without changing the bare array contract of ``GET /v1/usage``. Runs only when the client asks (a separate request), so the ``COUNT(*)`` is not paid on every page load. With ``counts_toward_budget=false`` it also backs the \"select all N matching this filter\" affordance for bulk delete / set-price, which touch imported rows only.  That value is the one place this count is narrower than ``GET /v1/usage``: it also excludes rows this deployment served itself, so the number an operator confirms is the number the mutation can reach. The list still pages the budget-exempt gateway rows it omits.
 pub async fn count_usage_v1_usage_count_get(
     configuration: &configuration::Configuration,
     start_date: Option<chrono::DateTime<chrono::FixedOffset>>,
@@ -95,6 +94,7 @@ pub async fn count_usage_v1_usage_count_get(
     tool: Option<&str>,
     counts_toward_budget: Option<bool>,
     request_group_id: Option<Vec<String>>,
+    workspace_id: Option<&str>,
 ) -> Result<models::UsageCount, Error<CountUsageV1UsageCountGetError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_query_start_date = start_date;
@@ -112,6 +112,7 @@ pub async fn count_usage_v1_usage_count_get(
     let p_query_tool = tool;
     let p_query_counts_toward_budget = counts_toward_budget;
     let p_query_request_group_id = request_group_id;
+    let p_query_workspace_id = workspace_id;
 
     let uri_str = format!("{}/v1/usage/count", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
@@ -224,6 +225,9 @@ pub async fn count_usage_v1_usage_count_get(
                     .to_string(),
             )]),
         };
+    }
+    if let Some(ref param_value) = p_query_workspace_id {
+        req_builder = req_builder.query(&[("workspace_id", &param_value.to_string())]);
     }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
@@ -402,6 +406,63 @@ pub async fn ingest_external_usage_v1_usage_external_events_post(
     }
 }
 
+/// Requests the gateway is currently serving, longest-running first.  A usage row is written when a request settles, so the log alone cannot answer \"is anything happening right now\": on a slow backend, a 30-second local model call is invisible until it finishes. This reports what is in progress.  Read from an in-memory registry, so it describes the process that answers this call and not the deployment: behind a load balancer, consecutive polls reach different otari processes, and there is no deployment-wide total to ask for. ``total`` is the true in-flight count for the answering process even when ``requests`` is capped.
+pub async fn list_in_flight_v1_usage_in_flight_get(
+    configuration: &configuration::Configuration,
+) -> Result<models::InFlightResponse, Error<ListInFlightV1UsageInFlightGetError>> {
+    let uri_str = format!("{}/v1/usage/in-flight", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::InFlightResponse`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::InFlightResponse`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<ListInFlightV1UsageInFlightGetError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
 /// List usage logs ordered by timestamp (most recent first).  Supports optional filters for time range, user, status, failure status code, model, endpoint, provider, source, session (``source_label``), and request group (``request_group_id``, repeatable, which returns a routed request's whole attempt plan). Paginated via skip/limit. The return shape is a bare JSON array; external billing/analytics consumers depend on this, so the total row count for a paginated UI is served separately by ``GET /v1/usage/count`` rather than wrapped in an envelope here. Timestamps accept either ISO 8601 strings or Unix epoch seconds (numeric).
 pub async fn list_usage_v1_usage_get(
     configuration: &configuration::Configuration,
@@ -420,6 +481,7 @@ pub async fn list_usage_v1_usage_get(
     tool: Option<&str>,
     counts_toward_budget: Option<bool>,
     request_group_id: Option<Vec<String>>,
+    workspace_id: Option<&str>,
     skip: Option<i32>,
     limit: Option<i32>,
 ) -> Result<Vec<models::UsageEntry>, Error<ListUsageV1UsageGetError>> {
@@ -439,6 +501,7 @@ pub async fn list_usage_v1_usage_get(
     let p_query_tool = tool;
     let p_query_counts_toward_budget = counts_toward_budget;
     let p_query_request_group_id = request_group_id;
+    let p_query_workspace_id = workspace_id;
     let p_query_skip = skip;
     let p_query_limit = limit;
 
@@ -553,6 +616,9 @@ pub async fn list_usage_v1_usage_get(
                     .to_string(),
             )]),
         };
+    }
+    if let Some(ref param_value) = p_query_workspace_id {
+        req_builder = req_builder.query(&[("workspace_id", &param_value.to_string())]);
     }
     if let Some(ref param_value) = p_query_skip {
         req_builder = req_builder.query(&[("skip", &param_value.to_string())]);
@@ -691,6 +757,7 @@ pub async fn usage_series_v1_usage_series_get(
     priced: Option<bool>,
     tool: Option<&str>,
     counts_toward_budget: Option<bool>,
+    workspace_id: Option<&str>,
     bucket: Option<&str>,
 ) -> Result<models::UsageGroupedSeries, Error<UsageSeriesV1UsageSeriesGetError>> {
     // add a prefix to parameters to efficiently prevent name collisions
@@ -709,6 +776,7 @@ pub async fn usage_series_v1_usage_series_get(
     let p_query_priced = priced;
     let p_query_tool = tool;
     let p_query_counts_toward_budget = counts_toward_budget;
+    let p_query_workspace_id = workspace_id;
     let p_query_bucket = bucket;
 
     let uri_str = format!("{}/v1/usage/series", configuration.base_path);
@@ -805,6 +873,9 @@ pub async fn usage_series_v1_usage_series_get(
     if let Some(ref param_value) = p_query_counts_toward_budget {
         req_builder = req_builder.query(&[("counts_toward_budget", &param_value.to_string())]);
     }
+    if let Some(ref param_value) = p_query_workspace_id {
+        req_builder = req_builder.query(&[("workspace_id", &param_value.to_string())]);
+    }
     if let Some(ref param_value) = p_query_bucket {
         req_builder = req_builder.query(&[("bucket", &param_value.to_string())]);
     }
@@ -857,183 +928,6 @@ pub async fn usage_series_v1_usage_series_get(
     }
 }
 
-/// Download every breakdown the summary reports, as one CSV.  One row per (dimension, key): model, user, API key, source, session (``source_label``), endpoint, and provider. A dedicated route rather than a ``format=csv`` flag on ``/summary`` so that endpoint keeps a single JSON response model and a clean OpenAPI schema. The export is **uncapped** (no top-N fold): finance wants every row. ``tokens`` is the billed total (fresh input, both cache buckets, and output), matching the dashboard's analytics. Kept separate from the bare-array ``/v1/usage`` contract, which is untouched.
-pub async fn usage_summary_csv_v1_usage_summary_csv_get(
-    configuration: &configuration::Configuration,
-    start_date: Option<chrono::DateTime<chrono::FixedOffset>>,
-    end_date: Option<chrono::DateTime<chrono::FixedOffset>>,
-    user_id: Option<Vec<String>>,
-    status: Option<&str>,
-    status_code: Option<i32>,
-    model: Option<Vec<String>>,
-    endpoint: Option<&str>,
-    provider: Option<&str>,
-    source: Option<&str>,
-    source_label: Option<&str>,
-    api_key_id: Option<Vec<String>>,
-    priced: Option<bool>,
-    tool: Option<&str>,
-    counts_toward_budget: Option<bool>,
-) -> Result<serde_json::Value, Error<UsageSummaryCsvV1UsageSummaryCsvGetError>> {
-    // add a prefix to parameters to efficiently prevent name collisions
-    let p_query_start_date = start_date;
-    let p_query_end_date = end_date;
-    let p_query_user_id = user_id;
-    let p_query_status = status;
-    let p_query_status_code = status_code;
-    let p_query_model = model;
-    let p_query_endpoint = endpoint;
-    let p_query_provider = provider;
-    let p_query_source = source;
-    let p_query_source_label = source_label;
-    let p_query_api_key_id = api_key_id;
-    let p_query_priced = priced;
-    let p_query_tool = tool;
-    let p_query_counts_toward_budget = counts_toward_budget;
-
-    let uri_str = format!("{}/v1/usage/summary.csv", configuration.base_path);
-    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
-
-    if let Some(ref param_value) = p_query_start_date {
-        req_builder = req_builder.query(&[("start_date", &param_value.to_string())]);
-    }
-    if let Some(ref param_value) = p_query_end_date {
-        req_builder = req_builder.query(&[("end_date", &param_value.to_string())]);
-    }
-    if let Some(ref param_value) = p_query_user_id {
-        req_builder = match "multi" {
-            "multi" => req_builder.query(
-                &param_value
-                    .into_iter()
-                    .map(|p| ("user_id".to_owned(), p.to_string()))
-                    .collect::<Vec<(std::string::String, std::string::String)>>(),
-            ),
-            _ => req_builder.query(&[(
-                "user_id",
-                &param_value
-                    .into_iter()
-                    .map(|p| p.to_string())
-                    .collect::<Vec<String>>()
-                    .join(",")
-                    .to_string(),
-            )]),
-        };
-    }
-    if let Some(ref param_value) = p_query_status {
-        req_builder = req_builder.query(&[("status", &param_value.to_string())]);
-    }
-    if let Some(ref param_value) = p_query_status_code {
-        req_builder = req_builder.query(&[("status_code", &param_value.to_string())]);
-    }
-    if let Some(ref param_value) = p_query_model {
-        req_builder = match "multi" {
-            "multi" => req_builder.query(
-                &param_value
-                    .into_iter()
-                    .map(|p| ("model".to_owned(), p.to_string()))
-                    .collect::<Vec<(std::string::String, std::string::String)>>(),
-            ),
-            _ => req_builder.query(&[(
-                "model",
-                &param_value
-                    .into_iter()
-                    .map(|p| p.to_string())
-                    .collect::<Vec<String>>()
-                    .join(",")
-                    .to_string(),
-            )]),
-        };
-    }
-    if let Some(ref param_value) = p_query_endpoint {
-        req_builder = req_builder.query(&[("endpoint", &param_value.to_string())]);
-    }
-    if let Some(ref param_value) = p_query_provider {
-        req_builder = req_builder.query(&[("provider", &param_value.to_string())]);
-    }
-    if let Some(ref param_value) = p_query_source {
-        req_builder = req_builder.query(&[("source", &param_value.to_string())]);
-    }
-    if let Some(ref param_value) = p_query_source_label {
-        req_builder = req_builder.query(&[("source_label", &param_value.to_string())]);
-    }
-    if let Some(ref param_value) = p_query_api_key_id {
-        req_builder = match "multi" {
-            "multi" => req_builder.query(
-                &param_value
-                    .into_iter()
-                    .map(|p| ("api_key_id".to_owned(), p.to_string()))
-                    .collect::<Vec<(std::string::String, std::string::String)>>(),
-            ),
-            _ => req_builder.query(&[(
-                "api_key_id",
-                &param_value
-                    .into_iter()
-                    .map(|p| p.to_string())
-                    .collect::<Vec<String>>()
-                    .join(",")
-                    .to_string(),
-            )]),
-        };
-    }
-    if let Some(ref param_value) = p_query_priced {
-        req_builder = req_builder.query(&[("priced", &param_value.to_string())]);
-    }
-    if let Some(ref param_value) = p_query_tool {
-        req_builder = req_builder.query(&[("tool", &param_value.to_string())]);
-    }
-    if let Some(ref param_value) = p_query_counts_toward_budget {
-        req_builder = req_builder.query(&[("counts_toward_budget", &param_value.to_string())]);
-    }
-    if let Some(ref user_agent) = configuration.user_agent {
-        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-    }
-    if let Some(ref apikey) = configuration.api_key {
-        let key = apikey.key.clone();
-        let value = match apikey.prefix {
-            Some(ref prefix) => format!("{} {}", prefix, key),
-            None => key,
-        };
-        req_builder = req_builder.header("x-api-key", value);
-    };
-    if let Some(ref apikey) = configuration.api_key {
-        let key = apikey.key.clone();
-        let value = match apikey.prefix {
-            Some(ref prefix) => format!("{} {}", prefix, key),
-            None => key,
-        };
-        req_builder = req_builder.header("Otari-Key", value);
-    };
-
-    let req = req_builder.build()?;
-    let resp = configuration.client.execute(req).await?;
-
-    let status = resp.status();
-    let content_type = resp
-        .headers()
-        .get("content-type")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("application/octet-stream");
-    let content_type = super::ContentType::from(content_type);
-
-    if !status.is_client_error() && !status.is_server_error() {
-        let content = resp.text().await?;
-        match content_type {
-            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `serde_json::Value`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `serde_json::Value`")))),
-        }
-    } else {
-        let content = resp.text().await?;
-        let entity: Option<UsageSummaryCsvV1UsageSummaryCsvGetError> =
-            serde_json::from_str(&content).ok();
-        Err(Error::ResponseError(ResponseContent {
-            status,
-            content,
-            entity,
-        }))
-    }
-}
-
 /// Aggregate spend, tokens, and request volume for the dashboard Usage page.  Range-bounded (default last 30 days, hard-capped): unlike the raw ``/v1/usage`` list, every aggregate is scoped to a bounded window so it stays served by the timestamp index. Returns grand totals, breakdowns by model / user / API key / source / session (``source_label``) / endpoint / provider (top rows plus a reconciling ``other`` fold, billed token counts), the error taxonomy grouped by failure status code, and a UTC-bucketed time series carrying each bucket's error count and billed token composition (input incl. cache, cache read/write, output).  Each breakdown is its own ``GROUP BY`` pass, so a caller that reads only the totals or the series should narrow ``dimensions`` rather than pay for all eight (the dashboard's tiles, timeline context, and model typeahead all do). Omitting the parameter keeps the full set.  ``model``, ``user_id``, and ``api_key_id`` are repeatable: several values match any of them, so one chart can compare a handful of models, users, or keys.
 pub async fn usage_summary_v1_usage_summary_get(
     configuration: &configuration::Configuration,
@@ -1051,6 +945,7 @@ pub async fn usage_summary_v1_usage_summary_get(
     priced: Option<bool>,
     tool: Option<&str>,
     counts_toward_budget: Option<bool>,
+    workspace_id: Option<&str>,
     bucket: Option<&str>,
     dimensions: Option<Vec<String>>,
 ) -> Result<models::UsageSummary, Error<UsageSummaryV1UsageSummaryGetError>> {
@@ -1069,6 +964,7 @@ pub async fn usage_summary_v1_usage_summary_get(
     let p_query_priced = priced;
     let p_query_tool = tool;
     let p_query_counts_toward_budget = counts_toward_budget;
+    let p_query_workspace_id = workspace_id;
     let p_query_bucket = bucket;
     let p_query_dimensions = dimensions;
 
@@ -1164,6 +1060,9 @@ pub async fn usage_summary_v1_usage_summary_get(
     }
     if let Some(ref param_value) = p_query_counts_toward_budget {
         req_builder = req_builder.query(&[("counts_toward_budget", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_workspace_id {
+        req_builder = req_builder.query(&[("workspace_id", &param_value.to_string())]);
     }
     if let Some(ref param_value) = p_query_bucket {
         req_builder = req_builder.query(&[("bucket", &param_value.to_string())]);

@@ -21,7 +21,7 @@ pub struct CountTokensRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub betas: Option<Option<Vec<String>>>,
-    /// An unsaved policy body to explain.
+    /// Provider-native request fields used as defaults (e.g. exa's 'type', searxng's 'engines').
     #[serde(
         rename = "cache_control",
         default,
@@ -29,7 +29,7 @@ pub struct CountTokensRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub cache_control: Option<Option<std::collections::HashMap<String, serde_json::Value>>>,
-    /// An unsaved policy body to explain.
+    /// Provider-native request fields used as defaults (e.g. exa's 'type', searxng's 'engines').
     #[serde(
         rename = "context_management",
         default,
@@ -39,7 +39,7 @@ pub struct CountTokensRequest {
     pub context_management: Option<Option<std::collections::HashMap<String, serde_json::Value>>>,
     #[serde(rename = "messages")]
     pub messages: Vec<std::collections::HashMap<String, serde_json::Value>>,
-    /// An unsaved policy body to explain.
+    /// Provider-native request fields used as defaults (e.g. exa's 'type', searxng's 'engines').
     #[serde(
         rename = "metadata",
         default,
@@ -56,7 +56,7 @@ pub struct CountTokensRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub system: Option<Option<Box<models::System>>>,
-    /// An unsaved policy body to explain.
+    /// Provider-native request fields used as defaults (e.g. exa's 'type', searxng's 'engines').
     #[serde(
         rename = "thinking",
         default,
@@ -64,7 +64,7 @@ pub struct CountTokensRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub thinking: Option<Option<std::collections::HashMap<String, serde_json::Value>>>,
-    /// An unsaved policy body to explain.
+    /// Provider-native request fields used as defaults (e.g. exa's 'type', searxng's 'engines').
     #[serde(
         rename = "tool_choice",
         default,

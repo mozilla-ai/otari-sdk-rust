@@ -36,7 +36,7 @@ pub struct MrMessageUsage {
         skip_serializing_if = "Option::is_none"
     )]
     pub cache_read_input_tokens: Option<Option<i32>>,
-    /// Delete the alias scoped to this user. Omit to delete the global alias of that name.
+    /// Filter to a single event type or metric name (e.g. 'tool_result', 'claude_code.commit.count')
     #[serde(
         rename = "inference_geo",
         default,
@@ -48,6 +48,13 @@ pub struct MrMessageUsage {
     pub input_tokens: i32,
     #[serde(rename = "output_tokens")]
     pub output_tokens: i32,
+    #[serde(
+        rename = "output_tokens_details",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub output_tokens_details: Option<Option<models::MrOutputTokensDetails>>,
     #[serde(
         rename = "server_tool_use",
         default,
@@ -87,6 +94,7 @@ impl MrMessageUsage {
             inference_geo: None,
             input_tokens,
             output_tokens,
+            output_tokens_details: None,
             server_tool_use: None,
             service_tier: None,
             iterations: None,

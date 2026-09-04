@@ -38,6 +38,30 @@ pub struct CreateBudgetRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub name: Option<Option<String>>,
+    /// Maximum requests over the period. Independent of max_budget; null is unlimited
+    #[serde(
+        rename = "request_limit",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub request_limit: Option<Option<i32>>,
+    /// Reset on a UTC calendar boundary instead of a fixed number of seconds, which is the only way to express a calendar month. Mutually exclusive with budget_duration_sec
+    #[serde(
+        rename = "reset_alignment",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub reset_alignment: Option<Option<ResetAlignment>>,
+    /// Maximum tokens over the period. Independent of max_budget; null is unlimited
+    #[serde(
+        rename = "token_limit",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub token_limit: Option<Option<i32>>,
 }
 
 impl CreateBudgetRequest {
@@ -47,6 +71,25 @@ impl CreateBudgetRequest {
             budget_duration_sec: None,
             max_budget: None,
             name: None,
+            request_limit: None,
+            reset_alignment: None,
+            token_limit: None,
         }
+    }
+}
+/// Reset on a UTC calendar boundary instead of a fixed number of seconds, which is the only way to express a calendar month. Mutually exclusive with budget_duration_sec
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
+pub enum ResetAlignment {
+    #[serde(rename = "calendar_day")]
+    CalendarDay,
+    #[serde(rename = "calendar_week")]
+    CalendarWeek,
+    #[serde(rename = "calendar_month")]
+    CalendarMonth,
+}
+
+impl Default for ResetAlignment {
+    fn default() -> ResetAlignment {
+        Self::CalendarDay
     }
 }

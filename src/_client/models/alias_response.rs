@@ -41,6 +41,13 @@ pub struct AliasResponse {
         skip_serializing_if = "Option::is_none"
     )]
     pub user_id: Option<Option<String>>,
+    #[serde(
+        rename = "workspace_id",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub workspace_id: Option<Option<uuid::Uuid>>,
 }
 
 impl AliasResponse {
@@ -53,6 +60,7 @@ impl AliasResponse {
             target,
             updated_at: None,
             user_id: None,
+            workspace_id: None,
         }
     }
 }

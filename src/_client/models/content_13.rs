@@ -19,21 +19,53 @@ pub struct Content13 {
     pub error_message: Option<String>,
     #[serde(rename = "type")]
     pub r#type: Type,
-    #[serde(rename = "tool_references")]
-    pub tool_references: Vec<models::MrToolReferenceBlock>,
+    #[serde(rename = "content")]
+    pub content: String,
+    #[serde(rename = "file_type")]
+    pub file_type: FileType,
+    #[serde(rename = "num_lines", skip_serializing_if = "Option::is_none")]
+    pub num_lines: Option<i32>,
+    #[serde(rename = "start_line", skip_serializing_if = "Option::is_none")]
+    pub start_line: Option<i32>,
+    #[serde(rename = "total_lines", skip_serializing_if = "Option::is_none")]
+    pub total_lines: Option<i32>,
+    #[serde(rename = "is_file_update")]
+    pub is_file_update: bool,
+    #[serde(rename = "lines", skip_serializing_if = "Option::is_none")]
+    pub lines: Option<Vec<String>>,
+    #[serde(rename = "new_lines", skip_serializing_if = "Option::is_none")]
+    pub new_lines: Option<i32>,
+    #[serde(rename = "new_start", skip_serializing_if = "Option::is_none")]
+    pub new_start: Option<i32>,
+    #[serde(rename = "old_lines", skip_serializing_if = "Option::is_none")]
+    pub old_lines: Option<i32>,
+    #[serde(rename = "old_start", skip_serializing_if = "Option::is_none")]
+    pub old_start: Option<i32>,
 }
 
 impl Content13 {
     pub fn new(
         error_code: ErrorCode,
         r#type: Type,
-        tool_references: Vec<models::MrToolReferenceBlock>,
+        content: String,
+        file_type: FileType,
+        is_file_update: bool,
     ) -> Content13 {
         Content13 {
             error_code,
             error_message: None,
             r#type,
-            tool_references,
+            content,
+            file_type,
+            num_lines: None,
+            start_line: None,
+            total_lines: None,
+            is_file_update,
+            lines: None,
+            new_lines: None,
+            new_start: None,
+            old_lines: None,
+            old_start: None,
         }
     }
 }
@@ -48,6 +80,8 @@ pub enum ErrorCode {
     TooManyRequests,
     #[serde(rename = "execution_time_exceeded")]
     ExecutionTimeExceeded,
+    #[serde(rename = "file_not_found")]
+    FileNotFound,
 }
 
 impl Default for ErrorCode {
@@ -58,14 +92,34 @@ impl Default for ErrorCode {
 ///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Type {
-    #[serde(rename = "tool_search_tool_result_error")]
-    ToolSearchToolResultError,
-    #[serde(rename = "tool_search_tool_search_result")]
-    ToolSearchToolSearchResult,
+    #[serde(rename = "text_editor_code_execution_tool_result_error")]
+    TextEditorCodeExecutionToolResultError,
+    #[serde(rename = "text_editor_code_execution_view_result")]
+    TextEditorCodeExecutionViewResult,
+    #[serde(rename = "text_editor_code_execution_create_result")]
+    TextEditorCodeExecutionCreateResult,
+    #[serde(rename = "text_editor_code_execution_str_replace_result")]
+    TextEditorCodeExecutionStrReplaceResult,
 }
 
 impl Default for Type {
     fn default() -> Type {
-        Self::ToolSearchToolResultError
+        Self::TextEditorCodeExecutionToolResultError
+    }
+}
+///
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
+pub enum FileType {
+    #[serde(rename = "text")]
+    Text,
+    #[serde(rename = "image")]
+    Image,
+    #[serde(rename = "pdf")]
+    Pdf,
+}
+
+impl Default for FileType {
+    fn default() -> FileType {
+        Self::Text
     }
 }

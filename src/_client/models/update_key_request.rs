@@ -22,6 +22,13 @@ pub struct UpdateKeyRequest {
     )]
     pub allowed_models: Option<Option<Vec<String>>>,
     #[serde(
+        rename = "capture_agent_telemetry",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub capture_agent_telemetry: Option<Option<bool>>,
+    #[serde(
         rename = "exclude_from_budget",
         default,
         with = "::serde_with::rust::double_option",
@@ -70,6 +77,7 @@ impl UpdateKeyRequest {
     pub fn new() -> UpdateKeyRequest {
         UpdateKeyRequest {
             allowed_models: None,
+            capture_agent_telemetry: None,
             exclude_from_budget: None,
             expires_at: None,
             is_active: None,

@@ -49,6 +49,8 @@ impl MrBetaServerToolUseBlock {
 ///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Name {
+    #[serde(rename = "advisor")]
+    Advisor,
     #[serde(rename = "web_search")]
     WebSearch,
     #[serde(rename = "web_fetch")]
@@ -67,7 +69,7 @@ pub enum Name {
 
 impl Default for Name {
     fn default() -> Name {
-        Self::WebSearch
+        Self::Advisor
     }
 }
 ///

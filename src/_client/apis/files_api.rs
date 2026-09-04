@@ -344,15 +344,17 @@ pub async fn get_file_v1_files_file_id_get(
     }
 }
 
-/// List the authenticated user's uploaded files.
+/// List the authenticated user's uploaded files in the request's workspace.  ``workspace_id`` narrows a master-key listing to one workspace; a keyed request is already confined to its key's own and cannot widen or move it.
 pub async fn list_files_v1_files_get(
     configuration: &configuration::Configuration,
     user: Option<&str>,
     purpose: Option<&str>,
+    workspace_id: Option<&str>,
 ) -> Result<std::collections::HashMap<String, serde_json::Value>, Error<ListFilesV1FilesGetError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_query_user = user;
     let p_query_purpose = purpose;
+    let p_query_workspace_id = workspace_id;
 
     let uri_str = format!("{}/v1/files", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
@@ -362,6 +364,9 @@ pub async fn list_files_v1_files_get(
     }
     if let Some(ref param_value) = p_query_purpose {
         req_builder = req_builder.query(&[("purpose", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_workspace_id {
+        req_builder = req_builder.query(&[("workspace_id", &param_value.to_string())]);
     }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());

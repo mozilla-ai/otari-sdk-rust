@@ -61,7 +61,7 @@ pub enum UpdateKeyV1KeysKeyIdPatchError {
     UnknownValue(serde_json::Value),
 }
 
-/// Create a new API key.  Requires master key authentication.  If user_id is provided, the key will be associated with that user (creates user if it doesn't exist). If user_id is not provided, the key is associated with the shared \"default\" user, which is created on first use. Keys without an explicit owner therefore share one identity, and so share budget, usage, and files.
+/// Create a new API key in the caller's organization.  Requires master key authentication.  If user_id is provided, the key will be associated with that user (creates user if it doesn't exist). If user_id is not provided, the key is associated with the shared \"default\" user, which is created on first use. Keys without an explicit owner therefore share one identity, and so share budget, usage, and files.  ``workspace_id`` names a workspace in the caller's organization, and omitting it mints into that organization's default workspace. A key resolves that organization's provider credentials and bills there, so minting into another organization's workspace would spend its budget on its credentials.
 pub async fn create_key_v1_keys_post(
     configuration: &configuration::Configuration,
     create_key_request: models::CreateKeyRequest,
@@ -124,7 +124,7 @@ pub async fn create_key_v1_keys_post(
     }
 }
 
-/// Delete (revoke) an API key.  Requires master key authentication.
+/// Delete (revoke) an API key in the caller's organization.  Requires master key authentication.
 pub async fn delete_key_v1_keys_key_id_delete(
     configuration: &configuration::Configuration,
     key_id: &str,
@@ -179,7 +179,7 @@ pub async fn delete_key_v1_keys_key_id_delete(
     }
 }
 
-/// Get details of a specific API key.  Requires master key authentication.
+/// Get details of a specific API key in the caller's organization.  Requires master key authentication.
 pub async fn get_key_v1_keys_key_id_get(
     configuration: &configuration::Configuration,
     key_id: &str,
@@ -243,15 +243,17 @@ pub async fn get_key_v1_keys_key_id_get(
     }
 }
 
-/// List all API keys.  Requires master key authentication.
+/// List the API keys in the caller's organization.  Requires master key authentication. An unset ``workspace_id`` lists every key in that organization; naming a workspace in another one lists nothing rather than refusing, so the filter reports no more than the unfiltered read does.
 pub async fn list_keys_v1_keys_get(
     configuration: &configuration::Configuration,
     skip: Option<i32>,
     limit: Option<i32>,
+    workspace_id: Option<&str>,
 ) -> Result<Vec<models::KeyInfo>, Error<ListKeysV1KeysGetError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_query_skip = skip;
     let p_query_limit = limit;
+    let p_query_workspace_id = workspace_id;
 
     let uri_str = format!("{}/v1/keys", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
@@ -261,6 +263,9 @@ pub async fn list_keys_v1_keys_get(
     }
     if let Some(ref param_value) = p_query_limit {
         req_builder = req_builder.query(&[("limit", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_workspace_id {
+        req_builder = req_builder.query(&[("workspace_id", &param_value.to_string())]);
     }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
@@ -311,7 +316,7 @@ pub async fn list_keys_v1_keys_get(
     }
 }
 
-/// Rotate an API key's secret in place.  Requires master key authentication.  Generates a new secret for the same key row (id, user, name, expiry, and metadata are preserved) and returns the new raw key once, using the same response shape as key creation. The previous secret stops authenticating immediately; there is no grace window.
+/// Rotate an API key's secret in place, within the caller's organization.  Requires master key authentication.  Generates a new secret for the same key row (id, user, name, expiry, and metadata are preserved) and returns the new raw key once, using the same response shape as key creation. The previous secret stops authenticating immediately; there is no grace window.
 pub async fn rotate_key_v1_keys_key_id_rotate_post(
     configuration: &configuration::Configuration,
     key_id: &str,
@@ -378,7 +383,7 @@ pub async fn rotate_key_v1_keys_key_id_rotate_post(
     }
 }
 
-/// Update an API key.  Requires master key authentication.
+/// Update an API key in the caller's organization.  Requires master key authentication.
 pub async fn update_key_v1_keys_key_id_patch(
     configuration: &configuration::Configuration,
     key_id: &str,

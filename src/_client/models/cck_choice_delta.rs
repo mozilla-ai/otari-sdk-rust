@@ -48,7 +48,7 @@ pub struct CckChoiceDelta {
         skip_serializing_if = "Option::is_none"
     )]
     pub tool_calls: Option<Option<Vec<models::CckChoiceDeltaToolCall>>>,
-    /// Delete the alias scoped to this user. Omit to delete the global alias of that name.
+    /// Filter to a single event type or metric name (e.g. 'tool_result', 'claude_code.commit.count')
     #[serde(
         rename = "reasoning",
         default,

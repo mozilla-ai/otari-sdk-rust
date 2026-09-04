@@ -22,6 +22,14 @@ pub struct CreateKeyRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub allowed_models: Option<Option<Vec<String>>>,
+    /// Per-key override of the deployment-wide capture_agent_telemetry setting: null (default) inherits it, true always stores this key's coding-agent telemetry, false always discards it. Covers both behavioral events (tool_result, tool_decision, user_prompt, api_error) from POST /v1/logs and outcome-metric data points (lines of code, commits, pull requests, active time) from POST /v1/metrics. Usage capture and billing are unaffected either way.
+    #[serde(
+        rename = "capture_agent_telemetry",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub capture_agent_telemetry: Option<Option<bool>>,
     /// When true, requests on this key are logged with cost but never reserved, reconciled into the user's spend, or gated by budget.
     #[serde(
         rename = "exclude_from_budget",
@@ -63,6 +71,14 @@ pub struct CreateKeyRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub user_id: Option<Option<String>>,
+    /// Workspace this key belongs to, which must be one in the caller's organization. Omitted means that organization's default workspace. A key belongs to exactly one workspace: requests on it are scoped and billed there, so the workspace is read off the key rather than off a request header.
+    #[serde(
+        rename = "workspace_id",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub workspace_id: Option<Option<uuid::Uuid>>,
 }
 
 impl CreateKeyRequest {
@@ -70,12 +86,14 @@ impl CreateKeyRequest {
     pub fn new() -> CreateKeyRequest {
         CreateKeyRequest {
             allowed_models: None,
+            capture_agent_telemetry: None,
             exclude_from_budget: None,
             expires_at: None,
             key_name: None,
             metadata: None,
             reject_user_mismatch: None,
             user_id: None,
+            workspace_id: None,
         }
     }
 }

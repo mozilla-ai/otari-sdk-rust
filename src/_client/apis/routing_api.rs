@@ -13,6 +13,14 @@ use crate::{apis::ResponseContent, models};
 use reqwest;
 use serde::{de::Error as _, Deserialize, Serialize};
 
+/// struct for typed errors of method [`delete_organization_routing_policy_v1_organizations_me_routing_policies_name_delete`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum DeleteOrganizationRoutingPolicyV1OrganizationsMeRoutingPoliciesNameDeleteError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`delete_policy_v1_routing_policies_name_delete`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -33,6 +41,39 @@ pub enum ExplainPolicyV1RoutingPoliciesExplainPostError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum ListPoliciesV1RoutingPoliciesGetError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`list_visible_routing_policies_v1_organizations_me_routing_policies_get`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ListVisibleRoutingPoliciesV1OrganizationsMeRoutingPoliciesGetError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`rank_candidates_v1_routing_preferences_rank_post`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum RankCandidatesV1RoutingPreferencesRankPostError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`routing_memory_status_v1_routing_status_get`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum RoutingMemoryStatusV1RoutingStatusGetError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`set_organization_routing_policy_v1_organizations_me_routing_policies_post`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum SetOrganizationRoutingPolicyV1OrganizationsMeRoutingPoliciesPostError {
+    Status422(models::HttpValidationError),
     UnknownValue(serde_json::Value),
 }
 
@@ -44,15 +85,80 @@ pub enum SetPolicyV1RoutingPoliciesPostError {
     UnknownValue(serde_json::Value),
 }
 
-/// Delete a stored policy in one scope.  Scoped by ``user_id`` for the same reason the upsert is: deleting the global policy must not take a user's override with it, and deleting an override must leave the global one serving everyone else.
+/// Delete a stored policy from one of the organization's workspaces. Owners and admins only.
+pub async fn delete_organization_routing_policy_v1_organizations_me_routing_policies_name_delete(
+    configuration: &configuration::Configuration,
+    name: &str,
+    workspace_id: Option<&str>,
+) -> Result<(), Error<DeleteOrganizationRoutingPolicyV1OrganizationsMeRoutingPoliciesNameDeleteError>>
+{
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_name = name;
+    let p_query_workspace_id = workspace_id;
+
+    let uri_str = format!(
+        "{}/v1/organizations/me/routing-policies/{name}",
+        configuration.base_path,
+        name = crate::apis::urlencode(p_path_name)
+    );
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::DELETE, &uri_str);
+
+    if let Some(ref param_value) = p_query_workspace_id {
+        req_builder = req_builder.query(&[("workspace_id", &param_value.to_string())]);
+    }
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<
+            DeleteOrganizationRoutingPolicyV1OrganizationsMeRoutingPoliciesNameDeleteError,
+        > = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Delete a stored policy in one scope.
 pub async fn delete_policy_v1_routing_policies_name_delete(
     configuration: &configuration::Configuration,
     name: &str,
     user_id: Option<&str>,
+    workspace_id: Option<&str>,
 ) -> Result<(), Error<DeletePolicyV1RoutingPoliciesNameDeleteError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_name = name;
     let p_query_user_id = user_id;
+    let p_query_workspace_id = workspace_id;
 
     let uri_str = format!(
         "{}/v1/routing/policies/{name}",
@@ -65,6 +171,9 @@ pub async fn delete_policy_v1_routing_policies_name_delete(
 
     if let Some(ref param_value) = p_query_user_id {
         req_builder = req_builder.query(&[("user_id", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_workspace_id {
+        req_builder = req_builder.query(&[("workspace_id", &param_value.to_string())]);
     }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
@@ -105,7 +214,7 @@ pub async fn delete_policy_v1_routing_policies_name_delete(
     }
 }
 
-/// Compile a policy and return the plan, without dispatching anything.  Master-key gated, and deliberately so: the response enumerates the policy's targets, which is exactly the information a policy exists to keep off the wire. It is a management surface, not a caller-facing one.  Accepts an unsaved ``spec`` as well as a saved ``name``, so a form can validate what the operator is about to save. The response includes dropped candidates with reasons, which is the part that catches a \"failover\" policy that has quietly compiled down to a single attempt.
+/// Compile a policy and return the plan, without dispatching anything.  Operator-gated, and deliberately so: the response enumerates the policy's targets, which is exactly the information a policy exists to keep off the wire. It is a management surface, not a caller-facing one.  Accepts an unsaved ``spec`` as well as a saved ``name``, so a form can validate what the operator is about to save. The response includes dropped candidates with reasons, which is the part that catches a \"failover\" policy that has quietly compiled down to a single attempt.
 pub async fn explain_policy_v1_routing_policies_explain_post(
     configuration: &configuration::Configuration,
     explain_request: models::ExplainRequest,
@@ -169,13 +278,20 @@ pub async fn explain_policy_v1_routing_policies_explain_post(
     }
 }
 
-/// List every routing policy in force, from config.yml and from storage.  Every scope at once, global and user-scoped alike: this is the master-key management view, not what any one caller resolves.
+/// List every routing policy in force, from config.yml and from storage.  Every scope at once, workspace-wide and user-scoped alike: this is the master-key management view, not what any one caller resolves.
 pub async fn list_policies_v1_routing_policies_get(
     configuration: &configuration::Configuration,
+    workspace_id: Option<&str>,
 ) -> Result<Vec<models::PolicyResponse>, Error<ListPoliciesV1RoutingPoliciesGetError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_workspace_id = workspace_id;
+
     let uri_str = format!("{}/v1/routing/policies", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref param_value) = p_query_workspace_id {
+        req_builder = req_builder.query(&[("workspace_id", &param_value.to_string())]);
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -226,7 +342,278 @@ pub async fn list_policies_v1_routing_policies_get(
     }
 }
 
-/// Create or update a stored policy, global or scoped to one user.  The spec is validated here and stored as given, so a row can never contain a body this build would refuse at load. The cache is refreshed twice: once before validating (so the shadowing checks see other writers' policies) and once after committing (so this worker serves the new policy immediately).
+/// List the routing policies in force in the workspaces this caller may see.  Stored policies from the caller's visible workspaces plus the config-file policies, which are deployment-wide and resolve in every workspace. The response is the shape ``GET /v1/routing/policies`` answers, narrowed to the caller's own organization.
+pub async fn list_visible_routing_policies_v1_organizations_me_routing_policies_get(
+    configuration: &configuration::Configuration,
+    limit: Option<i32>,
+) -> Result<
+    Vec<models::PolicyResponse>,
+    Error<ListVisibleRoutingPoliciesV1OrganizationsMeRoutingPoliciesGetError>,
+> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_limit = limit;
+
+    let uri_str = format!(
+        "{}/v1/organizations/me/routing-policies",
+        configuration.base_path
+    );
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref param_value) = p_query_limit {
+        req_builder = req_builder.query(&[("limit", &param_value.to_string())]);
+    }
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `Vec&lt;models::PolicyResponse&gt;`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `Vec&lt;models::PolicyResponse&gt;`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<ListVisibleRoutingPoliciesV1OrganizationsMeRoutingPoliciesGetError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Record scored examples: one routing-memory record each, plus an audit row.  The routing-memory record is written before its audit row for each example, because it is the load-bearing one (the router votes over it) and embedding it can fail; writing the audit row only afterwards means a failed embedding never leaves an orphan audit row.  A failed embedding is a 502 that names the model, not a 500. Every example in the batch is embedded, so this is the call an operator makes most often and the one most likely to meet a misconfigured ``router_embedding_model``.  Score keys are stored canonically as ``instance:model`` (see :func:`_validated_scores`), which is the form the router canonicalizes its candidates to, so how a policy spells a candidate cannot decide whether it matches.
+pub async fn rank_candidates_v1_routing_preferences_rank_post(
+    configuration: &configuration::Configuration,
+    rank_request: models::RankRequest,
+) -> Result<models::RankResponse, Error<RankCandidatesV1RoutingPreferencesRankPostError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_rank_request = rank_request;
+
+    let uri_str = format!("{}/v1/routing/preferences/rank", configuration.base_path);
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+    req_builder = req_builder.json(&p_body_rank_request);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::RankResponse`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::RankResponse`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<RankCandidatesV1RoutingPreferencesRankPostError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Report how warm one user's routing memory is in one workspace, per pool.  ``user_id`` is required rather than optional because there is no aggregate answer: warmth is per user, and a total across users would describe a pool that no request ever votes over. The same holds across workspaces, which is why ``workspace_id`` narrows rather than aggregating; it merely defaults instead of being required, because a single-workspace deployment has one answer.
+pub async fn routing_memory_status_v1_routing_status_get(
+    configuration: &configuration::Configuration,
+    user_id: &str,
+    workspace_id: Option<&str>,
+) -> Result<models::RouterStatus, Error<RoutingMemoryStatusV1RoutingStatusGetError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_user_id = user_id;
+    let p_query_workspace_id = workspace_id;
+
+    let uri_str = format!("{}/v1/routing/status", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    req_builder = req_builder.query(&[("user_id", &p_query_user_id.to_string())]);
+    if let Some(ref param_value) = p_query_workspace_id {
+        req_builder = req_builder.query(&[("workspace_id", &param_value.to_string())]);
+    }
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::RouterStatus`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::RouterStatus`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<RoutingMemoryStatusV1RoutingStatusGetError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Create or update a stored policy in one of the organization's workspaces.  Organization owners and admins only. ``workspace_id`` is required and must name a workspace of the caller's own organization; ``user_id`` is not accepted here.
+pub async fn set_organization_routing_policy_v1_organizations_me_routing_policies_post(
+    configuration: &configuration::Configuration,
+    policy_request: models::PolicyRequest,
+) -> Result<
+    models::PolicyResponse,
+    Error<SetOrganizationRoutingPolicyV1OrganizationsMeRoutingPoliciesPostError>,
+> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_policy_request = policy_request;
+
+    let uri_str = format!(
+        "{}/v1/organizations/me/routing-policies",
+        configuration.base_path
+    );
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+    req_builder = req_builder.json(&p_body_policy_request);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::PolicyResponse`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::PolicyResponse`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<SetOrganizationRoutingPolicyV1OrganizationsMeRoutingPoliciesPostError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Create or update a stored policy in one workspace, optionally for one user.  Omitting ``workspace_id`` means the deployment's default workspace, which is where an operator acting deployment-wide writes.
 pub async fn set_policy_v1_routing_policies_post(
     configuration: &configuration::Configuration,
     policy_request: models::PolicyRequest,

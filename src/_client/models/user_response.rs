@@ -26,6 +26,10 @@ pub struct UserResponse {
     pub budget_started_at: Option<String>,
     #[serde(rename = "created_at")]
     pub created_at: String,
+    #[serde(rename = "current_requests")]
+    pub current_requests: i32,
+    #[serde(rename = "current_tokens")]
+    pub current_tokens: i32,
     #[serde(rename = "metadata")]
     pub metadata: std::collections::HashMap<String, serde_json::Value>,
     #[serde(
@@ -35,6 +39,10 @@ pub struct UserResponse {
     pub next_budget_reset_at: Option<String>,
     #[serde(rename = "reserved")]
     pub reserved: f64,
+    #[serde(rename = "reserved_requests")]
+    pub reserved_requests: i32,
+    #[serde(rename = "reserved_tokens")]
+    pub reserved_tokens: i32,
     #[serde(rename = "spend")]
     pub spend: f64,
     #[serde(rename = "updated_at")]
@@ -52,9 +60,13 @@ impl UserResponse {
         budget_id: Option<String>,
         budget_started_at: Option<String>,
         created_at: String,
+        current_requests: i32,
+        current_tokens: i32,
         metadata: std::collections::HashMap<String, serde_json::Value>,
         next_budget_reset_at: Option<String>,
         reserved: f64,
+        reserved_requests: i32,
+        reserved_tokens: i32,
         spend: f64,
         updated_at: String,
         user_id: String,
@@ -66,9 +78,13 @@ impl UserResponse {
             budget_id,
             budget_started_at,
             created_at,
+            current_requests,
+            current_tokens,
             metadata,
             next_budget_reset_at,
             reserved,
+            reserved_requests,
+            reserved_tokens,
             spend,
             updated_at,
             user_id,

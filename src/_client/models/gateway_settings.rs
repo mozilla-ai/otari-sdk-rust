@@ -27,7 +27,7 @@ pub struct GatewaySettings {
     pub model_discovery: bool,
     #[serde(rename = "require_pricing")]
     pub require_pricing: bool,
-    /// Whether OTARI_SECRET_KEY is set on the server. Provider credentials are encrypted at rest with it, so the dashboard disables adding stored providers when it is unset.
+    /// Whether OTARI_SECRET_KEY is set on the server. Provider credentials are encrypted at rest with it, so a deployment without it can store none. The dashboard reads the same fact from the membership context's provider_key_encryption_available, because this endpoint is operator-only and the provider-key pages are read by tenants.
     #[serde(rename = "secret_key_configured")]
     pub secret_key_configured: bool,
     #[serde(rename = "version")]

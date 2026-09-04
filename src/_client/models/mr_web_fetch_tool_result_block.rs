@@ -21,7 +21,7 @@ pub struct MrWebFetchToolResultBlock {
     )]
     pub caller: Option<Option<Box<models::Caller1>>>,
     #[serde(rename = "content")]
-    pub content: Box<models::Content14>,
+    pub content: Box<models::Content15>,
     #[serde(rename = "tool_use_id")]
     pub tool_use_id: String,
     #[serde(rename = "type")]
@@ -30,7 +30,7 @@ pub struct MrWebFetchToolResultBlock {
 
 impl MrWebFetchToolResultBlock {
     pub fn new(
-        content: models::Content14,
+        content: models::Content15,
         tool_use_id: String,
         r#type: Type,
     ) -> MrWebFetchToolResultBlock {

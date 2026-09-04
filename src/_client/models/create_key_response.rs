@@ -16,6 +16,11 @@ use serde::{Deserialize, Serialize};
 pub struct CreateKeyResponse {
     #[serde(rename = "allowed_models", deserialize_with = "Option::deserialize")]
     pub allowed_models: Option<Vec<String>>,
+    #[serde(
+        rename = "capture_agent_telemetry",
+        deserialize_with = "Option::deserialize"
+    )]
+    pub capture_agent_telemetry: Option<bool>,
     #[serde(rename = "created_at")]
     pub created_at: String,
     #[serde(rename = "exclude_from_budget")]
@@ -47,6 +52,7 @@ impl CreateKeyResponse {
     /// Response model for creating a new API key.
     pub fn new(
         allowed_models: Option<Vec<String>>,
+        capture_agent_telemetry: Option<bool>,
         created_at: String,
         exclude_from_budget: bool,
         expires_at: Option<String>,
@@ -61,6 +67,7 @@ impl CreateKeyResponse {
     ) -> CreateKeyResponse {
         CreateKeyResponse {
             allowed_models,
+            capture_agent_telemetry,
             created_at,
             exclude_from_budget,
             expires_at,

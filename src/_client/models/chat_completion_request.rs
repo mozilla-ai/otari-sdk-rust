@@ -11,7 +11,7 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// ChatCompletionRequest : OpenAI-compatible chat completion request.  The completion-param fields are derived from any-llm's ``CompletionParams`` (see ``_schema_derive``) so the schema cannot silently drop a param any-llm forwards. Fields below either tighten a derived field (``messages``, ``response_format``) or add gateway-internal behavior (``mcp_servers``, ``mcp_server_ids``, ``guardrails``, ``tools_header``, ``max_tool_iterations``) that is stripped before the request is forwarded upstream.
+/// ChatCompletionRequest : OpenAI-compatible chat completion request.  The completion-param fields are derived from any-llm's ``CompletionParams`` (see ``_schema_derive``) so the schema cannot silently drop a param any-llm forwards. Fields below either tighten a derived field (``messages``, ``response_format``), declare an OpenAI wire param ``CompletionParams`` does not model (``service_tier``, forwarded as an any-llm ``**kwargs`` param), add gateway-internal behavior (``mcp_servers``, ``mcp_server_ids``, ``guardrails``, ``tools_header``, ``max_tool_iterations``) that is stripped before the request is forwarded upstream, or restate a derived field unchanged to document it (``max_completion_tokens``), which is only worth doing where the wire contract is not guessable from the field itself.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ChatCompletionRequest {
     #[serde(
@@ -42,6 +42,7 @@ pub struct ChatCompletionRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub logprobs: Option<Option<bool>>,
+    /// Upper bound on generated tokens. OpenAI's current name for the cap `max_tokens` used to carry; either field is accepted, and this one wins when a request sends both.
     #[serde(
         rename = "max_completion_tokens",
         default,
@@ -103,6 +104,13 @@ pub struct ChatCompletionRequest {
     )]
     pub presence_penalty: Option<Option<f64>>,
     #[serde(
+        rename = "prompt_cache_key",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub prompt_cache_key: Option<Option<String>>,
+    #[serde(
         rename = "reasoning_effort",
         default,
         with = "::serde_with::rust::double_option",
@@ -123,6 +131,13 @@ pub struct ChatCompletionRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub seed: Option<Option<i32>>,
+    #[serde(
+        rename = "service_tier",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub service_tier: Option<Option<String>>,
     /// Optional caller-supplied label for cost attribution (per run, experiment, or conversation). In hybrid mode it is forwarded onto the platform usage report so spend can be sliced by session without standing up OpenTelemetry. Stripped before the request is forwarded upstream to the provider. Has no effect in standalone mode, where there is no platform to report it to.
     #[serde(
         rename = "session_label",
@@ -140,7 +155,7 @@ pub struct ChatCompletionRequest {
     pub stop: Option<Option<Box<models::Stop>>>,
     #[serde(rename = "stream", skip_serializing_if = "Option::is_none")]
     pub stream: Option<bool>,
-    /// An unsaved policy body to explain.
+    /// Provider-native request fields used as defaults (e.g. exa's 'type', searxng's 'engines').
     #[serde(
         rename = "stream_options",
         default,
@@ -201,7 +216,7 @@ pub struct ChatCompletionRequest {
 }
 
 impl ChatCompletionRequest {
-    /// OpenAI-compatible chat completion request.  The completion-param fields are derived from any-llm's ``CompletionParams`` (see ``_schema_derive``) so the schema cannot silently drop a param any-llm forwards. Fields below either tighten a derived field (``messages``, ``response_format``) or add gateway-internal behavior (``mcp_servers``, ``mcp_server_ids``, ``guardrails``, ``tools_header``, ``max_tool_iterations``) that is stripped before the request is forwarded upstream.
+    /// OpenAI-compatible chat completion request.  The completion-param fields are derived from any-llm's ``CompletionParams`` (see ``_schema_derive``) so the schema cannot silently drop a param any-llm forwards. Fields below either tighten a derived field (``messages``, ``response_format``), declare an OpenAI wire param ``CompletionParams`` does not model (``service_tier``, forwarded as an any-llm ``**kwargs`` param), add gateway-internal behavior (``mcp_servers``, ``mcp_server_ids``, ``guardrails``, ``tools_header``, ``max_tool_iterations``) that is stripped before the request is forwarded upstream, or restate a derived field unchanged to document it (``max_completion_tokens``), which is only worth doing where the wire contract is not guessable from the field itself.
     pub fn new(messages: Vec<models::ChatMessageInput>, model: String) -> ChatCompletionRequest {
         ChatCompletionRequest {
             frequency_penalty: None,
@@ -218,9 +233,11 @@ impl ChatCompletionRequest {
             n: None,
             parallel_tool_calls: None,
             presence_penalty: None,
+            prompt_cache_key: None,
             reasoning_effort: None,
             response_format: None,
             seed: None,
+            service_tier: None,
             session_label: None,
             stop: None,
             stream: None,

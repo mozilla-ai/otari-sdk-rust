@@ -27,6 +27,8 @@ pub struct MrBetaMessageIterationUsage {
     pub cache_read_input_tokens: i32,
     #[serde(rename = "input_tokens")]
     pub input_tokens: i32,
+    #[serde(rename = "model")]
+    pub model: Box<models::Model1>,
     #[serde(rename = "output_tokens")]
     pub output_tokens: i32,
     #[serde(rename = "type")]
@@ -39,6 +41,7 @@ impl MrBetaMessageIterationUsage {
         cache_creation_input_tokens: i32,
         cache_read_input_tokens: i32,
         input_tokens: i32,
+        model: models::Model1,
         output_tokens: i32,
         r#type: Type,
     ) -> MrBetaMessageIterationUsage {
@@ -47,6 +50,7 @@ impl MrBetaMessageIterationUsage {
             cache_creation_input_tokens,
             cache_read_input_tokens,
             input_tokens,
+            model: Box::new(model),
             output_tokens,
             r#type,
         }

@@ -28,7 +28,7 @@ pub struct ModerationResult {
     pub category_scores: Option<std::collections::HashMap<String, f64>>,
     #[serde(rename = "flagged")]
     pub flagged: bool,
-    /// An unsaved policy body to explain.
+    /// Provider-native request fields used as defaults (e.g. exa's 'type', searxng's 'engines').
     #[serde(
         rename = "provider_raw",
         default,

@@ -13,6 +13,20 @@ use crate::{apis::ResponseContent, models};
 use reqwest;
 use serde::{de::Error as _, Deserialize, Serialize};
 
+/// struct for typed errors of method [`get_mail_settings_v1_settings_mail_get`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetMailSettingsV1SettingsMailGetError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`get_maintenance_mode_v1_settings_maintenance_mode_get`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetMaintenanceModeV1SettingsMaintenanceModeGetError {
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_settings_v1_settings_get`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -27,12 +41,142 @@ pub enum RotateMasterKeyV1SettingsMasterKeyRotatePostError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`send_test_mail_v1_settings_mail_test_post`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum SendTestMailV1SettingsMailTestPostError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`update_maintenance_mode_v1_settings_maintenance_mode_patch`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum UpdateMaintenanceModeV1SettingsMaintenanceModePatchError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`update_settings_v1_settings_patch`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum UpdateSettingsV1SettingsPatchError {
     Status422(models::HttpValidationError),
     UnknownValue(serde_json::Value),
+}
+
+/// Report the effective outgoing-mail configuration.
+pub async fn get_mail_settings_v1_settings_mail_get(
+    configuration: &configuration::Configuration,
+) -> Result<models::MailSettings, Error<GetMailSettingsV1SettingsMailGetError>> {
+    let uri_str = format!("{}/v1/settings/mail", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::MailSettings`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::MailSettings`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetMailSettingsV1SettingsMailGetError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Report whether new dashboard sign-ins are frozen.
+pub async fn get_maintenance_mode_v1_settings_maintenance_mode_get(
+    configuration: &configuration::Configuration,
+) -> Result<models::MaintenanceMode, Error<GetMaintenanceModeV1SettingsMaintenanceModeGetError>> {
+    let uri_str = format!("{}/v1/settings/maintenance-mode", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::MaintenanceMode`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::MaintenanceMode`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetMaintenanceModeV1SettingsMaintenanceModeGetError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
 }
 
 /// Return non-secret runtime settings for the admin dashboard.
@@ -91,7 +235,7 @@ pub async fn get_settings_v1_settings_get(
     }
 }
 
-/// Regenerate the database-backed master key and invalidate the old one.  Only the first-run generated master key can be rotated here. When a master key is supplied through config or ``OTARI_MASTER_KEY``, the dashboard cannot invalidate it; the operator must change that value and restart instead.  Every dashboard session is revoked with the rotation (a session only proves possession of the now-dead key); the caller's own session is re-minted under the new key so the tab that performed the rotation stays signed in.
+/// Regenerate the database-backed master key and invalidate the old one.  Only the first-run generated master key can be rotated here. When a master key is supplied through config or ``OTARI_MASTER_KEY``, the dashboard cannot invalidate it; the operator must change that value and restart instead.  Every dashboard session is revoked with the rotation (a session only proves possession of the now-dead key); the caller's own session is re-minted under the new key, for the same identity it named, so the tab that performed the rotation stays signed in as who it was. A caller that authenticated with a header key has no session identity to re-mint for, so it is not handed one: it was not signed in to the dashboard to begin with.
 pub async fn rotate_master_key_v1_settings_master_key_rotate_post(
     configuration: &configuration::Configuration,
 ) -> Result<models::RotateMasterKeyResponse, Error<RotateMasterKeyV1SettingsMasterKeyRotatePostError>>
@@ -151,7 +295,136 @@ pub async fn rotate_master_key_v1_settings_master_key_rotate_post(
     }
 }
 
-/// Persist and apply runtime setting changes.  Each provided field is stored as an override (winning over config/env) and applied to the running gateway immediately. Master-key gated: these change how the gateway meters and lists models.
+/// Send one templated test message to prove the configuration works.  Refuses with 503 when the deployment cannot send a linked message, naming the missing settings; the dashboard disables the control in that state, so reaching this is a direct API call or a race with a configuration change.  The recipient is the only caller-supplied value: the body is a fixed template, so this cannot be used to put chosen text in someone's inbox from the deployment's own address, and the message says outright that no account was created for whoever receives it.
+pub async fn send_test_mail_v1_settings_mail_test_post(
+    configuration: &configuration::Configuration,
+    send_test_mail_request: models::SendTestMailRequest,
+) -> Result<models::SendTestMailResponse, Error<SendTestMailV1SettingsMailTestPostError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_send_test_mail_request = send_test_mail_request;
+
+    let uri_str = format!("{}/v1/settings/mail/test", configuration.base_path);
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+    req_builder = req_builder.json(&p_body_send_test_mail_request);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::SendTestMailResponse`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::SendTestMailResponse`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<SendTestMailV1SettingsMailTestPostError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Freeze or unfreeze dashboard sign-ins, for this and every other replica.  The new state is persisted and nothing is applied to the running worker, because every reader goes back to the stored row. That is what makes one call enough for a deployment running more than one of them.
+pub async fn update_maintenance_mode_v1_settings_maintenance_mode_patch(
+    configuration: &configuration::Configuration,
+    update_maintenance_mode_request: models::UpdateMaintenanceModeRequest,
+) -> Result<models::MaintenanceMode, Error<UpdateMaintenanceModeV1SettingsMaintenanceModePatchError>>
+{
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_update_maintenance_mode_request = update_maintenance_mode_request;
+
+    let uri_str = format!("{}/v1/settings/maintenance-mode", configuration.base_path);
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::PATCH, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+    req_builder = req_builder.json(&p_body_update_maintenance_mode_request);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::MaintenanceMode`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::MaintenanceMode`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<UpdateMaintenanceModeV1SettingsMaintenanceModePatchError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Persist and apply runtime setting changes.  Each provided field is stored as an override (winning over config/env) and applied to the running gateway immediately. Operator-gated: these change how the gateway meters and lists models.
 pub async fn update_settings_v1_settings_patch(
     configuration: &configuration::Configuration,
     update_settings_request: models::UpdateSettingsRequest,

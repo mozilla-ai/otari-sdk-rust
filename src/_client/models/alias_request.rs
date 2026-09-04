@@ -20,7 +20,7 @@ pub struct AliasRequest {
     /// Selector the alias resolves to, as 'provider:model' or 'instance:model'.
     #[serde(rename = "target")]
     pub target: String,
-    /// User this alias belongs to. Omit for a global alias every caller sees. A user-scoped alias resolves only for that user and shadows a global one of the same name.
+    /// User this alias belongs to. Omit for an alias every caller in the workspace sees. A user-scoped alias resolves only for that user and shadows the workspace-wide one of the same name.
     #[serde(
         rename = "user_id",
         default,
@@ -28,6 +28,14 @@ pub struct AliasRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub user_id: Option<Option<String>>,
+    /// Workspace this alias belongs to. Omit for the deployment's default workspace. The alias resolves only for requests in that workspace, so two workspaces can each point the same name at a different model.
+    #[serde(
+        rename = "workspace_id",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub workspace_id: Option<Option<uuid::Uuid>>,
 }
 
 impl AliasRequest {
@@ -37,6 +45,7 @@ impl AliasRequest {
             name,
             target,
             user_id: None,
+            workspace_id: None,
         }
     }
 }

@@ -57,7 +57,7 @@ pub struct CcChatCompletionMessage {
         skip_serializing_if = "Option::is_none"
     )]
     pub tool_calls: Option<Option<Vec<models::CcChatCompletionMessageToolCallsInner>>>,
-    /// Delete the alias scoped to this user. Omit to delete the global alias of that name.
+    /// Filter to a single event type or metric name (e.g. 'tool_result', 'claude_code.commit.count')
     #[serde(
         rename = "reasoning",
         default,
@@ -65,7 +65,7 @@ pub struct CcChatCompletionMessage {
         skip_serializing_if = "Option::is_none"
     )]
     pub reasoning: Option<Option<String>>,
-    /// An unsaved policy body to explain.
+    /// Provider-native request fields used as defaults (e.g. exa's 'type', searxng's 'engines').
     #[serde(
         rename = "extra_content",
         default,

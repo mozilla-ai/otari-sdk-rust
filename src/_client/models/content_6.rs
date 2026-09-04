@@ -12,10 +12,75 @@ use crate::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct Content6 {}
+pub struct Content6 {
+    #[serde(rename = "error_code")]
+    pub error_code: ErrorCode,
+    #[serde(rename = "type")]
+    pub r#type: Type,
+    #[serde(rename = "content")]
+    pub content: Vec<models::MrBetaCodeExecutionOutputBlock>,
+    #[serde(rename = "return_code")]
+    pub return_code: i32,
+    #[serde(rename = "stderr")]
+    pub stderr: String,
+    #[serde(rename = "stdout")]
+    pub stdout: String,
+    #[serde(rename = "encrypted_stdout")]
+    pub encrypted_stdout: String,
+}
 
 impl Content6 {
-    pub fn new() -> Content6 {
-        Content6 {}
+    pub fn new(
+        error_code: ErrorCode,
+        r#type: Type,
+        content: Vec<models::MrBetaCodeExecutionOutputBlock>,
+        return_code: i32,
+        stderr: String,
+        stdout: String,
+        encrypted_stdout: String,
+    ) -> Content6 {
+        Content6 {
+            error_code,
+            r#type,
+            content,
+            return_code,
+            stderr,
+            stdout,
+            encrypted_stdout,
+        }
+    }
+}
+///
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
+pub enum ErrorCode {
+    #[serde(rename = "invalid_tool_input")]
+    InvalidToolInput,
+    #[serde(rename = "unavailable")]
+    Unavailable,
+    #[serde(rename = "too_many_requests")]
+    TooManyRequests,
+    #[serde(rename = "execution_time_exceeded")]
+    ExecutionTimeExceeded,
+}
+
+impl Default for ErrorCode {
+    fn default() -> ErrorCode {
+        Self::InvalidToolInput
+    }
+}
+///
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
+pub enum Type {
+    #[serde(rename = "code_execution_tool_result_error")]
+    CodeExecutionToolResultError,
+    #[serde(rename = "code_execution_result")]
+    CodeExecutionResult,
+    #[serde(rename = "encrypted_code_execution_result")]
+    EncryptedCodeExecutionResult,
+}
+
+impl Default for Type {
+    fn default() -> Type {
+        Self::CodeExecutionToolResultError
     }
 }

@@ -11,7 +11,7 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// CcChatCompletionMessageFunctionToolCall : A call to a function tool created by the model.
+/// CcChatCompletionMessageFunctionToolCall : Extended tool call type that includes extra_content for provider-specific data.  The extra_content field is used to store provider-specific metadata that needs to be preserved across multi-turn conversations. For example, Gemini 3 models require thought_signature to be passed back with function calls.  Example extra_content structure for Gemini:     {\"google\": {\"thought_signature\": \"<base64-encoded-signature>\"}}
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct CcChatCompletionMessageFunctionToolCall {
     #[serde(rename = "id")]
@@ -20,10 +20,17 @@ pub struct CcChatCompletionMessageFunctionToolCall {
     pub function: models::CcFunction,
     #[serde(rename = "type")]
     pub r#type: Type,
+    #[serde(
+        rename = "extra_content",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub extra_content: Option<Option<std::collections::HashMap<String, serde_json::Value>>>,
 }
 
 impl CcChatCompletionMessageFunctionToolCall {
-    /// A call to a function tool created by the model.
+    /// Extended tool call type that includes extra_content for provider-specific data.  The extra_content field is used to store provider-specific metadata that needs to be preserved across multi-turn conversations. For example, Gemini 3 models require thought_signature to be passed back with function calls.  Example extra_content structure for Gemini:     {\"google\": {\"thought_signature\": \"<base64-encoded-signature>\"}}
     pub fn new(
         id: String,
         function: models::CcFunction,
@@ -33,6 +40,7 @@ impl CcChatCompletionMessageFunctionToolCall {
             id,
             function,
             r#type,
+            extra_content: None,
         }
     }
 }

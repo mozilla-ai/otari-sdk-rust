@@ -12,21 +12,28 @@ use crate::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct MrBetaDiagnosticsFallback {
-    /// An unsaved policy body to explain.
+pub struct WorkspaceUpdate {
     #[serde(
-        rename = "cache_miss_reason",
+        rename = "description",
         default,
         with = "::serde_with::rust::double_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub cache_miss_reason: Option<Option<std::collections::HashMap<String, serde_json::Value>>>,
+    pub description: Option<Option<String>>,
+    #[serde(
+        rename = "name",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub name: Option<Option<String>>,
 }
 
-impl MrBetaDiagnosticsFallback {
-    pub fn new() -> MrBetaDiagnosticsFallback {
-        MrBetaDiagnosticsFallback {
-            cache_miss_reason: None,
+impl WorkspaceUpdate {
+    pub fn new() -> WorkspaceUpdate {
+        WorkspaceUpdate {
+            description: None,
+            name: None,
         }
     }
 }

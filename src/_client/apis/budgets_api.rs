@@ -124,7 +124,7 @@ pub async fn create_budget_v1_budgets_post(
     }
 }
 
-/// Delete a budget.
+/// Delete a budget.  Refused with 409 while anything still names this budget: a workspace handing it to its members, or a scoped ceiling enforcing it. Both foreign keys are ``RESTRICT``, so the database would refuse either anyway, but as an ``IntegrityError`` reported as \"Database error\" with nothing naming what to go and change. Checked here so the refusal can say which, and where.
 pub async fn delete_budget_v1_budgets_budget_id_delete(
     configuration: &configuration::Configuration,
     budget_id: &str,

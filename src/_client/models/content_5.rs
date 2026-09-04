@@ -18,26 +18,23 @@ pub struct Content5 {
     #[serde(rename = "type")]
     pub r#type: Type,
     #[serde(rename = "content")]
-    pub content: Vec<models::MrBetaCodeExecutionOutputBlock>,
+    pub content: Vec<models::MrBetaBashCodeExecutionOutputBlock>,
     #[serde(rename = "return_code")]
     pub return_code: i32,
     #[serde(rename = "stderr")]
     pub stderr: String,
     #[serde(rename = "stdout")]
     pub stdout: String,
-    #[serde(rename = "encrypted_stdout")]
-    pub encrypted_stdout: String,
 }
 
 impl Content5 {
     pub fn new(
         error_code: ErrorCode,
         r#type: Type,
-        content: Vec<models::MrBetaCodeExecutionOutputBlock>,
+        content: Vec<models::MrBetaBashCodeExecutionOutputBlock>,
         return_code: i32,
         stderr: String,
         stdout: String,
-        encrypted_stdout: String,
     ) -> Content5 {
         Content5 {
             error_code,
@@ -46,7 +43,6 @@ impl Content5 {
             return_code,
             stderr,
             stdout,
-            encrypted_stdout,
         }
     }
 }
@@ -61,6 +57,8 @@ pub enum ErrorCode {
     TooManyRequests,
     #[serde(rename = "execution_time_exceeded")]
     ExecutionTimeExceeded,
+    #[serde(rename = "output_file_too_large")]
+    OutputFileTooLarge,
 }
 
 impl Default for ErrorCode {
@@ -71,16 +69,14 @@ impl Default for ErrorCode {
 ///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Type {
-    #[serde(rename = "code_execution_tool_result_error")]
-    CodeExecutionToolResultError,
-    #[serde(rename = "code_execution_result")]
-    CodeExecutionResult,
-    #[serde(rename = "encrypted_code_execution_result")]
-    EncryptedCodeExecutionResult,
+    #[serde(rename = "bash_code_execution_tool_result_error")]
+    BashCodeExecutionToolResultError,
+    #[serde(rename = "bash_code_execution_result")]
+    BashCodeExecutionResult,
 }
 
 impl Default for Type {
     fn default() -> Type {
-        Self::CodeExecutionToolResultError
+        Self::BashCodeExecutionToolResultError
     }
 }

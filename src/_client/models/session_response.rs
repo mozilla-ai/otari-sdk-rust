@@ -14,14 +14,28 @@ use serde::{Deserialize, Serialize};
 /// SessionResponse : A freshly minted dashboard session (the token travels only in the cookie).
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SessionResponse {
+    /// The organization that identity is acting in, which scopes every tenancy surface.
+    #[serde(rename = "active_organization_id")]
+    pub active_organization_id: uuid::Uuid,
     /// When the session cookie stops being accepted.
     #[serde(rename = "expires_at")]
     pub expires_at: chrono::DateTime<chrono::FixedOffset>,
+    /// The identity this session speaks for.
+    #[serde(rename = "user_id")]
+    pub user_id: uuid::Uuid,
 }
 
 impl SessionResponse {
     /// A freshly minted dashboard session (the token travels only in the cookie).
-    pub fn new(expires_at: chrono::DateTime<chrono::FixedOffset>) -> SessionResponse {
-        SessionResponse { expires_at }
+    pub fn new(
+        active_organization_id: uuid::Uuid,
+        expires_at: chrono::DateTime<chrono::FixedOffset>,
+        user_id: uuid::Uuid,
+    ) -> SessionResponse {
+        SessionResponse {
+            active_organization_id,
+            expires_at,
+            user_id,
+        }
     }
 }

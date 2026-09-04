@@ -20,6 +20,13 @@ pub enum ReceiveLogsV1LogsPostError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`receive_metrics_v1_metrics_post`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ReceiveMetricsV1MetricsPostError {
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`receive_traces_v1_traces_post`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -77,6 +84,64 @@ pub async fn receive_logs_v1_logs_post(
     } else {
         let content = resp.text().await?;
         let entity: Option<ReceiveLogsV1LogsPostError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Ingest content-free coding-agent outcome metrics from OTLP metric points.  Records the outcome counters a coding agent reports on the metrics signal and that Otari has no other source for: lines of code changed, commits, pull requests, and active time. Points are stored exactly as reported, with their OTLP series identity, so a cumulative counter is turned into an increment at read time rather than re-counted on every export. Metrics that duplicate an already-recorded signal (token/cost usage, already billed; edit decisions, already captured as behavioral events) are skipped, as is any metric name this gateway does not know, so a newer agent version never breaks reception.  Outcome metrics are never billable: they touch no budget and no spend. Capture answers to the same ``capture_agent_telemetry`` toggle as behavioral events; with it off, the export still succeeds and simply stores nothing.
+pub async fn receive_metrics_v1_metrics_post(
+    configuration: &configuration::Configuration,
+) -> Result<serde_json::Value, Error<ReceiveMetricsV1MetricsPostError>> {
+    let uri_str = format!("{}/v1/metrics", configuration.base_path);
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `serde_json::Value`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `serde_json::Value`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<ReceiveMetricsV1MetricsPostError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent {
             status,
             content,
