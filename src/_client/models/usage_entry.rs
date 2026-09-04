@@ -17,6 +17,13 @@ pub struct UsageEntry {
     #[serde(rename = "api_key_id", deserialize_with = "Option::deserialize")]
     pub api_key_id: Option<String>,
     #[serde(
+        rename = "api_key_name",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub api_key_name: Option<Option<String>>,
+    #[serde(
         rename = "attempt_count",
         default,
         with = "::serde_with::rust::double_option",
@@ -30,9 +37,10 @@ pub struct UsageEntry {
         skip_serializing_if = "Option::is_none"
     )]
     pub attempt_position: Option<Option<i32>>,
-    /// An unsaved policy body to explain.
     #[serde(rename = "billing_meters", deserialize_with = "Option::deserialize")]
-    pub billing_meters: Option<std::collections::HashMap<String, serde_json::Value>>,
+    pub billing_meters: Option<Box<models::BillingMeters>>,
+    #[serde(rename = "bulk_editable")]
+    pub bulk_editable: bool,
     #[serde(rename = "cache_read_tokens", deserialize_with = "Option::deserialize")]
     pub cache_read_tokens: Option<i32>,
     #[serde(
@@ -69,9 +77,7 @@ pub struct UsageEntry {
     )]
     pub policy_name: Option<Option<String>>,
     #[serde(rename = "pricing_breakdown", deserialize_with = "Option::deserialize")]
-    pub pricing_breakdown: Option<
-        Vec<std::collections::HashMap<String, models::UsageEntryPricingBreakdownInnerValue>>,
-    >,
+    pub pricing_breakdown: Option<Vec<models::UsageEntryPricingBreakdownInner>>,
     #[serde(rename = "prompt_tokens", deserialize_with = "Option::deserialize")]
     pub prompt_tokens: Option<i32>,
     #[serde(rename = "provider", deserialize_with = "Option::deserialize")]
@@ -102,6 +108,13 @@ pub struct UsageEntry {
     pub timestamp: String,
     #[serde(rename = "total_tokens", deserialize_with = "Option::deserialize")]
     pub total_tokens: Option<i32>,
+    #[serde(
+        rename = "user_alias",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub user_alias: Option<Option<String>>,
     #[serde(rename = "user_id", deserialize_with = "Option::deserialize")]
     pub user_id: Option<String>,
 }
@@ -110,7 +123,8 @@ impl UsageEntry {
     /// A single usage log entry.
     pub fn new(
         api_key_id: Option<String>,
-        billing_meters: Option<std::collections::HashMap<String, serde_json::Value>>,
+        billing_meters: Option<models::BillingMeters>,
+        bulk_editable: bool,
         cache_read_tokens: Option<i32>,
         cache_write_1h_tokens: Option<i32>,
         cache_write_tokens: Option<i32>,
@@ -122,9 +136,7 @@ impl UsageEntry {
         id: String,
         latency_ms: Option<i32>,
         model: String,
-        pricing_breakdown: Option<
-            Vec<std::collections::HashMap<String, models::UsageEntryPricingBreakdownInnerValue>>,
-        >,
+        pricing_breakdown: Option<Vec<models::UsageEntryPricingBreakdownInner>>,
         prompt_tokens: Option<i32>,
         provider: Option<String>,
         source: String,
@@ -137,9 +149,15 @@ impl UsageEntry {
     ) -> UsageEntry {
         UsageEntry {
             api_key_id,
+            api_key_name: None,
             attempt_count: None,
             attempt_position: None,
-            billing_meters,
+            billing_meters: if let Some(x) = billing_meters {
+                Some(Box::new(x))
+            } else {
+                None
+            },
+            bulk_editable,
             cache_read_tokens,
             cache_write_1h_tokens,
             cache_write_tokens,
@@ -163,6 +181,7 @@ impl UsageEntry {
             status_code,
             timestamp,
             total_tokens,
+            user_alias: None,
             user_id,
         }
     }

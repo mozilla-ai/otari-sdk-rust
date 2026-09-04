@@ -28,6 +28,13 @@ pub struct MrBetaToolUseBlock {
         skip_serializing_if = "Option::is_none"
     )]
     pub caller: Option<Option<Box<models::Caller>>>,
+    #[serde(
+        rename = "toolset_name",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub toolset_name: Option<Option<String>>,
 }
 
 impl MrBetaToolUseBlock {
@@ -43,6 +50,7 @@ impl MrBetaToolUseBlock {
             name,
             r#type,
             caller: None,
+            toolset_name: None,
         }
     }
 }

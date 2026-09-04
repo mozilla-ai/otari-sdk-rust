@@ -11,7 +11,7 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// BudgetResponse : Response model for budget information.  ``max_budget`` is the per-user spending limit, and multiple users can share one budget, so the usage rollup is an aggregate over the users assigned to this budget: how many there are and their combined ``spend`` / ``reserved``. Assigning users to a budget is done through the users API (dashboard support lands with user management), so a fresh gateway reports zeros here.
+/// BudgetResponse : Response model for budget information.  ``max_budget``, ``token_limit`` and ``request_limit`` are the per-user ceilings, each independent and each unlimited when null, and multiple users can share one budget, so the usage rollup is an aggregate over the users assigned to this budget: how many there are and their combined ``spend`` / ``reserved``. Assigning users to a budget is done through the users API (dashboard support lands with user management), so a fresh gateway reports zeros here.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct BudgetResponse {
     #[serde(
@@ -27,6 +27,14 @@ pub struct BudgetResponse {
     pub max_budget: Option<f64>,
     #[serde(rename = "name", deserialize_with = "Option::deserialize")]
     pub name: Option<String>,
+    #[serde(rename = "organization_id", deserialize_with = "Option::deserialize")]
+    pub organization_id: Option<uuid::Uuid>,
+    #[serde(rename = "request_limit", deserialize_with = "Option::deserialize")]
+    pub request_limit: Option<i32>,
+    #[serde(rename = "reset_alignment", deserialize_with = "Option::deserialize")]
+    pub reset_alignment: Option<String>,
+    #[serde(rename = "token_limit", deserialize_with = "Option::deserialize")]
+    pub token_limit: Option<i32>,
     #[serde(rename = "total_reserved", skip_serializing_if = "Option::is_none")]
     pub total_reserved: Option<f64>,
     #[serde(rename = "total_spend", skip_serializing_if = "Option::is_none")]
@@ -38,13 +46,17 @@ pub struct BudgetResponse {
 }
 
 impl BudgetResponse {
-    /// Response model for budget information.  ``max_budget`` is the per-user spending limit, and multiple users can share one budget, so the usage rollup is an aggregate over the users assigned to this budget: how many there are and their combined ``spend`` / ``reserved``. Assigning users to a budget is done through the users API (dashboard support lands with user management), so a fresh gateway reports zeros here.
+    /// Response model for budget information.  ``max_budget``, ``token_limit`` and ``request_limit`` are the per-user ceilings, each independent and each unlimited when null, and multiple users can share one budget, so the usage rollup is an aggregate over the users assigned to this budget: how many there are and their combined ``spend`` / ``reserved``. Assigning users to a budget is done through the users API (dashboard support lands with user management), so a fresh gateway reports zeros here.
     pub fn new(
         budget_duration_sec: Option<i32>,
         budget_id: String,
         created_at: String,
         max_budget: Option<f64>,
         name: Option<String>,
+        organization_id: Option<uuid::Uuid>,
+        request_limit: Option<i32>,
+        reset_alignment: Option<String>,
+        token_limit: Option<i32>,
         updated_at: String,
     ) -> BudgetResponse {
         BudgetResponse {
@@ -53,6 +65,10 @@ impl BudgetResponse {
             created_at,
             max_budget,
             name,
+            organization_id,
+            request_limit,
+            reset_alignment,
+            token_limit,
             total_reserved: None,
             total_spend: None,
             updated_at,

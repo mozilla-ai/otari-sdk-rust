@@ -21,10 +21,27 @@ pub enum DeleteAliasV1AliasesNameDeleteError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`delete_organization_alias_v1_organizations_me_aliases_name_delete`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum DeleteOrganizationAliasV1OrganizationsMeAliasesNameDeleteError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`list_aliases_v1_aliases_get`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum ListAliasesV1AliasesGetError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`list_visible_aliases_v1_organizations_me_aliases_get`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ListVisibleAliasesV1OrganizationsMeAliasesGetError {
+    Status422(models::HttpValidationError),
     UnknownValue(serde_json::Value),
 }
 
@@ -36,15 +53,25 @@ pub enum SetAliasV1AliasesPostError {
     UnknownValue(serde_json::Value),
 }
 
-/// Delete a stored alias in one scope.  Scoped by ``user_id`` for the same reason the upsert is: deleting the global alias must not take a user's override with it, and deleting an override must leave the global one serving everyone else.
+/// struct for typed errors of method [`set_organization_alias_v1_organizations_me_aliases_post`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum SetOrganizationAliasV1OrganizationsMeAliasesPostError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
+/// Delete a stored alias in one scope.
 pub async fn delete_alias_v1_aliases_name_delete(
     configuration: &configuration::Configuration,
     name: &str,
     user_id: Option<&str>,
+    workspace_id: Option<&str>,
 ) -> Result<(), Error<DeleteAliasV1AliasesNameDeleteError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_name = name;
     let p_query_user_id = user_id;
+    let p_query_workspace_id = workspace_id;
 
     let uri_str = format!(
         "{}/v1/aliases/{name}",
@@ -57,6 +84,9 @@ pub async fn delete_alias_v1_aliases_name_delete(
 
     if let Some(ref param_value) = p_query_user_id {
         req_builder = req_builder.query(&[("user_id", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_workspace_id {
+        req_builder = req_builder.query(&[("workspace_id", &param_value.to_string())]);
     }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
@@ -97,13 +127,81 @@ pub async fn delete_alias_v1_aliases_name_delete(
     }
 }
 
-/// List every alias in force, from config.yml and from storage.  Every scope at once, global and user-scoped alike: this is the master-key management view, not what any one caller resolves.
+/// Delete a stored alias from one of the organization's workspaces. Owners and admins only.
+pub async fn delete_organization_alias_v1_organizations_me_aliases_name_delete(
+    configuration: &configuration::Configuration,
+    name: &str,
+    workspace_id: Option<&str>,
+) -> Result<(), Error<DeleteOrganizationAliasV1OrganizationsMeAliasesNameDeleteError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_name = name;
+    let p_query_workspace_id = workspace_id;
+
+    let uri_str = format!(
+        "{}/v1/organizations/me/aliases/{name}",
+        configuration.base_path,
+        name = crate::apis::urlencode(p_path_name)
+    );
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::DELETE, &uri_str);
+
+    if let Some(ref param_value) = p_query_workspace_id {
+        req_builder = req_builder.query(&[("workspace_id", &param_value.to_string())]);
+    }
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<DeleteOrganizationAliasV1OrganizationsMeAliasesNameDeleteError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// List every alias in force, from config.yml and from storage.  Every scope at once, workspace-wide and user-scoped alike: this is the master-key management view, not what any one caller resolves.
 pub async fn list_aliases_v1_aliases_get(
     configuration: &configuration::Configuration,
+    workspace_id: Option<&str>,
 ) -> Result<Vec<models::AliasResponse>, Error<ListAliasesV1AliasesGetError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_workspace_id = workspace_id;
+
     let uri_str = format!("{}/v1/aliases", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref param_value) = p_query_workspace_id {
+        req_builder = req_builder.query(&[("workspace_id", &param_value.to_string())]);
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -153,7 +251,71 @@ pub async fn list_aliases_v1_aliases_get(
     }
 }
 
-/// Create or update a stored alias, global or scoped to one user.
+/// List the aliases in force in the workspaces this caller may see.  The policies list's sibling, over ``model_aliases``, and scoped the same way: stored rows from the caller's visible workspaces, plus the config-file aliases, which are deployment-wide.
+pub async fn list_visible_aliases_v1_organizations_me_aliases_get(
+    configuration: &configuration::Configuration,
+    limit: Option<i32>,
+) -> Result<Vec<models::AliasResponse>, Error<ListVisibleAliasesV1OrganizationsMeAliasesGetError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_limit = limit;
+
+    let uri_str = format!("{}/v1/organizations/me/aliases", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref param_value) = p_query_limit {
+        req_builder = req_builder.query(&[("limit", &param_value.to_string())]);
+    }
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `Vec&lt;models::AliasResponse&gt;`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `Vec&lt;models::AliasResponse&gt;`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<ListVisibleAliasesV1OrganizationsMeAliasesGetError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Create or update a stored alias in one workspace, optionally for one user.
 pub async fn set_alias_v1_aliases_post(
     configuration: &configuration::Configuration,
     alias_request: models::AliasRequest,
@@ -208,6 +370,70 @@ pub async fn set_alias_v1_aliases_post(
     } else {
         let content = resp.text().await?;
         let entity: Option<SetAliasV1AliasesPostError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Create or update a stored alias in one of the organization's workspaces.  Organization owners and admins only, with the same two scope rules the policy write has: ``workspace_id`` is required and resolved inside the caller's organization, and ``user_id`` is not accepted.
+pub async fn set_organization_alias_v1_organizations_me_aliases_post(
+    configuration: &configuration::Configuration,
+    alias_request: models::AliasRequest,
+) -> Result<models::AliasResponse, Error<SetOrganizationAliasV1OrganizationsMeAliasesPostError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_alias_request = alias_request;
+
+    let uri_str = format!("{}/v1/organizations/me/aliases", configuration.base_path);
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+    req_builder = req_builder.json(&p_body_alias_request);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::AliasResponse`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::AliasResponse`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<SetOrganizationAliasV1OrganizationsMeAliasesPostError> =
+            serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent {
             status,
             content,

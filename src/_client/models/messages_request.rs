@@ -29,6 +29,13 @@ pub struct MessagesRequest {
     )]
     pub cache_control: Option<Option<std::collections::HashMap<String, serde_json::Value>>>,
     #[serde(
+        rename = "container",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub container: Option<Option<String>>,
+    #[serde(
         rename = "context_management",
         default,
         with = "::serde_with::rust::double_option",
@@ -76,7 +83,7 @@ pub struct MessagesRequest {
     pub metadata: Option<Option<std::collections::HashMap<String, serde_json::Value>>>,
     #[serde(rename = "model")]
     pub model: String,
-    /// An unsaved policy body to explain.
+    /// Provider-native request fields used as defaults (e.g. exa's 'type', searxng's 'engines').
     #[serde(
         rename = "output_format",
         default,
@@ -84,6 +91,20 @@ pub struct MessagesRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub output_format: Option<Option<std::collections::HashMap<String, serde_json::Value>>>,
+    #[serde(
+        rename = "prompt_cache_key",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub prompt_cache_key: Option<Option<String>>,
+    #[serde(
+        rename = "service_tier",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub service_tier: Option<Option<String>>,
     /// Optional caller-supplied label for cost attribution (per run, experiment, or conversation). In hybrid mode it is forwarded onto the platform usage report so spend can be sliced by session without standing up OpenTelemetry. Stripped before the request is forwarded upstream to the provider. Has no effect in standalone mode, where there is no platform to report it to.
     #[serde(
         rename = "session_label",
@@ -169,6 +190,7 @@ impl MessagesRequest {
         MessagesRequest {
             betas: None,
             cache_control: None,
+            container: None,
             context_management: None,
             guardrails: None,
             max_tokens,
@@ -179,6 +201,8 @@ impl MessagesRequest {
             metadata: None,
             model,
             output_format: None,
+            prompt_cache_key: None,
+            service_tier: None,
             session_label: None,
             stop_sequences: None,
             stream: None,

@@ -33,6 +33,8 @@ pub enum ErrorCode {
     UrlTooLong,
     #[serde(rename = "url_not_allowed")]
     UrlNotAllowed,
+    #[serde(rename = "url_not_in_prior_context")]
+    UrlNotInPriorContext,
     #[serde(rename = "url_not_accessible")]
     UrlNotAccessible,
     #[serde(rename = "unsupported_content_type")]

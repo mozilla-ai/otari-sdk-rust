@@ -12,7 +12,7 @@ use crate::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct Content16Inner {
+pub struct Content17Inner {
     #[serde(rename = "signature")]
     pub signature: String,
     #[serde(rename = "thinking")]
@@ -38,6 +38,8 @@ pub struct Content16Inner {
     pub input: std::collections::HashMap<String, serde_json::Value>,
     #[serde(rename = "name")]
     pub name: String,
+    #[serde(rename = "toolset_name", skip_serializing_if = "Option::is_none")]
+    pub toolset_name: Option<String>,
     #[serde(rename = "content")]
     pub content: String,
     #[serde(rename = "tool_use_id")]
@@ -48,9 +50,18 @@ pub struct Content16Inner {
     pub server_name: String,
     #[serde(rename = "is_error")]
     pub is_error: bool,
+    /// Filter to a single event type or metric name (e.g. 'tool_result', 'claude_code.commit.count')
+    #[serde(rename = "encrypted_content", skip_serializing_if = "Option::is_none")]
+    pub encrypted_content: Option<String>,
+    #[serde(rename = "from")]
+    pub from: models::MrBetaFallbackInfo,
+    #[serde(rename = "to")]
+    pub to: models::MrBetaFallbackInfo,
+    #[serde(rename = "trigger")]
+    pub trigger: models::MrBetaFallbackRefusalTrigger,
 }
 
-impl Content16Inner {
+impl Content17Inner {
     pub fn new(
         signature: String,
         thinking: String,
@@ -65,8 +76,11 @@ impl Content16Inner {
         file_id: String,
         server_name: String,
         is_error: bool,
-    ) -> Content16Inner {
-        Content16Inner {
+        from: models::MrBetaFallbackInfo,
+        to: models::MrBetaFallbackInfo,
+        trigger: models::MrBetaFallbackRefusalTrigger,
+    ) -> Content17Inner {
+        Content17Inner {
             signature,
             thinking,
             r#type,
@@ -77,11 +91,16 @@ impl Content16Inner {
             caller: None,
             input,
             name,
+            toolset_name: None,
             content,
             tool_use_id,
             file_id,
             server_name,
             is_error,
+            encrypted_content: None,
+            from,
+            to,
+            trigger,
         }
     }
 }
@@ -112,12 +131,16 @@ pub enum Type {
     ToolSearchToolResult,
     #[serde(rename = "container_upload")]
     ContainerUpload,
+    #[serde(rename = "advisor_tool_result")]
+    AdvisorToolResult,
     #[serde(rename = "mcp_tool_use")]
     McpToolUse,
     #[serde(rename = "mcp_tool_result")]
     McpToolResult,
     #[serde(rename = "compaction")]
     Compaction,
+    #[serde(rename = "fallback")]
+    Fallback,
 }
 
 impl Default for Type {

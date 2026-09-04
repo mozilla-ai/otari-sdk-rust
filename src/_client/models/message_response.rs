@@ -23,7 +23,7 @@ pub struct MessageResponse {
     )]
     pub container: Option<Option<models::MrBetaContainer>>,
     #[serde(rename = "content")]
-    pub content: Vec<models::Content16Inner>,
+    pub content: Vec<models::Content17Inner>,
     #[serde(rename = "model")]
     pub model: Box<models::Model1>,
     #[serde(rename = "role")]
@@ -42,7 +42,7 @@ pub struct MessageResponse {
         skip_serializing_if = "Option::is_none"
     )]
     pub stop_reason: Option<Option<StopReason>>,
-    /// Delete the alias scoped to this user. Omit to delete the global alias of that name.
+    /// Filter to a single event type or metric name (e.g. 'tool_result', 'claude_code.commit.count')
     #[serde(
         rename = "stop_sequence",
         default,
@@ -54,6 +54,14 @@ pub struct MessageResponse {
     pub r#type: Type,
     #[serde(rename = "usage")]
     pub usage: models::MrMessageUsage,
+    /// Filter to a single event type or metric name (e.g. 'tool_result', 'claude_code.commit.count')
+    #[serde(
+        rename = "request_id",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub request_id: Option<Option<String>>,
     #[serde(
         rename = "context_management",
         default,
@@ -67,13 +75,13 @@ pub struct MessageResponse {
         with = "::serde_with::rust::double_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub diagnostics: Option<Option<models::MrBetaDiagnosticsFallback>>,
+    pub diagnostics: Option<Option<models::MrBetaDiagnostics>>,
 }
 
 impl MessageResponse {
     pub fn new(
         id: String,
-        content: Vec<models::Content16Inner>,
+        content: Vec<models::Content17Inner>,
         model: models::Model1,
         role: Role,
         r#type: Type,
@@ -90,6 +98,7 @@ impl MessageResponse {
             stop_sequence: None,
             r#type,
             usage,
+            request_id: None,
             context_management: None,
             diagnostics: None,
         }

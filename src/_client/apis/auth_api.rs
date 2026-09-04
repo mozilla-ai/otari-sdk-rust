@@ -13,10 +13,57 @@ use crate::{apis::ResponseContent, models};
 use reqwest;
 use serde::{de::Error as _, Deserialize, Serialize};
 
+/// struct for typed errors of method [`authenticate_passkey_v1_auth_webauthn_authenticate_post`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum AuthenticatePasskeyV1AuthWebauthnAuthenticatePostError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`authentication_options_v1_auth_webauthn_authenticate_options_post`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum AuthenticationOptionsV1AuthWebauthnAuthenticateOptionsPostError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`authorize_v1_auth_oauth_provider_authorize_get`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum AuthorizeV1AuthOauthProviderAuthorizeGetError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`callback_v1_auth_oauth_provider_callback_post`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum CallbackV1AuthOauthProviderCallbackPostError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`confirm_reset_v1_auth_password_reset_confirm_post`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ConfirmResetV1AuthPasswordResetConfirmPostError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`create_session_v1_auth_session_post`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum CreateSessionV1AuthSessionPostError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`delete_passkey_v1_auth_webauthn_credentials_credential_id_delete`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum DeletePasskeyV1AuthWebauthnCredentialsCredentialIdDeleteError {
     Status422(models::HttpValidationError),
     UnknownValue(serde_json::Value),
 }
@@ -28,7 +75,317 @@ pub enum DeleteSessionV1AuthSessionDeleteError {
     UnknownValue(serde_json::Value),
 }
 
-/// Verify the master key and set the HttpOnly session cookie.  The rate-limit check deliberately runs only after a failed verification, not before it: a pre-verification gate can't know whether *this* attempt would have succeeded, so once an IP has used up its failure quota it would end up blocking that IP's legitimate owner too, not just further attackers. The issue this implements explicitly rules that out. The DB/hash lookup this exposes to repeated attempts only runs when no fixed master_key is configured (the auto-generated bootstrap-key path); with a configured master_key, verification is a constant-time string compare, not a DB round trip.
+/// struct for typed errors of method [`list_passkeys_v1_auth_webauthn_credentials_get`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ListPasskeysV1AuthWebauthnCredentialsGetError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`register_passkey_v1_auth_webauthn_register_post`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum RegisterPasskeyV1AuthWebauthnRegisterPostError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`registration_options_v1_auth_webauthn_register_options_post`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum RegistrationOptionsV1AuthWebauthnRegisterOptionsPostError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`rename_passkey_v1_auth_webauthn_credentials_credential_id_patch`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum RenamePasskeyV1AuthWebauthnCredentialsCredentialIdPatchError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`request_reset_v1_auth_password_reset_post`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum RequestResetV1AuthPasswordResetPostError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`resend_verification_v1_auth_resend_verification_post`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ResendVerificationV1AuthResendVerificationPostError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`set_dashboard_password_v1_auth_password_put`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum SetDashboardPasswordV1AuthPasswordPutError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`signup_v1_auth_signup_post`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum SignupV1AuthSignupPostError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`verify_email_route_v1_auth_verify_email_post`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum VerifyEmailRouteV1AuthVerifyEmailPostError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
+
+/// Verify an assertion and set the HttpOnly session cookie.  The session is bound to the identity whose passkey signed, exactly as a password sign-in binds one to the identity that authenticated, so every request it later authenticates resolves the same caller.  A refusal is counted like the other sign-in failures (``record_auth_failure``) and answered as a 401 by the tenancy error handler. Unlike the password path there is no separate post-failure throttle: this route is throttled unconditionally on the way in, because unlike a password there is no legitimate caller here whose correct credential must never be blocked (a passkey ceremony is one round trip a browser drives, not something a person retries by hand).  **Maintenance mode freezes this the way it freezes the password sign-in.** The freeze is on starting a session, not on a credential, so a passkey has to answer to it or the switch is bypassable by anybody holding one, which is the whole population it exists to hold off during a redeploy. Refused before the assertion is verified, so a frozen deployment does no crypto and counts no auth failure: nobody failed to authenticate, the gateway declined to try.
+pub async fn authenticate_passkey_v1_auth_webauthn_authenticate_post(
+    configuration: &configuration::Configuration,
+    authenticate_passkey_request: models::AuthenticatePasskeyRequest,
+) -> Result<
+    models::PasskeySessionResponse,
+    Error<AuthenticatePasskeyV1AuthWebauthnAuthenticatePostError>,
+> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_authenticate_passkey_request = authenticate_passkey_request;
+
+    let uri_str = format!("{}/v1/auth/webauthn/authenticate", configuration.base_path);
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    req_builder = req_builder.json(&p_body_authenticate_passkey_request);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::PasskeySessionResponse`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::PasskeySessionResponse`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<AuthenticatePasskeyV1AuthWebauthnAuthenticatePostError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Start a passkey sign-in. Public, throttled, and names no credentials.  The options carry no ``allowCredentials``, so this publishes nothing about who holds a passkey here; see ``webauthn_service.begin_authentication``.
+pub async fn authentication_options_v1_auth_webauthn_authenticate_options_post(
+    configuration: &configuration::Configuration,
+) -> Result<
+    std::collections::HashMap<String, serde_json::Value>,
+    Error<AuthenticationOptionsV1AuthWebauthnAuthenticateOptionsPostError>,
+> {
+    let uri_str = format!(
+        "{}/v1/auth/webauthn/authenticate/options",
+        configuration.base_path
+    );
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `std::collections::HashMap&lt;String, serde_json::Value&gt;`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `std::collections::HashMap&lt;String, serde_json::Value&gt;`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<AuthenticationOptionsV1AuthWebauthnAuthenticateOptionsPostError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Start an OAuth sign-in: where to send the browser, and the state to keep.  A GET, and safe: it reads configuration and mints a random value, writing nothing. Repeating it simply produces another state, and only the one the browser kept is the one it will compare against.
+pub async fn authorize_v1_auth_oauth_provider_authorize_get(
+    configuration: &configuration::Configuration,
+    provider: &str,
+) -> Result<models::AuthorizeResponse, Error<AuthorizeV1AuthOauthProviderAuthorizeGetError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_provider = provider;
+
+    let uri_str = format!(
+        "{}/v1/auth/oauth/{provider}/authorize",
+        configuration.base_path,
+        provider = crate::apis::urlencode(p_path_provider)
+    );
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::AuthorizeResponse`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::AuthorizeResponse`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<AuthorizeV1AuthOauthProviderAuthorizeGetError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Exchange an authorization code and set the HttpOnly session cookie.  The session is bound to the identity the provider's account resolves to, exactly as a password sign-in binds one to the identity that authenticated, so every request it later authenticates resolves the same caller.  A refusal is counted like the other sign-in failures (``record_auth_failure``) and rendered by the tenancy error handler. Like the passkey route there is no separate post-failure throttle: this route is throttled unconditionally on the way in, because there is no legitimate caller here whose correct credential must never be blocked. An authorization code is single-use and minted by a redirect, not something a person retries by hand.  **Maintenance mode freezes this the way it freezes the other two sign-ins.** The freeze is on starting a session, not on a credential, so an OAuth sign-in has to answer to it or the switch is bypassable by anybody holding a Google account. Refused before the exchange, so a frozen deployment makes no outbound call, spends nobody's authorization code, and counts no auth failure: nobody failed to authenticate, the gateway declined to try.
+pub async fn callback_v1_auth_oauth_provider_callback_post(
+    configuration: &configuration::Configuration,
+    provider: &str,
+    o_auth_callback_request: models::OAuthCallbackRequest,
+) -> Result<models::OAuthSessionResponse, Error<CallbackV1AuthOauthProviderCallbackPostError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_provider = provider;
+    let p_body_o_auth_callback_request = o_auth_callback_request;
+
+    let uri_str = format!(
+        "{}/v1/auth/oauth/{provider}/callback",
+        configuration.base_path,
+        provider = crate::apis::urlencode(p_path_provider)
+    );
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    req_builder = req_builder.json(&p_body_o_auth_callback_request);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::OAuthSessionResponse`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::OAuthSessionResponse`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<CallbackV1AuthOauthProviderCallbackPostError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Complete a password reset. Single-use: the token stops working after this.
+pub async fn confirm_reset_v1_auth_password_reset_confirm_post(
+    configuration: &configuration::Configuration,
+    reset_password_request: models::ResetPasswordRequest,
+) -> Result<(), Error<ConfirmResetV1AuthPasswordResetConfirmPostError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_reset_password_request = reset_password_request;
+
+    let uri_str = format!("{}/v1/auth/password/reset/confirm", configuration.base_path);
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    req_builder = req_builder.json(&p_body_reset_password_request);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<ConfirmResetV1AuthPasswordResetConfirmPostError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Verify a sign-in credential and set the HttpOnly session cookie.  The session is bound to the identity that authenticated, so every request it later authenticates resolves a user and that user's active organization rather than only \"a credential was presented once\". The response names both, so a client knows who it is signed in as without a second call.  The rate-limit check deliberately runs only after a failed verification, not before it: a pre-verification gate can't know whether *this* attempt would have succeeded, so once an IP has used up its failure quota it would end up blocking that IP's legitimate owner too, not just further attackers. Running after verification also means the throttle bounds how many verdicts an IP gets, not how much work it can cause: a password attempt pays for a bcrypt verification (cost 12, on the order of 200ms of CPU, and one is burned against a stand-in hash even for an address nobody holds) before the limit is consulted, so a 429 costs the same as a 401. A gateway exposed to the internet should rate-limit this path at the proxy as well.  The maintenance-mode check runs before either credential is verified, and refuses both. Before, because a frozen deployment should not spend a bcrypt verification per attempt and the refusal is not about the credential anyway; both, because the way back out is the master key against ``PATCH /v1/settings/maintenance-mode`` through the header, which never passes through this door. That is what keeps the way back out off the frozen path, and it is why no identity needs an exemption here; an operator who no longer holds the master key recovers by setting ``OTARI_MASTER_KEY`` and restarting, which is a restart rather than a click. It leaks nothing either: ``GET /v1/bootstrap`` already publishes the same flag unauthenticated, so the sign-in screen can render the right page.
 pub async fn create_session_v1_auth_session_post(
     configuration: &configuration::Configuration,
     create_session_request: models::CreateSessionRequest,
@@ -76,6 +433,62 @@ pub async fn create_session_v1_auth_session_post(
     }
 }
 
+/// Remove one of the caller's passkeys.  Removing the last one is allowed: an email and password is still this deployment's login, so this is not a lockout, and refusing would strand whoever lost the authenticator.
+pub async fn delete_passkey_v1_auth_webauthn_credentials_credential_id_delete(
+    configuration: &configuration::Configuration,
+    credential_id: &str,
+) -> Result<(), Error<DeletePasskeyV1AuthWebauthnCredentialsCredentialIdDeleteError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_credential_id = credential_id;
+
+    let uri_str = format!(
+        "{}/v1/auth/webauthn/credentials/{credential_id}",
+        configuration.base_path,
+        credential_id = crate::apis::urlencode(p_path_credential_id)
+    );
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::DELETE, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<DeletePasskeyV1AuthWebauthnCredentialsCredentialIdDeleteError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
 /// Sign out: revoke the cookie's session server-side and expire the cookie.  Deliberately unauthenticated and idempotent: it only ever revokes the session named by the caller's own cookie, and the dashboard calls it on the 401-bounce path where no valid credential exists anymore. Unlike the read path in ``deps.py`` it applies no Sec-Fetch-Site check: ``SameSite=Strict`` already keeps cross-site requests from carrying the cookie, and the worst a forged call could do is sign the operator out.
 pub async fn delete_session_v1_auth_session_delete(
     configuration: &configuration::Configuration,
@@ -99,6 +512,523 @@ pub async fn delete_session_v1_auth_session_delete(
     } else {
         let content = resp.text().await?;
         let entity: Option<DeleteSessionV1AuthSessionDeleteError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// The caller's own passkeys. Never anybody else's, and never key material.  Deliberately *not* behind ``require_passkey_support``, and not filtered to the current relying-party ID. A deployment that has changed or lost that ID still holds the rows registered under the old one, and refusing to list them would leave somebody looking at an empty page with no way to clean up and no hint as to why. Each row carries ``is_usable`` instead, so an orphan is visible, explained, and deletable.
+pub async fn list_passkeys_v1_auth_webauthn_credentials_get(
+    configuration: &configuration::Configuration,
+) -> Result<models::WebAuthnCredentialsPublic, Error<ListPasskeysV1AuthWebauthnCredentialsGetError>>
+{
+    let uri_str = format!("{}/v1/auth/webauthn/credentials", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::WebAuthnCredentialsPublic`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::WebAuthnCredentialsPublic`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<ListPasskeysV1AuthWebauthnCredentialsGetError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Verify a registration ceremony and store the passkey it produced.
+pub async fn register_passkey_v1_auth_webauthn_register_post(
+    configuration: &configuration::Configuration,
+    register_passkey_request: models::RegisterPasskeyRequest,
+) -> Result<models::WebAuthnCredentialPublic, Error<RegisterPasskeyV1AuthWebauthnRegisterPostError>>
+{
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_register_passkey_request = register_passkey_request;
+
+    let uri_str = format!("{}/v1/auth/webauthn/register", configuration.base_path);
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+    req_builder = req_builder.json(&p_body_register_passkey_request);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::WebAuthnCredentialPublic`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::WebAuthnCredentialPublic`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<RegisterPasskeyV1AuthWebauthnRegisterPostError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Start registering a passkey for the signed-in identity.  A POST rather than a GET even though it reads like one: it issues a server-side challenge and writes it, so it is not safe to repeat, cache, or prefetch.
+pub async fn registration_options_v1_auth_webauthn_register_options_post(
+    configuration: &configuration::Configuration,
+) -> Result<
+    std::collections::HashMap<String, serde_json::Value>,
+    Error<RegistrationOptionsV1AuthWebauthnRegisterOptionsPostError>,
+> {
+    let uri_str = format!(
+        "{}/v1/auth/webauthn/register/options",
+        configuration.base_path
+    );
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `std::collections::HashMap&lt;String, serde_json::Value&gt;`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `std::collections::HashMap&lt;String, serde_json::Value&gt;`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<RegistrationOptionsV1AuthWebauthnRegisterOptionsPostError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Relabel one of the caller's passkeys, which is all that is editable.  Ungated like the list, and for the same reason: naming an orphan before deleting it is not something a lost relying-party ID should prevent.
+pub async fn rename_passkey_v1_auth_webauthn_credentials_credential_id_patch(
+    configuration: &configuration::Configuration,
+    credential_id: &str,
+    web_authn_credential_update: models::WebAuthnCredentialUpdate,
+) -> Result<
+    models::WebAuthnCredentialPublic,
+    Error<RenamePasskeyV1AuthWebauthnCredentialsCredentialIdPatchError>,
+> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_credential_id = credential_id;
+    let p_body_web_authn_credential_update = web_authn_credential_update;
+
+    let uri_str = format!(
+        "{}/v1/auth/webauthn/credentials/{credential_id}",
+        configuration.base_path,
+        credential_id = crate::apis::urlencode(p_path_credential_id)
+    );
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::PATCH, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+    req_builder = req_builder.json(&p_body_web_authn_credential_update);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::WebAuthnCredentialPublic`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::WebAuthnCredentialPublic`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<RenamePasskeyV1AuthWebauthnCredentialsCredentialIdPatchError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Mail a password-reset link, or do nothing: the response never says which.
+pub async fn request_reset_v1_auth_password_reset_post(
+    configuration: &configuration::Configuration,
+    request_password_reset_request: models::RequestPasswordResetRequest,
+) -> Result<models::RequestPasswordResetResponse, Error<RequestResetV1AuthPasswordResetPostError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_request_password_reset_request = request_password_reset_request;
+
+    let uri_str = format!("{}/v1/auth/password/reset", configuration.base_path);
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    req_builder = req_builder.json(&p_body_request_password_reset_request);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::RequestPasswordResetResponse`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::RequestPasswordResetResponse`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<RequestResetV1AuthPasswordResetPostError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Mail a fresh verification link, or do nothing: the response never says which.
+pub async fn resend_verification_v1_auth_resend_verification_post(
+    configuration: &configuration::Configuration,
+    resend_verification_request: models::ResendVerificationRequest,
+) -> Result<
+    models::ResendVerificationResponse,
+    Error<ResendVerificationV1AuthResendVerificationPostError>,
+> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_resend_verification_request = resend_verification_request;
+
+    let uri_str = format!("{}/v1/auth/resend-verification", configuration.base_path);
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    req_builder = req_builder.json(&p_body_resend_verification_request);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::ResendVerificationResponse`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::ResendVerificationResponse`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<ResendVerificationV1AuthResendVerificationPostError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Set or change the password the caller signs in to the dashboard with.  Always the caller's own identity. Supply ``email`` when it has no sign-in address yet, which is the state first boot leaves the operator in, and ``current_password`` when it already has a password and the request is authenticated by the session cookie. The master key in a header is what excuses ``current_password``, which is how a forgotten password is recovered; it does not excuse ``email``, because an identity with no address has nothing to sign in with whoever is asking. The operator setting a password for the first time retires master-key sign-in on this deployment.  Every other session this identity holds ends, the caller's own excepted, so a cookie stolen before the change does not outlive it.
+pub async fn set_dashboard_password_v1_auth_password_put(
+    configuration: &configuration::Configuration,
+    set_password_request: models::SetPasswordRequest,
+) -> Result<models::PasswordResponse, Error<SetDashboardPasswordV1AuthPasswordPutError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_set_password_request = set_password_request;
+
+    let uri_str = format!("{}/v1/auth/password", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("x-api-key", value);
+    };
+    if let Some(ref apikey) = configuration.api_key {
+        let key = apikey.key.clone();
+        let value = match apikey.prefix {
+            Some(ref prefix) => format!("{} {}", prefix, key),
+            None => key,
+        };
+        req_builder = req_builder.header("Otari-Key", value);
+    };
+    req_builder = req_builder.json(&p_body_set_password_request);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::PasswordResponse`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::PasswordResponse`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<SetDashboardPasswordV1AuthPasswordPutError> =
+            serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Claim a roster identity, or do nothing: the response never says which.  No session is minted. A newly claimed identity is hard-blocked from signing in until it verifies, so there is nothing yet to sign it into.
+pub async fn signup_v1_auth_signup_post(
+    configuration: &configuration::Configuration,
+    signup_request: models::SignupRequest,
+) -> Result<models::SignupResponse, Error<SignupV1AuthSignupPostError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_signup_request = signup_request;
+
+    let uri_str = format!("{}/v1/auth/signup", configuration.base_path);
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    req_builder = req_builder.json(&p_body_signup_request);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::SignupResponse`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::SignupResponse`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<SignupV1AuthSignupPostError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent {
+            status,
+            content,
+            entity,
+        }))
+    }
+}
+
+/// Confirm an address from its verification link, lifting the sign-in gate.
+pub async fn verify_email_route_v1_auth_verify_email_post(
+    configuration: &configuration::Configuration,
+    verify_email_request: models::VerifyEmailRequest,
+) -> Result<models::VerifyEmailResponse, Error<VerifyEmailRouteV1AuthVerifyEmailPostError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_verify_email_request = verify_email_request;
+
+    let uri_str = format!("{}/v1/auth/verify-email", configuration.base_path);
+    let mut req_builder = configuration
+        .client
+        .request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    req_builder = req_builder.json(&p_body_verify_email_request);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::VerifyEmailResponse`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::VerifyEmailResponse`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<VerifyEmailRouteV1AuthVerifyEmailPostError> =
             serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent {
             status,

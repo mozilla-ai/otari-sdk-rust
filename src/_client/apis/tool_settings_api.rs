@@ -36,7 +36,7 @@ pub enum UpdateToolSettingsV1ToolSettingsPatchError {
     UnknownValue(serde_json::Value),
 }
 
-/// Return the effective tool/guardrail settings for the dashboard.
+/// Return the effective tool/guardrail settings for the dashboard.  Authentication only on the router: the role decides *how much* rather than whether, so this is not the deployment-wide gate ``require_deployment_operator`` names. A header master key is the deployment credential and reads everything; a session reads everything only while it operates the deployment, and otherwise gets the fields without the service endpoints in them.
 pub async fn get_tool_settings_v1_tool_settings_get(
     configuration: &configuration::Configuration,
 ) -> Result<models::ToolSettingsResponse, Error<GetToolSettingsV1ToolSettingsGetError>> {
@@ -163,7 +163,7 @@ pub async fn test_service_v1_tool_settings_service_test_post(
     }
 }
 
-/// Persist and apply tool/guardrail setting changes.  Uses ``model_fields_set`` so an explicit ``null`` clears a field while an omitted field is left unchanged. Master-key gated and standalone-only.
+/// Persist and apply tool/guardrail setting changes.  Uses ``model_fields_set`` so an explicit ``null`` clears a field while an omitted field is left unchanged. Operator-gated and standalone-only.
 pub async fn update_tool_settings_v1_tool_settings_patch(
     configuration: &configuration::Configuration,
     update_tool_settings_request: models::UpdateToolSettingsRequest,

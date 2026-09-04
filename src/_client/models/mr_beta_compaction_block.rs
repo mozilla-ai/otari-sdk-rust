@@ -21,6 +21,14 @@ pub struct MrBetaCompactionBlock {
         skip_serializing_if = "Option::is_none"
     )]
     pub content: Option<Option<String>>,
+    /// Filter to a single event type or metric name (e.g. 'tool_result', 'claude_code.commit.count')
+    #[serde(
+        rename = "encrypted_content",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub encrypted_content: Option<Option<String>>,
     #[serde(rename = "type")]
     pub r#type: Type,
 }
@@ -30,6 +38,7 @@ impl MrBetaCompactionBlock {
     pub fn new(r#type: Type) -> MrBetaCompactionBlock {
         MrBetaCompactionBlock {
             content: None,
+            encrypted_content: None,
             r#type,
         }
     }

@@ -28,6 +28,13 @@ pub struct MrToolUseBlock {
     pub name: String,
     #[serde(rename = "type")]
     pub r#type: Type,
+    #[serde(
+        rename = "toolset_name",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub toolset_name: Option<Option<String>>,
 }
 
 impl MrToolUseBlock {
@@ -43,6 +50,7 @@ impl MrToolUseBlock {
             input,
             name,
             r#type,
+            toolset_name: None,
         }
     }
 }

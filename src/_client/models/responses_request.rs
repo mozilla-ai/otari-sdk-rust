@@ -145,7 +145,7 @@ pub struct ResponsesRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub prompt_cache_retention: Option<Option<String>>,
-    /// An unsaved policy body to explain.
+    /// Provider-native request fields used as defaults (e.g. exa's 'type', searxng's 'engines').
     #[serde(
         rename = "reasoning",
         default,

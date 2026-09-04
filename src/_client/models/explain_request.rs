@@ -54,7 +54,7 @@ pub struct ExplainRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub name: Option<Option<String>>,
-    /// An unsaved policy body to explain.
+    /// Provider-native request fields used as defaults (e.g. exa's 'type', searxng's 'engines').
     #[serde(
         rename = "spec",
         default,
@@ -70,6 +70,14 @@ pub struct ExplainRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub user_id: Option<Option<String>>,
+    /// Resolve `name` and the policy's candidate selectors in this workspace. Omit for the deployment's default workspace.
+    #[serde(
+        rename = "workspace_id",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub workspace_id: Option<Option<uuid::Uuid>>,
 }
 
 impl ExplainRequest {
@@ -83,6 +91,7 @@ impl ExplainRequest {
             name: None,
             spec: None,
             user_id: None,
+            workspace_id: None,
         }
     }
 }

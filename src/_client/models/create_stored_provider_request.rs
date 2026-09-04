@@ -29,7 +29,7 @@ pub struct CreateStoredProviderRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub api_key: Option<Option<String>>,
-    /// An unsaved policy body to explain.
+    /// Provider-native request fields used as defaults (e.g. exa's 'type', searxng's 'engines').
     #[serde(
         rename = "client_args",
         default,

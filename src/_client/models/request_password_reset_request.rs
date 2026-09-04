@@ -12,10 +12,14 @@ use crate::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct UsageEntryPricingBreakdownInnerValue {}
+pub struct RequestPasswordResetRequest {
+    /// The address to send a reset link to.
+    #[serde(rename = "email")]
+    pub email: String,
+}
 
-impl UsageEntryPricingBreakdownInnerValue {
-    pub fn new() -> UsageEntryPricingBreakdownInnerValue {
-        UsageEntryPricingBreakdownInnerValue {}
+impl RequestPasswordResetRequest {
+    pub fn new(email: String) -> RequestPasswordResetRequest {
+        RequestPasswordResetRequest { email }
     }
 }

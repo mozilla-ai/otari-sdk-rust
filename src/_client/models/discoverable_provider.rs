@@ -14,6 +14,14 @@ use serde::{Deserialize, Serialize};
 /// DiscoverableProvider : One provider instance's discovery result.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct DiscoverableProvider {
+    /// When this instance was last dialed, ISO 8601. Null when it has not been checked yet, which is what the first read after a restart sees while the background refresh runs.
+    #[serde(
+        rename = "checked_at",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub checked_at: Option<Option<String>>,
     /// True when discovery failed only because this backend serves no model-listing endpoint. The provider may still handle requests for models declared in config.
     #[serde(
         rename = "discovery_unsupported",
@@ -45,6 +53,7 @@ impl DiscoverableProvider {
         provider: String,
     ) -> DiscoverableProvider {
         DiscoverableProvider {
+            checked_at: None,
             discovery_unsupported: None,
             error: None,
             models,

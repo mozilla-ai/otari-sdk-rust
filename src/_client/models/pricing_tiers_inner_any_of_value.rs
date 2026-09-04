@@ -12,10 +12,10 @@ use crate::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct PricingTiersInnerValue {}
+pub struct PricingTiersInnerAnyOfValue {}
 
-impl PricingTiersInnerValue {
-    pub fn new() -> PricingTiersInnerValue {
-        PricingTiersInnerValue {}
+impl PricingTiersInnerAnyOfValue {
+    pub fn new() -> PricingTiersInnerAnyOfValue {
+        PricingTiersInnerAnyOfValue {}
     }
 }

@@ -43,6 +43,13 @@ pub struct PolicyResponse {
         skip_serializing_if = "Option::is_none"
     )]
     pub user_id: Option<Option<String>>,
+    #[serde(
+        rename = "workspace_id",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub workspace_id: Option<Option<uuid::Uuid>>,
 }
 
 impl PolicyResponse {
@@ -60,6 +67,7 @@ impl PolicyResponse {
             spec,
             updated_at: None,
             user_id: None,
+            workspace_id: None,
         }
     }
 }

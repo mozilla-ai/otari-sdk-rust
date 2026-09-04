@@ -113,31 +113,51 @@ impl From<&str> for ContentType {
     }
 }
 
+pub mod admin_api;
+pub mod agent_telemetry_api;
 pub mod aliases_api;
 pub mod audio_api;
 pub mod auth_api;
 pub mod batches_api;
+pub mod bootstrap_api;
 pub mod budgets_api;
 pub mod chat_api;
 pub mod embeddings_api;
 pub mod files_api;
 pub mod health_api;
 pub mod images_api;
+pub mod invitations_api;
 pub mod keys_api;
+pub mod mcp_servers_api;
 pub mod messages_api;
 pub mod models_api;
 pub mod moderations_api;
+pub mod organization_budgets_api;
+pub mod organization_guardrails_api;
+pub mod organization_keys_api;
+pub mod organization_pricing_api;
+pub mod organization_usage_api;
+pub mod organizations_api;
 pub mod otel_api;
 pub mod pricing_api;
+pub mod provider_keys_api;
 pub mod providers_api;
 pub mod rerank_api;
 pub mod responses_api;
 pub mod routing_api;
+pub mod scoped_budgets_api;
 pub mod search_api;
+pub mod search_tools_api;
 pub mod settings_api;
 pub mod tool_settings_api;
 pub mod tools_api;
 pub mod usage_api;
 pub mod users_api;
+pub mod web_search_api;
+pub mod workspace_activation_api;
+pub mod workspace_code_execution_policy_api;
+pub mod workspace_member_budget_policies_api;
+pub mod workspace_web_search_api;
+pub mod workspaces_api;
 
 pub mod configuration;

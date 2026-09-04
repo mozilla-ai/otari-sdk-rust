@@ -40,8 +40,7 @@ pub struct ModelPricingInfo {
     #[serde(rename = "output_price_per_million")]
     pub output_price_per_million: f64,
     #[serde(rename = "pricing_tiers", skip_serializing_if = "Option::is_none")]
-    pub pricing_tiers:
-        Option<Vec<std::collections::HashMap<String, models::PricingTiersInnerValue>>>,
+    pub pricing_tiers: Option<Vec<models::PricingTiersInner>>,
 }
 
 impl ModelPricingInfo {

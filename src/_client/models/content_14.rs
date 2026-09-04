@@ -15,29 +15,25 @@ use serde::{Deserialize, Serialize};
 pub struct Content14 {
     #[serde(rename = "error_code")]
     pub error_code: ErrorCode,
+    #[serde(rename = "error_message", skip_serializing_if = "Option::is_none")]
+    pub error_message: Option<String>,
     #[serde(rename = "type")]
     pub r#type: Type,
-    #[serde(rename = "content")]
-    pub content: models::MrDocumentBlock,
-    #[serde(rename = "retrieved_at", skip_serializing_if = "Option::is_none")]
-    pub retrieved_at: Option<String>,
-    #[serde(rename = "url")]
-    pub url: String,
+    #[serde(rename = "tool_references")]
+    pub tool_references: Vec<models::MrToolReferenceBlock>,
 }
 
 impl Content14 {
     pub fn new(
         error_code: ErrorCode,
         r#type: Type,
-        content: models::MrDocumentBlock,
-        url: String,
+        tool_references: Vec<models::MrToolReferenceBlock>,
     ) -> Content14 {
         Content14 {
             error_code,
+            error_message: None,
             r#type,
-            content,
-            retrieved_at: None,
-            url,
+            tool_references,
         }
     }
 }
@@ -46,20 +42,12 @@ impl Content14 {
 pub enum ErrorCode {
     #[serde(rename = "invalid_tool_input")]
     InvalidToolInput,
-    #[serde(rename = "url_too_long")]
-    UrlTooLong,
-    #[serde(rename = "url_not_allowed")]
-    UrlNotAllowed,
-    #[serde(rename = "url_not_accessible")]
-    UrlNotAccessible,
-    #[serde(rename = "unsupported_content_type")]
-    UnsupportedContentType,
-    #[serde(rename = "too_many_requests")]
-    TooManyRequests,
-    #[serde(rename = "max_uses_exceeded")]
-    MaxUsesExceeded,
     #[serde(rename = "unavailable")]
     Unavailable,
+    #[serde(rename = "too_many_requests")]
+    TooManyRequests,
+    #[serde(rename = "execution_time_exceeded")]
+    ExecutionTimeExceeded,
 }
 
 impl Default for ErrorCode {
@@ -70,14 +58,14 @@ impl Default for ErrorCode {
 ///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Type {
-    #[serde(rename = "web_fetch_tool_result_error")]
-    WebFetchToolResultError,
-    #[serde(rename = "web_fetch_result")]
-    WebFetchResult,
+    #[serde(rename = "tool_search_tool_result_error")]
+    ToolSearchToolResultError,
+    #[serde(rename = "tool_search_tool_search_result")]
+    ToolSearchToolSearchResult,
 }
 
 impl Default for Type {
     fn default() -> Type {
-        Self::WebFetchToolResultError
+        Self::ToolSearchToolResultError
     }
 }

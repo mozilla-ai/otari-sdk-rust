@@ -17,66 +17,67 @@ pub struct Content4 {
     pub error_code: ErrorCode,
     #[serde(rename = "type")]
     pub r#type: Type,
-    #[serde(rename = "content")]
-    pub content: Vec<models::MrBetaBashCodeExecutionOutputBlock>,
-    #[serde(rename = "return_code")]
-    pub return_code: i32,
-    #[serde(rename = "stderr")]
-    pub stderr: String,
-    #[serde(rename = "stdout")]
-    pub stdout: String,
+    #[serde(rename = "stop_reason", skip_serializing_if = "Option::is_none")]
+    pub stop_reason: Option<String>,
+    #[serde(rename = "text")]
+    pub text: String,
+    #[serde(rename = "encrypted_content")]
+    pub encrypted_content: String,
 }
 
 impl Content4 {
     pub fn new(
         error_code: ErrorCode,
         r#type: Type,
-        content: Vec<models::MrBetaBashCodeExecutionOutputBlock>,
-        return_code: i32,
-        stderr: String,
-        stdout: String,
+        text: String,
+        encrypted_content: String,
     ) -> Content4 {
         Content4 {
             error_code,
             r#type,
-            content,
-            return_code,
-            stderr,
-            stdout,
+            stop_reason: None,
+            text,
+            encrypted_content,
         }
     }
 }
 ///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum ErrorCode {
-    #[serde(rename = "invalid_tool_input")]
-    InvalidToolInput,
-    #[serde(rename = "unavailable")]
-    Unavailable,
+    #[serde(rename = "max_uses_exceeded")]
+    MaxUsesExceeded,
+    #[serde(rename = "prompt_too_long")]
+    PromptTooLong,
     #[serde(rename = "too_many_requests")]
     TooManyRequests,
+    #[serde(rename = "overloaded")]
+    Overloaded,
+    #[serde(rename = "unavailable")]
+    Unavailable,
     #[serde(rename = "execution_time_exceeded")]
     ExecutionTimeExceeded,
-    #[serde(rename = "output_file_too_large")]
-    OutputFileTooLarge,
+    #[serde(rename = "model_not_found")]
+    ModelNotFound,
 }
 
 impl Default for ErrorCode {
     fn default() -> ErrorCode {
-        Self::InvalidToolInput
+        Self::MaxUsesExceeded
     }
 }
 ///
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Type {
-    #[serde(rename = "bash_code_execution_tool_result_error")]
-    BashCodeExecutionToolResultError,
-    #[serde(rename = "bash_code_execution_result")]
-    BashCodeExecutionResult,
+    #[serde(rename = "advisor_tool_result_error")]
+    AdvisorToolResultError,
+    #[serde(rename = "advisor_result")]
+    AdvisorResult,
+    #[serde(rename = "advisor_redacted_result")]
+    AdvisorRedactedResult,
 }
 
 impl Default for Type {
     fn default() -> Type {
-        Self::BashCodeExecutionToolResultError
+        Self::AdvisorToolResultError
     }
 }

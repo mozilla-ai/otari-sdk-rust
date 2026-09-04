@@ -20,6 +20,13 @@ pub struct UsageGroupRow {
     pub is_other: Option<bool>,
     #[serde(rename = "key", deserialize_with = "Option::deserialize")]
     pub key: Option<String>,
+    #[serde(
+        rename = "label",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub label: Option<Option<String>>,
     #[serde(rename = "requests")]
     pub requests: i32,
     #[serde(rename = "tokens")]
@@ -33,6 +40,7 @@ impl UsageGroupRow {
             cost,
             is_other: None,
             key,
+            label: None,
             requests,
             tokens,
         }

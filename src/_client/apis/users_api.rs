@@ -124,7 +124,7 @@ pub async fn create_user_v1_users_post(
     }
 }
 
-/// Delete a user.
+/// Delete a user, and erase the telemetry captured under their name.
 pub async fn delete_user_v1_users_user_id_delete(
     configuration: &configuration::Configuration,
     user_id: &str,

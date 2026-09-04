@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MrBetaTextEditorCodeExecutionToolResultBlock {
     #[serde(rename = "content")]
-    pub content: Box<models::Content7>,
+    pub content: Box<models::Content8>,
     #[serde(rename = "tool_use_id")]
     pub tool_use_id: String,
     #[serde(rename = "type")]
@@ -23,7 +23,7 @@ pub struct MrBetaTextEditorCodeExecutionToolResultBlock {
 
 impl MrBetaTextEditorCodeExecutionToolResultBlock {
     pub fn new(
-        content: models::Content7,
+        content: models::Content8,
         tool_use_id: String,
         r#type: Type,
     ) -> MrBetaTextEditorCodeExecutionToolResultBlock {

@@ -11,17 +11,42 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// CreateSessionRequest : Sign in to the dashboard by proving possession of the master key.
+/// CreateSessionRequest : Sign in to the dashboard with exactly one credential.  A flat body with an optional field per credential, rather than a tagged union: it is one extra key on the wire, it generates a client type a hand-written form can fill in, and the validator below makes the two forms exclusive anyway.  The example carries one credential, because a generated example is a body somebody will post: the schema alone would produce every field at once, which is the one shape the validator below refuses.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct CreateSessionRequest {
-    /// The gateway master key; verified once and never stored by the browser.
-    #[serde(rename = "master_key")]
-    pub master_key: String,
+    /// The identity's sign-in address.
+    #[serde(
+        rename = "email",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub email: Option<Option<String>>,
+    /// The gateway master key; verified once and never stored by the browser. Accepted only while the operator identity has no password, which is to say while nobody has claimed this deployment (see GET /v1/bootstrap).
+    #[serde(
+        rename = "master_key",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub master_key: Option<Option<String>>,
+    /// The identity's password.
+    #[serde(
+        rename = "password",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub password: Option<Option<String>>,
 }
 
 impl CreateSessionRequest {
-    /// Sign in to the dashboard by proving possession of the master key.
-    pub fn new(master_key: String) -> CreateSessionRequest {
-        CreateSessionRequest { master_key }
+    /// Sign in to the dashboard with exactly one credential.  A flat body with an optional field per credential, rather than a tagged union: it is one extra key on the wire, it generates a client type a hand-written form can fill in, and the validator below makes the two forms exclusive anyway.  The example carries one credential, because a generated example is a body somebody will post: the schema alone would produce every field at once, which is the one shape the validator below refuses.
+    pub fn new() -> CreateSessionRequest {
+        CreateSessionRequest {
+            email: None,
+            master_key: None,
+            password: None,
+        }
     }
 }

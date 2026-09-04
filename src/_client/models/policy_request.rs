@@ -17,10 +17,18 @@ pub struct PolicyRequest {
     /// Model name callers send, e.g. 'fast'.
     #[serde(rename = "name")]
     pub name: String,
+    /// Current name of the policy to rename, in the same scope, meaning the same workspace and the same user. A rename never moves a policy between them. The stored row keeps its id and created_at and takes `name` and `spec`. Sending it asserts that policy exists, so a name with no stored row is a 404 rather than a create, even when it equals `name`. Omit to create or update the policy named `name`. Renaming changes what callers must send as `model`; usage already recorded keeps the old name.
+    #[serde(
+        rename = "rename_from",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub rename_from: Option<Option<String>>,
     /// The policy body: select (with exactly one `default` entry, last), optional on_failure and guardrails. Same schema as a `routing.policies` entry in config.yml, and closed to unknown keys, so a typo is a 400 rather than a silently ignored setting.
     #[serde(rename = "spec")]
     pub spec: std::collections::HashMap<String, serde_json::Value>,
-    /// User this policy belongs to. Omit for a global policy every caller sees. A user-scoped policy resolves only for that user and shadows a global one of the same name.
+    /// User this policy belongs to. Omit for a policy every caller in the workspace sees. A user-scoped policy resolves only for that user and shadows the workspace-wide one of the same name.
     #[serde(
         rename = "user_id",
         default,
@@ -28,6 +36,14 @@ pub struct PolicyRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub user_id: Option<Option<String>>,
+    /// Workspace this policy belongs to. Omit for the deployment's default workspace. The policy resolves only for requests in that workspace, so two workspaces can each define their own 'fast'.
+    #[serde(
+        rename = "workspace_id",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub workspace_id: Option<Option<uuid::Uuid>>,
 }
 
 impl PolicyRequest {
@@ -38,8 +54,10 @@ impl PolicyRequest {
     ) -> PolicyRequest {
         PolicyRequest {
             name,
+            rename_from: None,
             spec,
             user_id: None,
+            workspace_id: None,
         }
     }
 }

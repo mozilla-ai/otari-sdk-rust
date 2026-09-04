@@ -24,6 +24,18 @@ pub struct ExplainResponse {
     pub is_dynamic: bool,
     #[serde(rename = "name")]
     pub name: String,
+    #[serde(
+        rename = "router_backend",
+        default,
+        with = "::serde_with::rust::double_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub router_backend: Option<Option<String>>,
+    #[serde(rename = "router_candidates", skip_serializing_if = "Option::is_none")]
+    pub router_candidates: Option<Vec<String>>,
+    /// For a weighted policy, the percentage of traffic each candidate receives, normalized over the candidates this caller may use. Empty for every other policy, and for a weighted policy whose whole split this caller may not use: a split over no candidate is not a split, and each filtered candidate is named in `dropped` instead. A weighted split needs no request state, so unlike a learned router's ranking it is knowable here: the plan above is the real ordering by share, not the decline path.
+    #[serde(rename = "router_weights", skip_serializing_if = "Option::is_none")]
+    pub router_weights: Option<std::collections::HashMap<String, f64>>,
     #[serde(rename = "selection_reason")]
     pub selection_reason: String,
 }
@@ -44,6 +56,9 @@ impl ExplainResponse {
             guardrails,
             is_dynamic,
             name,
+            router_backend: None,
+            router_candidates: None,
+            router_weights: None,
             selection_reason,
         }
     }

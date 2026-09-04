@@ -19,6 +19,8 @@ pub struct CcChatCompletionMessageToolCallsInner {
     pub function: models::CcFunction,
     #[serde(rename = "type")]
     pub r#type: Type,
+    #[serde(rename = "extra_content", skip_serializing_if = "Option::is_none")]
+    pub extra_content: Option<std::collections::HashMap<String, serde_json::Value>>,
     #[serde(rename = "custom")]
     pub custom: models::CcCustom,
 }
@@ -34,6 +36,7 @@ impl CcChatCompletionMessageToolCallsInner {
             id,
             function,
             r#type,
+            extra_content: None,
             custom,
         }
     }
