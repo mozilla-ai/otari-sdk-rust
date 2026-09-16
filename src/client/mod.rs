@@ -67,6 +67,12 @@ const OTARI_API_KEY_ENV: &str = "OTARI_API_KEY";
 /// base URL is configured via `Config::api_base` or env.
 const HOSTED_API_BASE: &str = "https://api.otari.ai";
 
+/// Path prefix every Otari gateway route lives under.
+///
+/// The configured base URL is a bare origin (`https://api.otari.ai`), and every
+/// endpoint path is relative to this root.
+pub const API_ROOT: &str = "/api/v1";
+
 /// User-Agent sent on every request. The hosted gateway's edge rejects
 /// requests with no User-Agent (HTTP 403), so always identify the client.
 const USER_AGENT: &str = concat!("otari-rust/", env!("CARGO_PKG_VERSION"));
@@ -233,6 +239,14 @@ impl Otari {
         make_configuration(&self.api_base, self.client.clone())
     }
 
+    /// Build the absolute URL of a gateway route.
+    ///
+    /// `route` is the path below [`API_ROOT`], with a leading slash and any
+    /// query string (for example `/chat/completions`).
+    fn api_url(&self, route: &str) -> String {
+        format!("{}{API_ROOT}{route}", self.api_base)
+    }
+
     // ----- Completion operations -----
 
     /// Create a chat completion.
@@ -241,7 +255,7 @@ impl Otari {
 
         let response = self
             .client
-            .post(format!("{}/v1/chat/completions", self.api_base))
+            .post(self.api_url("/chat/completions"))
             .json(&body)
             .send()
             .await?;
@@ -262,7 +276,7 @@ impl Otari {
 
         let request = self
             .client
-            .post(format!("{}/v1/chat/completions", self.api_base))
+            .post(self.api_url("/chat/completions"))
             .json(&body);
 
         let es = EventSource::new(request).map_err(|e| OtariError::Streaming {
@@ -281,7 +295,7 @@ impl Otari {
 
         let response = self
             .client
-            .post(format!("{}/v1/rerank", self.api_base))
+            .post(self.api_url("/rerank"))
             .json(&body)
             .send()
             .await
@@ -302,42 +316,45 @@ impl Otari {
 
     /// Create a batch job.
     pub async fn create_batch(&self, params: CreateBatchParams) -> Result<Batch> {
-        let url = format!("{}/v1/batches", self.api_base);
-        let response = self.client.post(&url).json(&params).send().await?;
+        let route = "/batches";
+        let response = self
+            .client
+            .post(self.api_url(route))
+            .json(&params)
+            .send()
+            .await?;
         if response.status().as_u16() != 200 {
-            return Err(convert_batch_error(response, "/v1/batches").await);
+            return Err(convert_batch_error(response, route).await);
         }
         Ok(response.json::<Batch>().await?)
     }
 
     /// Retrieve the status of a batch job.
     pub async fn retrieve_batch(&self, batch_id: &str, provider: &str) -> Result<Batch> {
-        let url = format!("{}/v1/batches/{}", self.api_base, batch_id);
+        let route = format!("/batches/{batch_id}");
         let response = self
             .client
-            .get(&url)
+            .get(self.api_url(&route))
             .query(&[("provider", provider)])
             .send()
             .await?;
-        let path = format!("/v1/batches/{batch_id}");
         if response.status().as_u16() != 200 {
-            return Err(convert_batch_error(response, &path).await);
+            return Err(convert_batch_error(response, &route).await);
         }
         Ok(response.json::<Batch>().await?)
     }
 
     /// Cancel a batch job.
     pub async fn cancel_batch(&self, batch_id: &str, provider: &str) -> Result<Batch> {
-        let url = format!("{}/v1/batches/{}/cancel", self.api_base, batch_id);
+        let route = format!("/batches/{batch_id}/cancel");
         let response = self
             .client
-            .post(&url)
+            .post(self.api_url(&route))
             .query(&[("provider", provider)])
             .send()
             .await?;
-        let path = format!("/v1/batches/{batch_id}/cancel");
         if response.status().as_u16() != 200 {
-            return Err(convert_batch_error(response, &path).await);
+            return Err(convert_batch_error(response, &route).await);
         }
         Ok(response.json::<Batch>().await?)
     }
@@ -348,7 +365,7 @@ impl Otari {
         provider: &str,
         options: ListBatchesOptions,
     ) -> Result<Vec<Batch>> {
-        let url = format!("{}/v1/batches", self.api_base);
+        let route = "/batches";
         let mut query: Vec<(&str, String)> = vec![("provider", provider.to_string())];
         if let Some(after) = &options.after {
             query.push(("after", after.clone()));
@@ -356,9 +373,14 @@ impl Otari {
         if let Some(limit) = options.limit {
             query.push(("limit", limit.to_string()));
         }
-        let response = self.client.get(&url).query(&query).send().await?;
+        let response = self
+            .client
+            .get(self.api_url(route))
+            .query(&query)
+            .send()
+            .await?;
         if response.status().as_u16() != 200 {
-            return Err(convert_batch_error(response, "/v1/batches").await);
+            return Err(convert_batch_error(response, route).await);
         }
         #[derive(Deserialize)]
         struct ListResponse {
@@ -374,23 +396,22 @@ impl Otari {
         batch_id: &str,
         provider: &str,
     ) -> Result<BatchResult> {
-        let url = format!("{}/v1/batches/{}/results", self.api_base, batch_id);
+        let route = format!("/batches/{batch_id}/results");
         let response = self
             .client
-            .get(&url)
+            .get(self.api_url(&route))
             .query(&[("provider", provider)])
             .send()
             .await?;
-        let path = format!("/v1/batches/{batch_id}/results");
         if response.status().as_u16() != 200 {
-            return Err(convert_batch_error(response, &path).await);
+            return Err(convert_batch_error(response, &route).await);
         }
         Ok(response.json::<BatchResult>().await?)
     }
 
     // ----- Moderation -----
 
-    /// Call `POST /v1/moderations` on the gateway.
+    /// Call `POST /api/v1/moderations` on the gateway.
     ///
     /// Auth headers (`Authorization` / `Otari-Key`) are already injected
     /// as default headers on the inner HTTP client.
@@ -406,7 +427,7 @@ impl Otari {
     /// - Other [`OtariError`] variants for standard HTTP error mapping,
     ///   transport failures, and deserialization errors.
     pub async fn moderation(&self, params: ModerationParams) -> Result<ModerationResponse> {
-        let mut url = format!("{}/v1/moderations", self.api_base);
+        let mut url = self.api_url("/moderations");
         if params.include_raw {
             url.push_str("?include_raw=true");
         }
@@ -424,7 +445,7 @@ impl Otari {
 
     // ----- Images -----
 
-    /// Generate images from a text prompt (`POST /v1/images/generations`).
+    /// Generate images from a text prompt (`POST /api/v1/images/generations`).
     ///
     /// Returns the generated typed [`gen_models::ImagesResponse`]
     /// (`created`, `data: Option<Option<Vec<ImgImage>>>`, plus the optional
@@ -448,7 +469,7 @@ impl Otari {
         request.style = params.style.map(Some);
         request.user = params.user.map(Some);
 
-        images_api::create_image_v1_images_generations_post(&self.gen_config(), request)
+        images_api::images_create_image(&self.gen_config(), request)
             .await
             .map_err(map_error)
     }
@@ -456,7 +477,7 @@ impl Otari {
     // ----- Audio -----
 
     /// Synthesize speech (text-to-speech), returning raw audio bytes
-    /// (`POST /v1/audio/speech`).
+    /// (`POST /api/v1/audio/speech`).
     ///
     /// The gateway returns binary audio (`audio/mpeg` by default) with no JSON
     /// response model, so the generated core (which only decodes JSON) cannot
@@ -484,15 +505,12 @@ impl Otari {
             obj.insert("user".to_string(), user.into());
         }
 
-        let request = self
-            .client
-            .post(format!("{}/v1/audio/speech", self.api_base))
-            .json(&body);
+        let request = self.client.post(self.api_url("/audio/speech")).json(&body);
         let response = self.send_raw(request).await?;
         response.bytes().await.map_err(OtariError::from)
     }
 
-    /// Transcribe audio to text (`POST /v1/audio/transcriptions`).
+    /// Transcribe audio to text (`POST /api/v1/audio/transcriptions`).
     ///
     /// `params.file` is uploaded as multipart form data (the `file` part); the
     /// model and other parameters are sent as form fields. The generated core
@@ -527,7 +545,7 @@ impl Otari {
 
         let request = self
             .client
-            .post(format!("{}/v1/audio/transcriptions", self.api_base))
+            .post(self.api_url("/audio/transcriptions"))
             .multipart(form);
         let response = self.send_raw(request).await?;
 
@@ -616,7 +634,7 @@ impl Otari {
     /// `body` is the request payload (`model`, `messages`, and any optional
     /// fields such as `temperature`, `tools`, `guardrails`).
     pub async fn chat(&self, body: serde_json::Value) -> Result<gen_models::ChatCompletion> {
-        self.post_typed("/v1/chat/completions", &body).await
+        self.post_typed("/chat/completions", &body).await
     }
 
     /// Create a response via the OpenAI-style Responses API.
@@ -625,7 +643,7 @@ impl Otari {
     /// returns the raw [`serde_json::Value`]. For streaming responses, use
     /// [`Self::response_stream`].
     pub async fn response(&self, body: serde_json::Value) -> Result<serde_json::Value> {
-        self.post_typed("/v1/responses", &body).await
+        self.post_typed("/responses", &body).await
     }
 
     /// Create an Anthropic-style message via the gateway `/messages` endpoint.
@@ -644,11 +662,11 @@ impl Otari {
     /// `signature`, `thinking`, `data`, ... all at once, and types `model` as
     /// an empty struct rather than a string).
     pub async fn message(&self, body: serde_json::Value) -> Result<serde_json::Value> {
-        self.post_typed("/v1/messages", &body).await
+        self.post_typed("/messages", &body).await
     }
 
     /// Count input tokens for an Anthropic-style message request via the
-    /// gateway `/v1/messages/count_tokens` endpoint.
+    /// gateway `/api/v1/messages/count_tokens` endpoint.
     ///
     /// Counts the tokens a `/messages` request would consume without generating
     /// a response, so `max_tokens` is not part of the body. Returns the
@@ -662,7 +680,7 @@ impl Otari {
         &self,
         body: serde_json::Value,
     ) -> Result<gen_models::CountTokensResponse> {
-        self.post_typed("/v1/messages/count_tokens", &body).await
+        self.post_typed("/messages/count_tokens", &body).await
     }
 
     /// Create embeddings for the given input through the generated typed core.
@@ -670,7 +688,7 @@ impl Otari {
         &self,
         body: serde_json::Value,
     ) -> Result<gen_models::CreateEmbeddingResponse> {
-        self.post_typed("/v1/embeddings", &body).await
+        self.post_typed("/embeddings", &body).await
     }
 
     /// Classify text against the gateway moderation endpoint, returning the
@@ -684,12 +702,12 @@ impl Otari {
         body: serde_json::Value,
         include_raw: bool,
     ) -> Result<gen_models::ModerationResponse> {
-        let path = if include_raw {
-            "/v1/moderations?include_raw=true"
+        let route = if include_raw {
+            "/moderations?include_raw=true"
         } else {
-            "/v1/moderations"
+            "/moderations"
         };
-        self.post_typed(path, &body).await
+        self.post_typed(route, &body).await
     }
 
     /// Rerank documents by relevance, returning the generated typed
@@ -701,7 +719,7 @@ impl Otari {
         &self,
         body: serde_json::Value,
     ) -> Result<gen_models::RerankResponse> {
-        self.post_typed("/v1/rerank", &body).await
+        self.post_typed("/rerank", &body).await
     }
 
     /// List available models from the gateway.
@@ -712,24 +730,25 @@ impl Otari {
         &self,
         provider: Option<&str>,
     ) -> Result<Vec<gen_models::ModelObject>> {
-        models_api::list_models_v1_models_get(&self.gen_config(), provider)
+        models_api::models_list_models(&self.gen_config(), provider)
             .await
             .map(|resp| resp.data)
             .map_err(map_error)
     }
 
-    /// POST `body` to `path`, deserialize the 2xx response into the typed
-    /// generated model `R`, and map non-2xx responses through the shared error
-    /// table (`x-correlation-id` / `retry-after` honored). `R = serde_json::
-    /// Value` yields the raw response for endpoints with no usable typed model.
+    /// POST `body` to the gateway route `route` (a path below [`API_ROOT`]),
+    /// deserialize the 2xx response into the typed generated model `R`, and map
+    /// non-2xx responses through the shared error table (`x-correlation-id` /
+    /// `retry-after` honored). `R = serde_json::Value` yields the raw response
+    /// for endpoints with no usable typed model.
     async fn post_typed<R: serde::de::DeserializeOwned>(
         &self,
-        path: &str,
+        route: &str,
         body: &serde_json::Value,
     ) -> Result<R> {
         let response = self
             .client
-            .post(format!("{}{path}", self.api_base))
+            .post(self.api_url(route))
             .json(body)
             .send()
             .await?;
@@ -771,7 +790,7 @@ impl Otari {
         &self,
         body: serde_json::Value,
     ) -> Result<crate::types::RawValueStream> {
-        self.raw_stream("/v1/responses", body)
+        self.raw_stream("/responses", body)
     }
 
     /// Stream an Anthropic-style `/messages` response as raw JSON events.
@@ -784,13 +803,14 @@ impl Otari {
         &self,
         body: serde_json::Value,
     ) -> Result<crate::types::RawValueStream> {
-        self.raw_stream("/v1/messages", body)
+        self.raw_stream("/messages", body)
     }
 
-    /// Open a raw SSE stream against `path`, forcing `stream: true`.
+    /// Open a raw SSE stream against the gateway route `route` (a path below
+    /// [`API_ROOT`]), forcing `stream: true`.
     fn raw_stream(
         &self,
-        path: &str,
+        route: &str,
         mut body: serde_json::Value,
     ) -> Result<crate::types::RawValueStream> {
         if let Some(obj) = body.as_object_mut() {
@@ -798,10 +818,7 @@ impl Otari {
         }
         // `reqwest-eventsource` sets `Accept: text/event-stream` on the request
         // itself, so we don't add it here (doing so would duplicate the header).
-        let request = self
-            .client
-            .post(format!("{}{path}", self.api_base))
-            .json(&body);
+        let request = self.client.post(self.api_url(route)).json(&body);
 
         let es = EventSource::new(request).map_err(|e| OtariError::Streaming {
             provider: "otari".into(),
@@ -977,14 +994,15 @@ fn parse_unsupported_provider(detail: &str) -> Option<String> {
 
 /// Convert an HTTP error response from a batch endpoint to a typed `OtariError`.
 ///
-/// Handles batch-specific status codes (409, 404 on batch paths) before
+/// `route` is the batch route the response came from, relative to the API
+/// root. Handles batch-specific status codes (409, 404 on batch routes) before
 /// falling through to the generic `convert_error` logic.
-async fn convert_batch_error(response: reqwest::Response, path: &str) -> OtariError {
+async fn convert_batch_error(response: reqwest::Response, route: &str) -> OtariError {
     let status = response.status().as_u16();
 
     // For 409 and batch-404 we need the body *before* delegating, because
     // `convert_error` consumes the response.
-    if status == 409 || (status == 404 && path.contains("/v1/batches")) {
+    if status == 409 || (status == 404 && route.contains("/batches")) {
         let correlation_id = response
             .headers()
             .get("x-correlation-id")
@@ -1125,11 +1143,23 @@ mod env_tests {
             let gw = Otari::from_config(Config::default()).unwrap();
             assert!(gw.is_platform_mode());
             assert_eq!(gw.api_base(), HOSTED_API_BASE);
-            // The base must produce correct request URLs with /v1 appended.
+            // The base is a bare origin; the API root comes from `api_url`.
             assert_eq!(
-                format!("{}/v1/chat/completions", gw.api_base()),
-                "https://api.otari.ai/v1/chat/completions"
+                gw.api_url("/chat/completions"),
+                "https://api.otari.ai/api/v1/chat/completions"
             );
+        });
+    }
+
+    #[test]
+    fn configured_base_is_a_bare_origin() {
+        with_clean_env(|| {
+            let gw = Otari::from_config(Config::new("k").with_api_base("http://localhost:8000/"))
+                .unwrap();
+            // A trailing slash is trimmed and no API root is folded into the
+            // base, so `api_url` never doubles or drops the prefix.
+            assert_eq!(gw.api_base(), "http://localhost:8000");
+            assert_eq!(gw.api_url("/models"), "http://localhost:8000/api/v1/models");
         });
     }
 

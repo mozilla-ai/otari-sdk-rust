@@ -6,7 +6,7 @@ use serde_json::{json, Value};
 use crate::error::{OtariError, Result};
 use crate::types::{CompletionParams, Content, ContentPart, Message};
 
-/// Request body for the gateway's `/v1/chat/completions` endpoint.
+/// Request body for the gateway's `/api/v1/chat/completions` endpoint.
 ///
 /// The gateway speaks the OpenAI wire format, so this maps `CompletionParams`
 /// to an OpenAI-compatible JSON body.

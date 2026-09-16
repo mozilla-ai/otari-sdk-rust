@@ -26,7 +26,7 @@
 //! use otari::control_plane::apis::keys_api;
 //!
 //! let cp = client.control_plane("gateway-master-key");
-//! let all = keys_api::list_keys_v1_keys_get(cp.config(), None, None).await.unwrap();
+//! let all = keys_api::keys_list_keys(cp.config(), None, None, None).await.unwrap();
 //! # let _ = all;
 //! # Ok(())
 //! # }
@@ -108,13 +108,13 @@ impl Keys<'_> {
         &self,
         create_key_request: models::CreateKeyRequest,
     ) -> Result<models::CreateKeyResponse> {
-        keys_api::create_key_v1_keys_post(self.config, create_key_request)
+        keys_api::keys_create_key(self.config, create_key_request)
             .await
             .map_err(map_error)
     }
 
     pub async fn get(&self, key_id: &str) -> Result<models::KeyInfo> {
-        keys_api::get_key_v1_keys_key_id_get(self.config, key_id)
+        keys_api::keys_get_key(self.config, key_id)
             .await
             .map_err(map_error)
     }
@@ -124,7 +124,9 @@ impl Keys<'_> {
         skip: Option<i32>,
         limit: Option<i32>,
     ) -> Result<Vec<models::KeyInfo>> {
-        keys_api::list_keys_v1_keys_get(self.config, skip, limit)
+        // workspace_id: a scoping filter the generated core gained that this
+        // alias does not surface yet.
+        keys_api::keys_list_keys(self.config, skip, limit, None)
             .await
             .map_err(map_error)
     }
@@ -134,13 +136,13 @@ impl Keys<'_> {
         key_id: &str,
         update_key_request: models::UpdateKeyRequest,
     ) -> Result<models::KeyInfo> {
-        keys_api::update_key_v1_keys_key_id_patch(self.config, key_id, update_key_request)
+        keys_api::keys_update_key(self.config, key_id, update_key_request)
             .await
             .map_err(map_error)
     }
 
     pub async fn delete(&self, key_id: &str) -> Result<()> {
-        keys_api::delete_key_v1_keys_key_id_delete(self.config, key_id)
+        keys_api::keys_delete_key(self.config, key_id)
             .await
             .map_err(map_error)
     }
@@ -156,13 +158,13 @@ impl Users<'_> {
         &self,
         create_user_request: models::CreateUserRequest,
     ) -> Result<models::UserResponse> {
-        users_api::create_user_v1_users_post(self.config, create_user_request)
+        users_api::users_create_user(self.config, create_user_request)
             .await
             .map_err(map_error)
     }
 
     pub async fn get(&self, user_id: &str) -> Result<models::UserResponse> {
-        users_api::get_user_v1_users_user_id_get(self.config, user_id)
+        users_api::users_get_user(self.config, user_id)
             .await
             .map_err(map_error)
     }
@@ -172,7 +174,7 @@ impl Users<'_> {
         skip: Option<i32>,
         limit: Option<i32>,
     ) -> Result<Vec<models::UserResponse>> {
-        users_api::list_users_v1_users_get(self.config, skip, limit)
+        users_api::users_list_users(self.config, skip, limit)
             .await
             .map_err(map_error)
     }
@@ -182,13 +184,13 @@ impl Users<'_> {
         user_id: &str,
         update_user_request: models::UpdateUserRequest,
     ) -> Result<models::UserResponse> {
-        users_api::update_user_v1_users_user_id_patch(self.config, user_id, update_user_request)
+        users_api::users_update_user(self.config, user_id, update_user_request)
             .await
             .map_err(map_error)
     }
 
     pub async fn delete(&self, user_id: &str) -> Result<()> {
-        users_api::delete_user_v1_users_user_id_delete(self.config, user_id)
+        users_api::users_delete_user(self.config, user_id)
             .await
             .map_err(map_error)
     }
@@ -199,7 +201,7 @@ impl Users<'_> {
         skip: Option<i32>,
         limit: Option<i32>,
     ) -> Result<Vec<models::UsageLogResponse>> {
-        users_api::get_user_usage_v1_users_user_id_usage_get(self.config, user_id, skip, limit)
+        users_api::users_get_user_usage(self.config, user_id, skip, limit)
             .await
             .map_err(map_error)
     }
@@ -215,13 +217,13 @@ impl Budgets<'_> {
         &self,
         create_budget_request: models::CreateBudgetRequest,
     ) -> Result<models::BudgetResponse> {
-        budgets_api::create_budget_v1_budgets_post(self.config, create_budget_request)
+        budgets_api::budgets_create_budget(self.config, create_budget_request)
             .await
             .map_err(map_error)
     }
 
     pub async fn get(&self, budget_id: &str) -> Result<models::BudgetResponse> {
-        budgets_api::get_budget_v1_budgets_budget_id_get(self.config, budget_id)
+        budgets_api::budgets_get_budget(self.config, budget_id)
             .await
             .map_err(map_error)
     }
@@ -231,7 +233,7 @@ impl Budgets<'_> {
         skip: Option<i32>,
         limit: Option<i32>,
     ) -> Result<Vec<models::BudgetResponse>> {
-        budgets_api::list_budgets_v1_budgets_get(self.config, skip, limit)
+        budgets_api::budgets_list_budgets(self.config, skip, limit)
             .await
             .map_err(map_error)
     }
@@ -241,17 +243,13 @@ impl Budgets<'_> {
         budget_id: &str,
         update_budget_request: models::UpdateBudgetRequest,
     ) -> Result<models::BudgetResponse> {
-        budgets_api::update_budget_v1_budgets_budget_id_patch(
-            self.config,
-            budget_id,
-            update_budget_request,
-        )
-        .await
-        .map_err(map_error)
+        budgets_api::budgets_update_budget(self.config, budget_id, update_budget_request)
+            .await
+            .map_err(map_error)
     }
 
     pub async fn delete(&self, budget_id: &str) -> Result<()> {
-        budgets_api::delete_budget_v1_budgets_budget_id_delete(self.config, budget_id)
+        budgets_api::budgets_delete_budget(self.config, budget_id)
             .await
             .map_err(map_error)
     }
@@ -268,7 +266,7 @@ impl Pricing<'_> {
         skip: Option<i32>,
         limit: Option<i32>,
     ) -> Result<Vec<models::PricingResponse>> {
-        pricing_api::list_pricing_v1_pricing_get(self.config, skip, limit)
+        pricing_api::pricing_list_pricing(self.config, skip, limit)
             .await
             .map_err(map_error)
     }
@@ -278,7 +276,7 @@ impl Pricing<'_> {
         model_key: &str,
         as_of: Option<chrono::DateTime<chrono::FixedOffset>>,
     ) -> Result<models::PricingResponse> {
-        pricing_api::get_pricing_v1_pricing_model_key_get(self.config, model_key, as_of)
+        pricing_api::pricing_get_pricing(self.config, model_key, as_of)
             .await
             .map_err(map_error)
     }
@@ -287,7 +285,7 @@ impl Pricing<'_> {
         &self,
         set_pricing_request: models::SetPricingRequest,
     ) -> Result<models::PricingResponse> {
-        pricing_api::set_pricing_v1_pricing_post(self.config, set_pricing_request)
+        pricing_api::pricing_set_pricing(self.config, set_pricing_request)
             .await
             .map_err(map_error)
     }
@@ -297,17 +295,13 @@ impl Pricing<'_> {
         model_key: &str,
         effective_at: Option<chrono::DateTime<chrono::FixedOffset>>,
     ) -> Result<()> {
-        pricing_api::delete_pricing_v1_pricing_model_key_delete(
-            self.config,
-            model_key,
-            effective_at,
-        )
-        .await
-        .map_err(map_error)
+        pricing_api::pricing_delete_pricing(self.config, model_key, effective_at)
+            .await
+            .map_err(map_error)
     }
 
     pub async fn get_history(&self, model_key: &str) -> Result<Vec<models::PricingResponse>> {
-        pricing_api::get_pricing_history_v1_pricing_model_key_history_get(self.config, model_key)
+        pricing_api::pricing_get_pricing_history(self.config, model_key)
             .await
             .map_err(map_error)
     }
@@ -327,7 +321,7 @@ impl Usage<'_> {
         skip: Option<i32>,
         limit: Option<i32>,
     ) -> Result<Vec<models::UsageEntry>> {
-        usage_api::list_usage_v1_usage_get(
+        usage_api::usage_list_usage(
             self.config,
             start_date,
             end_date,
@@ -336,8 +330,10 @@ impl Usage<'_> {
             // filtering is reachable through the generated core.
             user_id.map(|u| vec![u.to_string()]),
             // status, status_code, model, endpoint, provider, source, source_label,
-            // api_key_id, priced, tool, counts_toward_budget, request_group_id:
-            // filters the generated core gained that this alias does not surface yet.
+            // api_key_id, priced, tool, counts_toward_budget, request_group_id,
+            // workspace_id: filters the generated core gained that this alias
+            // does not surface yet.
+            None,
             None,
             None,
             None,

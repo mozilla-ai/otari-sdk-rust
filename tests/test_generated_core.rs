@@ -73,7 +73,7 @@ fn sse_body(events: &[&str]) -> String {
 async fn chat_returns_typed_completion_with_otari_key() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
+        .and(path("/api/v1/chat/completions"))
         .and(header("Otari-Key", "Bearer vk"))
         .and(body_partial_json(
             json!({"model": "openai:gpt-4o-mini", "temperature": 0.5}),
@@ -105,7 +105,7 @@ async fn chat_returns_typed_completion_with_otari_key() {
 async fn chat_sends_bearer_in_platform_mode() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
+        .and(path("/api/v1/chat/completions"))
         .and(header("Authorization", "Bearer tk"))
         .respond_with(ResponseTemplate::new(200).set_body_json(chat_response()))
         .mount(&server)
@@ -122,7 +122,7 @@ async fn chat_sends_bearer_in_platform_mode() {
 async fn embedding_returns_typed_response() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/embeddings"))
+        .and(path("/api/v1/embeddings"))
         .and(body_partial_json(json!({"input": "hello"})))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "object": "list",
@@ -145,7 +145,7 @@ async fn embedding_returns_typed_response() {
 async fn rerank_typed_returns_typed_response() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/rerank"))
+        .and(path("/api/v1/rerank"))
         .and(body_partial_json(json!({"documents": ["a", "b"]})))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "id": "rerank-1",
@@ -166,7 +166,7 @@ async fn rerank_typed_returns_typed_response() {
 async fn moderate_returns_typed_response() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/moderations"))
+        .and(path("/api/v1/moderations"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "id": "modr-1",
             "model": "m",
@@ -187,7 +187,7 @@ async fn moderate_returns_typed_response() {
 async fn moderate_include_raw_sets_query_param() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/moderations"))
+        .and(path("/api/v1/moderations"))
         .and(query_param("include_raw", "true"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "id": "modr-1", "model": "m",
@@ -215,7 +215,7 @@ async fn message_returns_raw_value() {
         "usage": {"input_tokens": 1, "output_tokens": 1}
     });
     Mock::given(method("POST"))
-        .and(path("/v1/messages"))
+        .and(path("/api/v1/messages"))
         .and(header("Otari-Key", "Bearer vk"))
         .and(body_partial_json(
             json!({"max_tokens": 64, "model": "anthropic:claude-3-5-sonnet"}),
@@ -240,7 +240,7 @@ async fn message_returns_raw_value() {
 async fn count_tokens_returns_typed_response() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/messages/count_tokens"))
+        .and(path("/api/v1/messages/count_tokens"))
         .and(header("Otari-Key", "Bearer vk"))
         .and(body_partial_json(
             json!({"model": "anthropic:claude-3-5-sonnet"}),
@@ -264,7 +264,7 @@ async fn count_tokens_returns_typed_response() {
 async fn list_models_returns_typed_models() {
     let server = MockServer::start().await;
     Mock::given(method("GET"))
-        .and(path("/v1/models"))
+        .and(path("/api/v1/models"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "object": "list",
             "data": [{"id": "openai:gpt-4o", "object": "model", "created": 1, "owned_by": "openai"}]
@@ -281,7 +281,7 @@ async fn list_models_returns_typed_models() {
 async fn response_returns_raw_value() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/responses"))
+        .and(path("/api/v1/responses"))
         .respond_with(
             ResponseTemplate::new(200).set_body_json(json!({"id": "resp-1", "output": []})),
         )
@@ -303,7 +303,7 @@ async fn response_returns_raw_value() {
 async fn assert_status_maps(status: u16, check: impl Fn(&OtariError) -> bool) {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
+        .and(path("/api/v1/chat/completions"))
         .respond_with(ResponseTemplate::new(status).set_body_json(json!({"detail": "boom"})))
         .mount(&server)
         .await;
@@ -333,7 +333,7 @@ async fn error_statuses_map_to_typed_errors() {
 async fn insufficient_funds_maps_with_correlation_id() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
+        .and(path("/api/v1/chat/completions"))
         .respond_with(
             ResponseTemplate::new(402)
                 .insert_header("x-correlation-id", "abc-123")
@@ -356,7 +356,7 @@ async fn insufficient_funds_maps_with_correlation_id() {
 async fn unsupported_moderation_maps_in_any_mode() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/moderations"))
+        .and(path("/api/v1/moderations"))
         .respond_with(
             ResponseTemplate::new(400)
                 .set_body_json(json!({"detail": "Provider anthropic does not support moderation"})),
@@ -391,7 +391,7 @@ async fn response_stream_yields_raw_events_and_stops_on_done() {
     let server = MockServer::start().await;
     let body = sse_body(&[r#"{"type":"a","seq":1}"#, r#"{"type":"b","seq":2}"#]);
     Mock::given(method("POST"))
-        .and(path("/v1/responses"))
+        .and(path("/api/v1/responses"))
         .and(header("Accept", "text/event-stream"))
         .and(header("Otari-Key", "Bearer vk"))
         .respond_with(ResponseTemplate::new(200).set_body_raw(body, "text/event-stream"))
@@ -417,7 +417,7 @@ async fn message_stream_yields_raw_events_with_bearer() {
         r#"{"type":"content_block_delta"}"#,
     ]);
     Mock::given(method("POST"))
-        .and(path("/v1/messages"))
+        .and(path("/api/v1/messages"))
         .and(header("Authorization", "Bearer tk"))
         .and(header("Accept", "text/event-stream"))
         .respond_with(ResponseTemplate::new(200).set_body_raw(body, "text/event-stream"))
@@ -442,7 +442,7 @@ async fn message_stream_yields_raw_events_with_bearer() {
 async fn control_plane_sends_admin_bearer() {
     let server = MockServer::start().await;
     Mock::given(method("GET"))
-        .and(path("/v1/keys"))
+        .and(path("/api/v1/keys"))
         .and(header("Authorization", "Bearer master"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!([])))
         .mount(&server)
@@ -456,7 +456,7 @@ async fn control_plane_sends_admin_bearer() {
     assert!(keys.is_empty());
 
     // Escape hatch: the generated functions stay reachable via `config()`.
-    let raw = otari::control_plane::apis::keys_api::list_keys_v1_keys_get(cp.config(), None, None)
+    let raw = otari::control_plane::apis::keys_api::keys_list_keys(cp.config(), None, None, None)
         .await
         .unwrap();
     assert!(raw.is_empty());
@@ -482,7 +482,7 @@ async fn control_plane_401(path_str: &str) -> (MockServer, Otari) {
 #[tokio::test]
 async fn control_plane_maps_response_error_to_typed_error() {
     // Keys
-    let (_server, client) = control_plane_401("/v1/keys").await;
+    let (_server, client) = control_plane_401("/api/v1/keys").await;
     let err = client
         .control_plane("master")
         .keys()
@@ -496,7 +496,7 @@ async fn control_plane_maps_response_error_to_typed_error() {
     assert!(err.to_string().contains("boom"), "keys: {err}");
 
     // Users
-    let (_server, client) = control_plane_401("/v1/users").await;
+    let (_server, client) = control_plane_401("/api/v1/users").await;
     let err = client
         .control_plane("master")
         .users()
@@ -509,7 +509,7 @@ async fn control_plane_maps_response_error_to_typed_error() {
     );
 
     // Budgets
-    let (_server, client) = control_plane_401("/v1/budgets").await;
+    let (_server, client) = control_plane_401("/api/v1/budgets").await;
     let err = client
         .control_plane("master")
         .budgets()
@@ -522,7 +522,7 @@ async fn control_plane_maps_response_error_to_typed_error() {
     );
 
     // Pricing
-    let (_server, client) = control_plane_401("/v1/pricing").await;
+    let (_server, client) = control_plane_401("/api/v1/pricing").await;
     let err = client
         .control_plane("master")
         .pricing()
@@ -535,7 +535,7 @@ async fn control_plane_maps_response_error_to_typed_error() {
     );
 
     // Usage
-    let (_server, client) = control_plane_401("/v1/usage").await;
+    let (_server, client) = control_plane_401("/api/v1/usage").await;
     let err = client
         .control_plane("master")
         .usage()

@@ -42,7 +42,7 @@ async fn image_generation_returns_typed_response() {
         "data": [{"url": "https://example.com/image.png"}]
     });
     Mock::given(method("POST"))
-        .and(path("/v1/images/generations"))
+        .and(path("/api/v1/images/generations"))
         .and(body_json(serde_json::json!({
             "model": "openai:dall-e-3",
             "prompt": "a red bicycle",
@@ -72,7 +72,7 @@ async fn image_generation_returns_typed_response() {
 async fn image_generation_sends_platform_bearer_header() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/images/generations"))
+        .and(path("/api/v1/images/generations"))
         .and(header("authorization", "Bearer tk_test_token"))
         .respond_with(
             ResponseTemplate::new(200)
@@ -91,7 +91,7 @@ async fn image_generation_sends_platform_bearer_header() {
 async fn image_generation_error_429_maps_to_rate_limit() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/images/generations"))
+        .and(path("/api/v1/images/generations"))
         .respond_with(
             ResponseTemplate::new(429)
                 .insert_header("Retry-After", "7")
@@ -118,7 +118,7 @@ async fn speech_returns_raw_bytes() {
     let server = MockServer::start().await;
     let audio = b"ID3\x00\x00\x00fake-mp3-bytes".to_vec();
     Mock::given(method("POST"))
-        .and(path("/v1/audio/speech"))
+        .and(path("/api/v1/audio/speech"))
         .and(body_json(serde_json::json!({
             "model": "openai:tts-1",
             "input": "hello world",
@@ -145,7 +145,7 @@ async fn speech_returns_raw_bytes() {
 async fn speech_sends_self_hosted_otari_key_header() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/audio/speech"))
+        .and(path("/api/v1/audio/speech"))
         .and(header("otari-key", "Bearer sk_self_hosted"))
         .respond_with(
             ResponseTemplate::new(200)
@@ -171,7 +171,7 @@ async fn speech_sends_self_hosted_otari_key_header() {
 async fn speech_error_402_maps_to_provider_error() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/audio/speech"))
+        .and(path("/api/v1/audio/speech"))
         .respond_with(
             ResponseTemplate::new(402)
                 .set_body_json(serde_json::json!({"detail": "budget exceeded"})),
@@ -198,7 +198,7 @@ async fn transcription_sends_multipart_and_returns_json() {
     let server = MockServer::start().await;
     let response_json = serde_json::json!({"text": "hello there"});
     Mock::given(method("POST"))
-        .and(path("/v1/audio/transcriptions"))
+        .and(path("/api/v1/audio/transcriptions"))
         .and(header_exists("content-type"))
         .and(|req: &Request| {
             let ct = req
@@ -242,7 +242,7 @@ async fn transcription_sends_multipart_and_returns_json() {
 async fn transcription_text_format_returns_string_value() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/audio/transcriptions"))
+        .and(path("/api/v1/audio/transcriptions"))
         .respond_with(
             ResponseTemplate::new(200)
                 .insert_header("content-type", "text/plain; charset=utf-8")
@@ -268,7 +268,7 @@ async fn transcription_text_format_returns_string_value() {
 async fn transcription_error_401_maps_to_authentication() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/audio/transcriptions"))
+        .and(path("/api/v1/audio/transcriptions"))
         .respond_with(
             ResponseTemplate::new(401).set_body_json(serde_json::json!({"detail": "bad token"})),
         )

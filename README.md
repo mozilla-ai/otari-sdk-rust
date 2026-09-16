@@ -246,7 +246,7 @@ for model in models {
 ### Moderation
 
 The `Otari` client exposes a `moderation` method that calls
-`POST /v1/moderations` and returns an OpenAI-compatible response:
+`POST /api/v1/moderations` and returns an OpenAI-compatible response:
 
 ```rust
 use otari::{Config, ModerationInput, ModerationParams, Otari};
@@ -300,7 +300,7 @@ for result in &response.results {
 ### Image generation
 
 Generate images with `client.image_generation(...)`, which calls
-`POST /v1/images/generations` and returns the typed `ImagesResponse` from the
+`POST /api/v1/images/generations` and returns the typed `ImagesResponse` from the
 generated core (`created` plus `data: Option<Option<Vec<ImgImage>>>`, where each
 `ImgImage` carries `url` / `b64_json` / `revised_prompt`):
 
@@ -325,7 +325,7 @@ if let Some(image) = result.data.flatten().and_then(|data| data.into_iter().next
 
 ### Audio (speech and transcription)
 
-`client.speech(...)` synthesizes text to speech (`POST /v1/audio/speech`) and
+`client.speech(...)` synthesizes text to speech (`POST /api/v1/audio/speech`) and
 returns the raw audio as `bytes::Bytes`, since the gateway responds with binary
 audio rather than JSON:
 
@@ -340,7 +340,7 @@ let audio = client
 std::fs::write("speech.mp3", &audio)?;
 ```
 
-`client.transcription(...)` transcribes audio (`POST /v1/audio/transcriptions`).
+`client.transcription(...)` transcribes audio (`POST /api/v1/audio/transcriptions`).
 The audio bytes are uploaded as multipart form data, and the result is returned
 as a `TranscriptionResult` with exactly one field populated, chosen by the
 response content type: `json` (parsed JSON) for the default `json` /

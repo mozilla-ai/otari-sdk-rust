@@ -146,7 +146,7 @@ async fn platform_mode_sends_authorization_header() {
     let server = MockServer::start().await;
 
     Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
+        .and(path("/api/v1/chat/completions"))
         .and(header("Authorization", "Bearer tk_test_token"))
         .respond_with(ResponseTemplate::new(200).set_body_json(chat_completion_json()))
         .expect(1)
@@ -166,7 +166,7 @@ async fn sends_user_agent_header() {
     let server = MockServer::start().await;
 
     Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
+        .and(path("/api/v1/chat/completions"))
         .and(header(
             "user-agent",
             concat!("otari-rust/", env!("CARGO_PKG_VERSION")),
@@ -186,7 +186,7 @@ async fn non_platform_mode_sends_otari_key_header() {
     let server = MockServer::start().await;
 
     Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
+        .and(path("/api/v1/chat/completions"))
         .and(header("Otari-Key", "Bearer my-api-key"))
         .respond_with(ResponseTemplate::new(200).set_body_json(chat_completion_json()))
         .expect(1)
@@ -207,7 +207,7 @@ async fn completion_parses_response() {
     let server = MockServer::start().await;
 
     Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
+        .and(path("/api/v1/chat/completions"))
         .respond_with(ResponseTemplate::new(200).set_body_json(chat_completion_json()))
         .mount(&server)
         .await;
@@ -242,7 +242,7 @@ async fn completion_with_reasoning() {
     });
 
     Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
+        .and(path("/api/v1/chat/completions"))
         .respond_with(ResponseTemplate::new(200).set_body_json(body))
         .mount(&server)
         .await;
@@ -280,7 +280,7 @@ async fn completion_with_tool_calls() {
     });
 
     Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
+        .and(path("/api/v1/chat/completions"))
         .respond_with(ResponseTemplate::new(200).set_body_json(body))
         .mount(&server)
         .await;
@@ -302,7 +302,7 @@ async fn streaming_returns_all_chunks() {
     let server = MockServer::start().await;
 
     Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
+        .and(path("/api/v1/chat/completions"))
         .respond_with(
             ResponseTemplate::new(200).set_body_raw(streaming_sse_body(), "text/event-stream"),
         )
@@ -333,7 +333,7 @@ async fn streaming_accumulator_works() {
     let server = MockServer::start().await;
 
     Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
+        .and(path("/api/v1/chat/completions"))
         .respond_with(
             ResponseTemplate::new(200).set_body_raw(streaming_sse_body(), "text/event-stream"),
         )
@@ -361,7 +361,7 @@ async fn streaming_accumulator_works() {
 async fn error_401_maps_to_authentication() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
+        .and(path("/api/v1/chat/completions"))
         .respond_with(
             ResponseTemplate::new(401)
                 .set_body_json(serde_json::json!({"error": {"message": "Invalid token"}})),
@@ -379,7 +379,7 @@ async fn error_401_maps_to_authentication() {
 async fn error_403_maps_to_authentication() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
+        .and(path("/api/v1/chat/completions"))
         .respond_with(
             ResponseTemplate::new(403)
                 .set_body_json(serde_json::json!({"error": {"message": "Forbidden"}})),
@@ -396,7 +396,7 @@ async fn error_403_maps_to_authentication() {
 async fn error_402_maps_to_provider_error_with_insufficient_funds() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
+        .and(path("/api/v1/chat/completions"))
         .respond_with(
             ResponseTemplate::new(402)
                 .set_body_json(serde_json::json!({"error": {"message": "Budget exceeded"}})),
@@ -414,7 +414,7 @@ async fn error_402_maps_to_provider_error_with_insufficient_funds() {
 async fn error_404_maps_to_model_not_found() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
+        .and(path("/api/v1/chat/completions"))
         .respond_with(
             ResponseTemplate::new(404)
                 .set_body_json(serde_json::json!({"error": {"message": "Model not found"}})),
@@ -431,7 +431,7 @@ async fn error_404_maps_to_model_not_found() {
 async fn error_429_maps_to_rate_limit() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
+        .and(path("/api/v1/chat/completions"))
         .respond_with(
             ResponseTemplate::new(429)
                 .insert_header("Retry-After", "30")
@@ -450,7 +450,7 @@ async fn error_429_maps_to_rate_limit() {
 async fn error_502_maps_to_provider_error() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
+        .and(path("/api/v1/chat/completions"))
         .respond_with(
             ResponseTemplate::new(502)
                 .set_body_json(serde_json::json!({"error": {"message": "Upstream error"}})),
@@ -468,7 +468,7 @@ async fn error_502_maps_to_provider_error() {
 async fn error_504_maps_to_provider_error() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
+        .and(path("/api/v1/chat/completions"))
         .respond_with(
             ResponseTemplate::new(504)
                 .set_body_json(serde_json::json!({"error": {"message": "Timed out"}})),
@@ -486,7 +486,7 @@ async fn error_504_maps_to_provider_error() {
 async fn error_includes_correlation_id() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
+        .and(path("/api/v1/chat/completions"))
         .respond_with(
             ResponseTemplate::new(401)
                 .insert_header("X-Correlation-ID", "corr-abc-123")
@@ -504,7 +504,7 @@ async fn error_includes_correlation_id() {
 async fn unknown_error_status_maps_to_provider_error() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
+        .and(path("/api/v1/chat/completions"))
         .respond_with(ResponseTemplate::new(500).set_body_string("Internal Server Error"))
         .mount(&server)
         .await;
@@ -524,7 +524,7 @@ async fn completion_api_function_works() {
     let server = MockServer::start().await;
 
     Mock::given(method("POST"))
-        .and(path("/v1/chat/completions"))
+        .and(path("/api/v1/chat/completions"))
         .respond_with(ResponseTemplate::new(200).set_body_json(chat_completion_json()))
         .mount(&server)
         .await;
@@ -591,7 +591,7 @@ async fn test_gateway_rerank() {
     let mock_server = MockServer::start().await;
 
     Mock::given(method("POST"))
-        .and(path("/v1/rerank"))
+        .and(path("/api/v1/rerank"))
         .respond_with(ResponseTemplate::new(200).set_body_string(rerank_response_json()))
         .mount(&mock_server)
         .await;
@@ -626,7 +626,7 @@ async fn test_gateway_rerank_401_error() {
     let mock_server = MockServer::start().await;
 
     Mock::given(method("POST"))
-        .and(path("/v1/rerank"))
+        .and(path("/api/v1/rerank"))
         .respond_with(
             ResponseTemplate::new(401).set_body_string(r#"{"error": {"message": "Unauthorized"}}"#),
         )
@@ -660,7 +660,7 @@ async fn test_gateway_rerank_429_error() {
     let mock_server = MockServer::start().await;
 
     Mock::given(method("POST"))
-        .and(path("/v1/rerank"))
+        .and(path("/api/v1/rerank"))
         .respond_with(
             ResponseTemplate::new(429)
                 .set_body_string(r#"{"error": {"message": "Rate limited"}}"#)
@@ -696,7 +696,7 @@ async fn test_rerank_api_function() {
     let mock_server = MockServer::start().await;
 
     Mock::given(method("POST"))
-        .and(path("/v1/rerank"))
+        .and(path("/api/v1/rerank"))
         .respond_with(ResponseTemplate::new(200).set_body_string(rerank_response_json()))
         .mount(&mock_server)
         .await;
@@ -884,7 +884,7 @@ async fn create_batch_sends_correct_request() {
     let server = MockServer::start().await;
 
     Mock::given(method("POST"))
-        .and(path("/v1/batches"))
+        .and(path("/api/v1/batches"))
         .and(header("Authorization", "Bearer tk_test_token"))
         .respond_with(ResponseTemplate::new(200).set_body_json(batch_json()))
         .expect(1)
@@ -912,7 +912,7 @@ async fn retrieve_batch_sends_provider_query_param() {
     let server = MockServer::start().await;
 
     Mock::given(method("GET"))
-        .and(path("/v1/batches/batch_abc123"))
+        .and(path("/api/v1/batches/batch_abc123"))
         .and(query_param("provider", "openai"))
         .respond_with(ResponseTemplate::new(200).set_body_json(batch_json()))
         .expect(1)
@@ -938,7 +938,7 @@ async fn cancel_batch_sends_correct_request() {
     });
 
     Mock::given(method("POST"))
-        .and(path("/v1/batches/batch_abc123/cancel"))
+        .and(path("/api/v1/batches/batch_abc123/cancel"))
         .and(query_param("provider", "openai"))
         .respond_with(ResponseTemplate::new(200).set_body_json(cancelled_json))
         .expect(1)
@@ -960,7 +960,7 @@ async fn list_batches_sends_pagination_params() {
     });
 
     Mock::given(method("GET"))
-        .and(path("/v1/batches"))
+        .and(path("/api/v1/batches"))
         .and(query_param("provider", "openai"))
         .and(query_param("after", "cursor_abc"))
         .and(query_param("limit", "10"))
@@ -984,7 +984,7 @@ async fn retrieve_batch_results_returns_batch_result() {
     let server = MockServer::start().await;
 
     Mock::given(method("GET"))
-        .and(path("/v1/batches/batch_abc123/results"))
+        .and(path("/api/v1/batches/batch_abc123/results"))
         .and(query_param("provider", "openai"))
         .respond_with(ResponseTemplate::new(200).set_body_json(batch_result_json()))
         .expect(1)
@@ -1011,10 +1011,10 @@ async fn batch_409_returns_batch_not_complete() {
     let server = MockServer::start().await;
 
     Mock::given(method("GET"))
-        .and(path("/v1/batches/batch_abc123/results"))
+        .and(path("/api/v1/batches/batch_abc123/results"))
         .respond_with(ResponseTemplate::new(409).set_body_json(serde_json::json!({
             "error": {
-                "message": "Batch 'batch_abc123' is not yet complete (status: in_progress). Call GET /v1/batches/batch_abc123?provider=openai to check the current status."
+                "message": "Batch 'batch_abc123' is not yet complete (status: in_progress). Call GET /api/v1/batches/batch_abc123?provider=openai to check the current status."
             }
         })))
         .mount(&server)
@@ -1042,7 +1042,7 @@ async fn batch_404_returns_upgrade_gateway_hint() {
     let server = MockServer::start().await;
 
     Mock::given(method("GET"))
-        .and(path("/v1/batches/batch_xyz"))
+        .and(path("/api/v1/batches/batch_xyz"))
         .respond_with(
             ResponseTemplate::new(404)
                 .set_body_json(serde_json::json!({"error": {"message": "Not found"}})),
@@ -1063,7 +1063,7 @@ async fn batch_401_returns_authentication_error() {
     let server = MockServer::start().await;
 
     Mock::given(method("POST"))
-        .and(path("/v1/batches"))
+        .and(path("/api/v1/batches"))
         .respond_with(
             ResponseTemplate::new(401)
                 .set_body_json(serde_json::json!({"error": {"message": "Invalid token"}})),
@@ -1083,7 +1083,7 @@ async fn batch_422_returns_provider_error() {
     let server = MockServer::start().await;
 
     Mock::given(method("POST"))
-        .and(path("/v1/batches"))
+        .and(path("/api/v1/batches"))
         .respond_with(ResponseTemplate::new(422).set_body_json(serde_json::json!({
             "error": {"message": "Unsupported provider: xyz"}
         })))
@@ -1102,7 +1102,7 @@ async fn batch_502_returns_provider_error() {
     let server = MockServer::start().await;
 
     Mock::given(method("GET"))
-        .and(path("/v1/batches/batch_abc123"))
+        .and(path("/api/v1/batches/batch_abc123"))
         .respond_with(ResponseTemplate::new(502).set_body_json(serde_json::json!({
             "error": {"message": "Upstream error"}
         })))
