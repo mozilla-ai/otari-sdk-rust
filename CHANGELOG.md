@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.4.0](https://github.com/mozilla-ai/otari-sdk-rust/compare/otari-0.3.0...otari-0.4.0) (2026-09-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* requests go to /api/v1 instead of /v1, so this SDK now requires a gateway that serves the /api/v1 prefix.
+
+### Features
+
+* regenerate the client core and call the gateway at /api/v1 ([#56](https://github.com/mozilla-ai/otari-sdk-rust/issues/56)) ([549464a](https://github.com/mozilla-ai/otari-sdk-rust/commit/549464aea88b42cb0ef1b154e9de13108c785acc))
+
 ## [0.3.0](https://github.com/mozilla-ai/otari-sdk-rust/compare/otari-0.2.0...otari-0.3.0) (2026-08-06)
 
 
