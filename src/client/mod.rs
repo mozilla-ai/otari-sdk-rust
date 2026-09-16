@@ -133,6 +133,11 @@ pub struct Otari {
     platform_mode: bool,
 }
 
+// A few methods here keep an `async` signature with nothing to await, so the
+// streaming and non-streaming pairs stay symmetric for callers. Clippy 1.98
+// reports those against its trait-implementation lint even though this is an
+// inherent impl, so that lint is off for the block.
+#[allow(clippy::unused_async_trait_impl)]
 impl Otari {
     /// Create a new Otari client from a configuration.
     ///
