@@ -1,10 +1,10 @@
 //! Image generation and audio (speech / transcription) request types.
 //!
-//! These mirror the OpenAI-compatible `/v1/images/generations`,
-//! `/v1/audio/speech`, and `/v1/audio/transcriptions` request shapes used by
-//! the gateway provider's inherent media methods.
+//! These mirror the OpenAI-compatible `/api/v1/images/generations`,
+//! `/api/v1/audio/speech`, and `/api/v1/audio/transcriptions` request shapes
+//! used by the gateway provider's inherent media methods.
 
-/// Parameters for an image generation request (`POST /v1/images/generations`).
+/// Parameters for an image generation request (`POST /api/v1/images/generations`).
 ///
 /// Only `model` and `prompt` are required; the optional fields map directly to
 /// the OpenAI-compatible image schema and are omitted from the body when unset.
@@ -89,7 +89,7 @@ impl ImageGenerationParams {
 }
 
 /// Result of an audio transcription request
-/// (`POST /v1/audio/transcriptions`).
+/// (`POST /api/v1/audio/transcriptions`).
 ///
 /// Exactly one field is populated, chosen by the gateway response's content
 /// type: `json` for the default `json` / `verbose_json` formats, `text` for the
@@ -103,7 +103,7 @@ pub struct TranscriptionResult {
     pub text: Option<String>,
 }
 
-/// Parameters for a text-to-speech request (`POST /v1/audio/speech`).
+/// Parameters for a text-to-speech request (`POST /api/v1/audio/speech`).
 ///
 /// The gateway returns binary audio (no JSON model), so [`crate::Otari::speech`]
 /// returns the raw bytes. Only `model`, `input`, and `voice` are required.
@@ -176,7 +176,7 @@ impl SpeechParams {
 }
 
 /// Parameters for an audio transcription request
-/// (`POST /v1/audio/transcriptions`).
+/// (`POST /api/v1/audio/transcriptions`).
 ///
 /// `file` holds the raw audio bytes, uploaded as the multipart `file` part;
 /// `filename` is sent with that part so providers can infer the format from its

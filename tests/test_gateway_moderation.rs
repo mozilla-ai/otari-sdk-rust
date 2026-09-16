@@ -44,7 +44,7 @@ fn moderation_response_json() -> serde_json::Value {
 async fn moderation_happy_path() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/moderations"))
+        .and(path("/api/v1/moderations"))
         .respond_with(ResponseTemplate::new(200).set_body_json(moderation_response_json()))
         .mount(&server)
         .await;
@@ -71,7 +71,7 @@ async fn moderation_happy_path() {
 async fn moderation_include_raw_uses_query_param() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/moderations"))
+        .and(path("/api/v1/moderations"))
         .and(query_param("include_raw", "true"))
         .respond_with(ResponseTemplate::new(200).set_body_json(moderation_response_json()))
         .mount(&server)
@@ -92,7 +92,7 @@ async fn moderation_include_raw_uses_query_param() {
 async fn moderation_omits_include_raw_query_when_false() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/moderations"))
+        .and(path("/api/v1/moderations"))
         .respond_with(ResponseTemplate::new(200).set_body_json(moderation_response_json()))
         .mount(&server)
         .await;
@@ -110,7 +110,7 @@ async fn moderation_omits_include_raw_query_when_false() {
 async fn moderation_text_input_serializes_as_string() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/moderations"))
+        .and(path("/api/v1/moderations"))
         .and(body_json(serde_json::json!({
             "model": "openai:omni-moderation-latest",
             "input": "hello"
@@ -132,7 +132,7 @@ async fn moderation_text_input_serializes_as_string() {
 async fn moderation_batch_input_serializes_as_array() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/moderations"))
+        .and(path("/api/v1/moderations"))
         .and(body_json(serde_json::json!({
             "model": "openai:omni-moderation-latest",
             "input": ["a", "b"]
@@ -154,7 +154,7 @@ async fn moderation_batch_input_serializes_as_array() {
 async fn moderation_multimodal_input_serializes_parts() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/moderations"))
+        .and(path("/api/v1/moderations"))
         .and(body_json(serde_json::json!({
             "model": "openai:omni-moderation-latest",
             "input": [
@@ -189,7 +189,7 @@ async fn moderation_multimodal_input_serializes_parts() {
 async fn moderation_with_user_includes_user_field() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/moderations"))
+        .and(path("/api/v1/moderations"))
         .and(body_json(serde_json::json!({
             "model": "openai:omni-moderation-latest",
             "input": "x",
@@ -216,7 +216,7 @@ async fn moderation_with_user_includes_user_field() {
 async fn moderation_unsupported_provider_maps_to_typed_error() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/moderations"))
+        .and(path("/api/v1/moderations"))
         .respond_with(ResponseTemplate::new(400).set_body_json(serde_json::json!({
             "detail": "Provider anthropic does not support moderation"
         })))
@@ -248,7 +248,7 @@ async fn moderation_unsupported_provider_maps_to_typed_error() {
 async fn moderation_unsupported_multimodal_maps_to_typed_error() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/moderations"))
+        .and(path("/api/v1/moderations"))
         .respond_with(ResponseTemplate::new(400).set_body_json(serde_json::json!({
             "detail": "Provider mistral does not support multimodal moderation input"
         })))
@@ -280,7 +280,7 @@ async fn moderation_unsupported_multimodal_maps_to_typed_error() {
 async fn moderation_unsupported_without_provider_prefix_falls_back_to_unknown() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/moderations"))
+        .and(path("/api/v1/moderations"))
         .respond_with(ResponseTemplate::new(400).set_body_json(serde_json::json!({
             "detail": "This backend does not support moderation."
         })))
@@ -316,7 +316,7 @@ async fn moderation_unsupported_without_provider_prefix_falls_back_to_unknown() 
 async fn moderation_error_401_maps_to_authentication() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/moderations"))
+        .and(path("/api/v1/moderations"))
         .respond_with(
             ResponseTemplate::new(401)
                 .set_body_json(serde_json::json!({"error": {"message": "Invalid token"}})),
@@ -341,7 +341,7 @@ async fn moderation_error_401_maps_to_authentication() {
 async fn moderation_error_429_maps_to_rate_limit() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/moderations"))
+        .and(path("/api/v1/moderations"))
         .respond_with(
             ResponseTemplate::new(429)
                 .insert_header("Retry-After", "5")
@@ -367,7 +367,7 @@ async fn moderation_error_429_maps_to_rate_limit() {
 async fn moderation_error_500_maps_to_provider_error() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/moderations"))
+        .and(path("/api/v1/moderations"))
         .respond_with(ResponseTemplate::new(500).set_body_string("boom"))
         .mount(&server)
         .await;

@@ -25,8 +25,8 @@ const UNSUPPORTED_MODERATION_MARKER: &str = "does not support";
 /// Build a generated-core [`Configuration`] for the gateway root, reusing the
 /// shell's already-authenticated `reqwest::Client`.
 ///
-/// The generated operation paths already include the `/v1` prefix, so
-/// `base_path` is the gateway root (no trailing `/v1`).
+/// The generated operation paths already include the `/api/v1` prefix, so
+/// `base_path` is the bare gateway origin.
 pub(crate) fn make_configuration(gateway_root: &str, client: reqwest::Client) -> Configuration {
     Configuration {
         base_path: gateway_root.to_string(),

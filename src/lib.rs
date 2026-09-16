@@ -124,6 +124,12 @@
 // publishes to crates.io as a single unit (no path dependency). The generated
 // code refers to its own modules as `crate::models` / `crate::apis`, so those
 // are re-exported at the crate root below.
+//
+// Spec descriptions reach these docs verbatim, and placeholders such as
+// `<base64-encoded-signature>` read as HTML to rustdoc. The prose belongs to
+// the spec, not to this crate, so the lint is off for the generated module
+// rather than worked around by editing generated files.
+#[allow(rustdoc::invalid_html_tags)]
 mod _client;
 pub(crate) use _client::{apis, models};
 

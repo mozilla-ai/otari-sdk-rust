@@ -1,7 +1,7 @@
 //! Moderation types.
 //!
-//! These mirror the OpenAI `/v1/moderations` request/response shape and
-//! are used by the gateway provider's inherent `moderation` method.
+//! These mirror the OpenAI-compatible `/api/v1/moderations` request/response
+//! shape and are used by the gateway provider's inherent `moderation` method.
 
 use std::collections::HashMap;
 
