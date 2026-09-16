@@ -101,6 +101,17 @@ jobs:
           mkdir -p .cargo
           printf '[resolver]\nincompatible-rust-versions = "fallback"\n' >> .cargo/config.toml
           cargo generate-lockfile
+          # The fallback resolver only sees crates that publish a rust-version.
+          # A crate that declares none is treated as compatible with every
+          # toolchain, so its newest release is picked even when the code needs
+          # a newer compiler. Each line below pins such a crate to the last
+          # release that builds on the MSRV. Drop a line once its crate
+          # declares a rust-version, and re-check the job. A pin whose crate
+          # has left the tree fails this step by name, which is the signal to
+          # remove that line rather than to silence it.
+          #
+          # yoke-derive 0.8.3 uses str::from_utf8 (Rust 1.87).
+          cargo update -p yoke-derive --precise 0.8.2
       - uses: dtolnay/rust-toolchain@1.83
       - uses: Swatinem/rust-cache@v2
       - run: cargo check --all-features --locked
