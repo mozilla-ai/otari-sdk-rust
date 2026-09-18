@@ -126,6 +126,7 @@ pub mod chat_api;
 pub mod embeddings_api;
 pub mod files_api;
 pub mod health_api;
+pub mod hooks_api;
 pub mod images_api;
 pub mod invitations_api;
 pub mod keys_api;
