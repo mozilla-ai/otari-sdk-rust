@@ -141,6 +141,7 @@ POST /api/v1/auth/session                           # dashboard-only
 # Deployment bootstrap: tells the dashboard shell which deployment served it, so
 # it exists for a browser deciding what to render. An SDK already knows.
 GET /api/v1/bootstrap                               # dashboard-only
+GET /api/v1/overview                                # dashboard-only: one page's strips, not a resource
 DELETE /api/v1/auth/session                         # dashboard-only
 # Setting the dashboard sign-in password: the other half of the same browser
 # flow. An SDK authenticates with the master key or an API key and never holds
@@ -193,6 +194,8 @@ GET /api/v1/agent-telemetry/summary                 # not yet wrapped
 GET /api/v1/agent-telemetry/count                   # not yet wrapped
 GET /api/v1/agent-telemetry/series                  # not yet wrapped
 DELETE /api/v1/agent-telemetry                      # not yet wrapped
+# Agent Gates' Hook Server: a hook-protocol endpoint for agent tooling, not an SDK surface
+POST /api/v1/hooks/check                            # not yet wrapped
 # Routing policies
 GET /api/v1/routing/policies                        # not yet wrapped
 POST /api/v1/routing/policies                       # not yet wrapped
@@ -207,6 +210,7 @@ POST /api/v1/pricing/refresh/reject                 # not yet wrapped
 GET /api/v1/pricing/refresh/pending                 # not yet wrapped
 GET /api/v1/pricing/snapshots                       # not yet wrapped
 GET /api/v1/pricing/drift                           # not yet wrapped
+GET /api/v1/pricing/current                         # dashboard's paged view of GET /api/v1/pricing; the SDK wraps the history read
 # Model catalog, grouped by model
 GET /api/v1/catalog/models                          # not yet wrapped
 GET /api/v1/catalog/models/{model_id}               # not yet wrapped
