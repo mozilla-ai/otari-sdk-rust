@@ -141,6 +141,7 @@ POST /api/v1/auth/session                           # dashboard-only
 # Deployment bootstrap: tells the dashboard shell which deployment served it, so
 # it exists for a browser deciding what to render. An SDK already knows.
 GET /api/v1/bootstrap                               # dashboard-only
+GET /api/v1/overview                                # dashboard-only: one page's strips, not a resource
 DELETE /api/v1/auth/session                         # dashboard-only
 # Setting the dashboard sign-in password: the other half of the same browser
 # flow. An SDK authenticates with the master key or an API key and never holds
@@ -150,6 +151,10 @@ PUT /api/v1/auth/password                           # dashboard-only
 # the credential ones. An SDK authenticates as a key rather than as a person and
 # has no account page to render, so there is nothing here for one to wrap.
 PATCH /api/v1/auth/profile                          # dashboard-only
+# A signed-in person's message to the Otari team, sent from the top bar (the
+# account menu on a phone).
+# It is something a person writes, not something an integration calls.
+POST /api/v1/feedback                               # dashboard-only
 # Signup, email verification, and password reset (otari#650): claiming a
 # roster identity's dashboard login and recovering it, the same browser-only
 # credential flow PUT /api/v1/auth/password is. No SDK caller holds a password.
@@ -193,6 +198,8 @@ GET /api/v1/agent-telemetry/summary                 # not yet wrapped
 GET /api/v1/agent-telemetry/count                   # not yet wrapped
 GET /api/v1/agent-telemetry/series                  # not yet wrapped
 DELETE /api/v1/agent-telemetry                      # not yet wrapped
+# Agent Gates' Hook Server: a hook-protocol endpoint for agent tooling, not an SDK surface
+POST /api/v1/hooks/check                            # not yet wrapped
 # Routing policies
 GET /api/v1/routing/policies                        # not yet wrapped
 POST /api/v1/routing/policies                       # not yet wrapped
@@ -207,6 +214,7 @@ POST /api/v1/pricing/refresh/reject                 # not yet wrapped
 GET /api/v1/pricing/refresh/pending                 # not yet wrapped
 GET /api/v1/pricing/snapshots                       # not yet wrapped
 GET /api/v1/pricing/drift                           # not yet wrapped
+GET /api/v1/pricing/current                         # dashboard's paged view of GET /api/v1/pricing; the SDK wraps the history read
 # Model catalog, grouped by model
 GET /api/v1/catalog/models                          # not yet wrapped
 GET /api/v1/catalog/models/{model_id}               # not yet wrapped
@@ -319,6 +327,18 @@ GET /api/v1/organizations/me/guardrails                         # operator surfa
 POST /api/v1/organizations/me/guardrails                        # operator surface
 PATCH /api/v1/organizations/me/guardrails/{guardrail_id}        # operator surface
 DELETE /api/v1/organizations/me/guardrails/{guardrail_id}       # operator surface
+POST /api/v1/organizations/me/guardrails/{guardrail_id}/test    # operator surface
+# The definitions those mandates will point at: what a guardrail *is*, where the
+# mandate says where it runs. Excluded on the `/organizations/me` ground rather
+# than the operator one above, which is the same ground the provider-key form
+# below is excluded on: the organization comes from the caller's dashboard
+# session, and a row here holds vendor credentials an owner or admin typed into
+# a form.
+GET /api/v1/organizations/me/guardrail-definitions                     # dashboard-only
+POST /api/v1/organizations/me/guardrail-definitions                    # dashboard-only
+PATCH /api/v1/organizations/me/guardrail-definitions/{definition_id}   # dashboard-only
+DELETE /api/v1/organizations/me/guardrail-definitions/{definition_id}  # dashboard-only
+POST /api/v1/organizations/me/guardrail-definitions/{definition_id}/test  # dashboard-only
 POST /api/v1/organizations/me/member-invitations                # dashboard-only
 DELETE /api/v1/organizations/me/member-invitations/{invitation_id} # dashboard-only
 # The invitee's side of the same flow, and dashboard-only for the same reason
@@ -369,6 +389,19 @@ DELETE /api/v1/organizations/me/provider-keys/{key_id}                        # 
 POST /api/v1/organizations/me/provider-keys/{key_id}/archive                  # dashboard-only
 POST /api/v1/organizations/me/provider-keys/{key_id}/restore                  # dashboard-only
 POST /api/v1/organizations/me/provider-keys/{key_id}/default                  # dashboard-only
+# The models offered on one of those keys, their rates and their serving
+# switches (otari#643 follow-up). Same surface, same reason: an SDK caller sends
+# a model and a key, and which of an organization's adopted models are served
+# through which credential is administered, not called. The effect is visible to
+# an SDK caller in the two places it should be, `GET /api/v1/models` and a 403 at
+# dispatch, never as these rows.
+GET /api/v1/organizations/me/provider-keys/{key_id}/models                     # dashboard-only
+POST /api/v1/organizations/me/provider-keys/{key_id}/models                    # dashboard-only
+PATCH /api/v1/organizations/me/provider-keys/{key_id}/models/{model_id}        # dashboard-only
+DELETE /api/v1/organizations/me/provider-keys/{key_id}/models/{model_id}       # dashboard-only
+POST /api/v1/organizations/me/provider-keys/{key_id}/models/refresh            # dashboard-only
+POST /api/v1/organizations/me/provider-keys/{key_id}/pricing/refresh           # dashboard-only
+GET /api/v1/organizations/me/provider-keys/{key_id}/available-models           # dashboard-only
 GET /api/v1/workspaces/{workspace_id}/provider-keys                           # dashboard-only
 PATCH /api/v1/workspaces/{workspace_id}/provider-keys/{key_id}                # dashboard-only
 DELETE /api/v1/workspaces/{workspace_id}/provider-keys/{key_id}               # dashboard-only
