@@ -88,7 +88,7 @@ jobs:
 
   # Ensure minimum supported Rust version works
   msrv:
-    name: MSRV (1.83)
+    name: MSRV (1.85)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -112,6 +112,6 @@ jobs:
           #
           # yoke-derive 0.8.3 uses str::from_utf8 (Rust 1.87).
           cargo update -p yoke-derive --precise 0.8.2
-      - uses: dtolnay/rust-toolchain@1.83
+      - uses: dtolnay/rust-toolchain@1.85
       - uses: Swatinem/rust-cache@v2
       - run: cargo check --all-features --locked

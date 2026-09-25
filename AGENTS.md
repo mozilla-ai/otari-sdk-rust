@@ -63,14 +63,14 @@ mozilla-ai/otari#438.
 
 ## Build, Test, and Development Commands
 
-This repo uses `cargo` (Rust 1.83+). For the full command set, see [CONTRIBUTING.md](CONTRIBUTING.md).
+This repo uses `cargo` (Rust 1.85+). For the full command set, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 - Build: `cargo build --all-features`
 - Run all checks: `cargo fmt --all -- --check && cargo clippy --all-features --all-targets -- -D warnings`
 - Unit tests: `cargo test --all-features`
 - Manifest checks: `cargo test --all-features --test endpoint_coverage`
 - Integration tests (need a gateway + keys): `cargo test --all-features -- --ignored`
-- MSRV check (Rust 1.83): `cargo check --all-features --locked`
+- MSRV check (Rust 1.85): `cargo check --all-features --locked`
 - Run example: `cargo run --example gateway_completion`
 - Build docs: `cargo doc --all-features --no-deps --open` (CI runs with `RUSTDOCFLAGS=-D warnings`)
 
