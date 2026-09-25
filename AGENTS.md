@@ -14,7 +14,7 @@ This SDK is a **thin, hand-written shell over an OpenAPI-generated typed core**.
 - **Hand-written shell** (`src/`): ergonomic API + auth + streaming + typed errors over that core.
   - `core.rs` is the key seam: `map_error()` / `map_response()` convert gateway HTTP responses
     into the typed `OtariError`.
-  - `src/client/models/stream.rs` implements SSE streaming via `reqwest-eventsource` (the
+  - `src/client/models/stream.rs` implements SSE streaming via `eventsource-stream` (the
     generated core cannot stream).
 
 ### Two auth modes (must both keep working)
@@ -51,7 +51,7 @@ mozilla-ai/otari#438.
   - `error.rs`: Unified error types (`OtariError`)
   - `config.rs`: `Config` struct for client configuration
   - `client/`: hand-written `Otari` client shell (auth modes, endpoint methods) over the generated core
-    - `client/models/stream.rs`: SSE streaming via `reqwest-eventsource`
+    - `client/models/stream.rs`: SSE streaming via `eventsource-stream`
   - `_client/`: the generated typed core (OpenAPI output; do not hand-edit)
   - `control_plane.rs`: control-plane API wrappers (keys/users/budgets/pricing/usage)
   - `types/`: Shared data types (messages, completions, tools, streaming chunks, batch, moderation, rerank)

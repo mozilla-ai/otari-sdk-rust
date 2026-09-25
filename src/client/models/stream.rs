@@ -3,8 +3,8 @@
 //! The gateway emits OpenAI-format Server-Sent Events. Each event is a
 //! `data: {json}` line, and the stream terminates with `data: [DONE]`.
 
+use eventsource_stream::{Event, EventStreamError};
 use futures::StreamExt;
-use reqwest_eventsource::{Event, EventSource};
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -23,41 +23,44 @@ use crate::OtariError;
 pub type RawValueStream =
     std::pin::Pin<Box<dyn futures::Stream<Item = Result<Value, OtariError>> + Send + 'static>>;
 
-/// Wrap a `reqwest-eventsource` source into a stream of raw JSON values,
-/// stopping on the `[DONE]` sentinel (matching the chat shim's semantics).
+/// An SSE event stream decoded from a gateway response body.
 ///
-/// Each emitted item is either a parsed event (`Ok`), or `None` for frames
-/// that carry no chunk data (the connection-open frame, mirroring the Python
-/// shim's skipping of non-`data:` framing lines). The `take_while` stops at
-/// the `[DONE]` sentinel / end-of-stream; `filter_map` drops the `None`s.
-pub fn raw_value_stream(source: EventSource) -> RawValueStream {
+/// The transport is erased so that this module stays independent of the HTTP
+/// client's major version.
+pub type EventStream = std::pin::Pin<
+    Box<
+        dyn futures::Stream<Item = Result<Event, EventStreamError<reqwest::Error>>>
+            + Send
+            + 'static,
+    >,
+>;
+
+/// Wrap an SSE event stream into a stream of raw JSON values, stopping on the
+/// `[DONE]` sentinel (matching the chat shim's semantics).
+pub fn raw_value_stream(source: EventStream) -> RawValueStream {
     let stream = source
         .map(|event| match event {
-            Ok(Event::Message(msg)) => {
-                // The [DONE] sentinel terminates the stream (outer `None`).
+            Ok(msg) => {
+                // The [DONE] sentinel terminates the stream.
                 if msg.data.trim() == "[DONE]" {
                     return None;
                 }
                 match serde_json::from_str::<Value>(&msg.data) {
-                    Ok(value) => Some(Some(Ok(value))),
-                    Err(e) => Some(Some(Err(OtariError::Streaming {
+                    Ok(value) => Some(Ok(value)),
+                    Err(e) => Some(Err(OtariError::Streaming {
                         provider: "otari".into(),
                         message: format!("Failed to parse event: {e}").into(),
-                    }))),
+                    })),
                 }
             }
-            // Connection-open frame carries no payload; emit a skippable item.
-            Ok(Event::Open) => Some(None),
-            Err(reqwest_eventsource::Error::StreamEnded) => None,
-            Err(e) => Some(Some(Err(OtariError::Streaming {
+            Err(e) => Some(Err(OtariError::Streaming {
                 provider: "otari".into(),
                 message: e.to_string().into(),
-            }))),
+            })),
         })
-        // Stop on the [DONE] sentinel (outer `None`) and on end-of-stream.
-        .take_while(|outer| std::future::ready(outer.is_some()))
-        // Drop the connection-open skip (inner `None`); keep real items.
-        .filter_map(|outer| std::future::ready(outer.flatten()));
+        // Stop on the [DONE] sentinel and on end-of-stream.
+        .take_while(|item| std::future::ready(item.is_some()))
+        .filter_map(std::future::ready);
 
     Box::pin(stream)
 }
@@ -66,12 +69,12 @@ pub fn raw_value_stream(source: EventSource) -> RawValueStream {
 const REASONING_FIELD_NAMES: &[&str] = &["reasoning", "reasoning_content", "thinking", "think"];
 
 pub struct GatewayStream {
-    source: EventSource,
+    source: EventStream,
     model: String,
 }
 
 impl GatewayStream {
-    pub fn new(source: EventSource, model: String) -> Self {
+    pub fn new(source: EventStream, model: String) -> Self {
         Self { source, model }
     }
 }
@@ -86,7 +89,7 @@ impl TryInto<CompletionStream> for GatewayStream {
             .map(move |event| {
                 let model = model.clone();
                 match event {
-                    Ok(Event::Message(msg)) => {
+                    Ok(msg) => {
                         // The [DONE] sentinel terminates the stream.
                         if msg.data.trim() == "[DONE]" {
                             return None;
@@ -100,8 +103,6 @@ impl TryInto<CompletionStream> for GatewayStream {
                             })),
                         }
                     }
-                    Ok(Event::Open) => Some(Ok(ChatCompletionChunk::empty(&model))),
-                    Err(reqwest_eventsource::Error::StreamEnded) => None,
                     Err(e) => Some(Err(OtariError::Streaming {
                         provider: "otari".into(),
                         message: e.to_string().into(),

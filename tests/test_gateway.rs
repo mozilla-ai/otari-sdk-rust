@@ -329,6 +329,48 @@ async fn streaming_returns_all_chunks() {
 }
 
 #[tokio::test]
+async fn streaming_transport_failure_does_not_retry() {
+    // A port nothing listens on, so the connection is refused rather than answered.
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let dead = format!("http://127.0.0.1:{}", listener.local_addr().unwrap().port());
+    drop(listener);
+
+    let gw = Otari::from_config(platform_config(&dead)).unwrap();
+
+    // Bounded, so an unlimited reconnect loop fails the test instead of hanging it.
+    let drained = tokio::time::timeout(std::time::Duration::from_secs(3), async {
+        if let Ok(mut stream) = gw.completion_stream(simple_params()).await {
+            while stream.next().await.is_some() {}
+        }
+    })
+    .await;
+
+    assert!(
+        drained.is_ok(),
+        "stream never terminated; it is still reconnecting"
+    );
+}
+
+#[tokio::test]
+async fn streaming_non_2xx_maps_to_typed_error() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/api/v1/chat/completions"))
+        .respond_with(
+            ResponseTemplate::new(401)
+                .set_body_json(serde_json::json!({"error": {"message": "Unauthorized"}})),
+        )
+        .mount(&server)
+        .await;
+
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
+    let Err(err) = gw.completion_stream(simple_params()).await else {
+        panic!("expected a typed error, got a stream");
+    };
+    assert!(matches!(err, OtariError::Authentication { .. }));
+}
+
+#[tokio::test]
 async fn streaming_accumulator_works() {
     let server = MockServer::start().await;
 

@@ -22,9 +22,9 @@
 //! - API base URL: `GATEWAY_API_BASE` (canonical), `OTARI_API_BASE` (legacy).
 //! - API key: `GATEWAY_API_KEY` (canonical), `OTARI_API_KEY` (legacy).
 
+use eventsource_stream::Eventsource;
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_TYPE};
 use reqwest::Client;
-use reqwest_eventsource::EventSource;
 
 use serde::Deserialize;
 
@@ -278,7 +278,6 @@ impl Otari {
     }
 
     /// Create a streaming chat completion.
-    #[allow(clippy::unused_async)]
     pub async fn completion_stream(&self, params: CompletionParams) -> Result<CompletionStream> {
         let model = params.model_id.clone();
         let body = TryInto::<GatewayRequest>::try_into(params)?.stream();
@@ -288,12 +287,9 @@ impl Otari {
             .post(self.api_url("/chat/completions"))
             .json(&body);
 
-        let es = EventSource::new(request).map_err(|e| OtariError::Streaming {
-            provider: "otari".into(),
-            message: e.to_string().into(),
-        })?;
+        let events = self.open_event_stream(request).await?;
 
-        GatewayStream::new(es, model).try_into()
+        GatewayStream::new(events, model).try_into()
     }
 
     // ----- Rerank operations -----
@@ -791,33 +787,31 @@ impl Otari {
     /// Stream a Responses-API response as raw JSON events.
     ///
     /// The generated core can't stream, so this uses the same hand-written
-    /// `reqwest-eventsource` shim as [`Self::completion_stream`], yielding the
+    /// `eventsource-stream` shim as [`Self::completion_stream`], yielding the
     /// raw parsed event values (the responses event stream has no single typed
     /// chunk model). `body` should NOT set `stream`; it is forced on here.
-    #[allow(clippy::unused_async)]
     pub async fn response_stream(
         &self,
         body: serde_json::Value,
     ) -> Result<crate::types::RawValueStream> {
-        self.raw_stream("/responses", body)
+        self.raw_stream("/responses", body).await
     }
 
     /// Stream an Anthropic-style `/messages` response as raw JSON events.
     ///
-    /// Like [`Self::response_stream`], this uses the `reqwest-eventsource` shim
+    /// Like [`Self::response_stream`], this uses the `eventsource-stream` shim
     /// and yields raw parsed event values (the messages event stream has no
     /// single typed chunk model). `body` must include `max_tokens`.
-    #[allow(clippy::unused_async)]
     pub async fn message_stream(
         &self,
         body: serde_json::Value,
     ) -> Result<crate::types::RawValueStream> {
-        self.raw_stream("/messages", body)
+        self.raw_stream("/messages", body).await
     }
 
     /// Open a raw SSE stream against the gateway route `route` (a path below
     /// [`API_ROOT`]), forcing `stream: true`.
-    fn raw_stream(
+    async fn raw_stream(
         &self,
         route: &str,
         mut body: serde_json::Value,
@@ -825,16 +819,30 @@ impl Otari {
         if let Some(obj) = body.as_object_mut() {
             obj.insert("stream".to_string(), serde_json::Value::Bool(true));
         }
-        // `reqwest-eventsource` sets `Accept: text/event-stream` on the request
-        // itself, so we don't add it here (doing so would duplicate the header).
         let request = self.client.post(self.api_url(route)).json(&body);
 
-        let es = EventSource::new(request).map_err(|e| OtariError::Streaming {
-            provider: "otari".into(),
-            message: e.to_string().into(),
-        })?;
+        let events = self.open_event_stream(request).await?;
 
-        Ok(models::stream::raw_value_stream(es))
+        Ok(models::stream::raw_value_stream(events))
+    }
+
+    /// Send `request` and decode the response body as an SSE event stream,
+    /// mapping a non-2xx response through the shared error table first.
+    ///
+    /// The gateway streams only when the request asks for it, so the `Accept`
+    /// header is set here rather than at each call site.
+    async fn open_event_stream(
+        &self,
+        request: reqwest::RequestBuilder,
+    ) -> Result<models::stream::EventStream> {
+        let response = request.header("Accept", "text/event-stream").send().await?;
+
+        let status = response.status().as_u16();
+        if !(200..300).contains(&status) {
+            return Err(convert_error(response).await);
+        }
+
+        Ok(Box::pin(response.bytes_stream().eventsource()))
     }
 }
 
