@@ -483,13 +483,13 @@ async fn error_504_maps_to_provider_error() {
 }
 
 #[tokio::test]
-async fn error_includes_correlation_id() {
+async fn error_includes_attempt_id() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
         .and(path("/api/v1/chat/completions"))
         .respond_with(
             ResponseTemplate::new(401)
-                .insert_header("X-Correlation-ID", "corr-abc-123")
+                .insert_header("Otari-Attempt-ID", "attempt-abc-123")
                 .set_body_json(serde_json::json!({"error": {"message": "Unauthorized"}})),
         )
         .mount(&server)
@@ -497,7 +497,7 @@ async fn error_includes_correlation_id() {
 
     let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
     let err = gw.completion(simple_params()).await.unwrap_err();
-    assert!(err.to_string().contains("correlation_id=corr-abc-123"));
+    assert!(err.to_string().contains("attempt_id=attempt-abc-123"));
 }
 
 #[tokio::test]
