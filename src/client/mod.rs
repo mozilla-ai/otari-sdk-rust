@@ -842,6 +842,25 @@ impl Otari {
             return Err(convert_error(response).await);
         }
 
+        // A success status is not enough. A proxy or a misrouted gateway can
+        // answer 200 with JSON or HTML, which decodes to an event stream that
+        // never yields a frame, so the caller would see an empty completion
+        // rather than a failure.
+        let media_type = response
+            .headers()
+            .get(CONTENT_TYPE)
+            .and_then(|value| value.to_str().ok())
+            .and_then(|value| value.split(';').next())
+            .map(str::trim)
+            .unwrap_or_default();
+        if !media_type.eq_ignore_ascii_case("text/event-stream") {
+            return Err(OtariError::Streaming {
+                provider: "otari".into(),
+                message: format!("Expected a text/event-stream response, got '{media_type}'")
+                    .into(),
+            });
+        }
+
         Ok(Box::pin(response.bytes_stream().eventsource()))
     }
 }

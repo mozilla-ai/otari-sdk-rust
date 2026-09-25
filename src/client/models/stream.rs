@@ -25,8 +25,8 @@ pub type RawValueStream =
 
 /// An SSE event stream decoded from a gateway response body.
 ///
-/// The transport is erased so that this module stays independent of the HTTP
-/// client's major version.
+/// Gotcha: the item type names `eventsource-stream` and `reqwest` types, so a
+/// major bump of either is a breaking change for anything using this alias.
 pub type EventStream = std::pin::Pin<
     Box<
         dyn futures::Stream<Item = Result<Event, EventStreamError<reqwest::Error>>>
