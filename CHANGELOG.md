@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.4.0](https://github.com/mozilla-ai/otari-sdk-rust/compare/otari-0.3.0...otari-0.4.0) (2026-09-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* error detail strings say attempt_id= where they said correlation_id=, so code matching on that text needs updating. Reading the attempt ID at all now requires a gateway at 0.12.0 or later.
+* requests go to /api/v1 instead of /v1, so this SDK now requires a gateway that serves the /api/v1 prefix.
+
+### Features
+
+* regenerate the client core and call the gateway at /api/v1 ([#56](https://github.com/mozilla-ai/otari-sdk-rust/issues/56)) ([549464a](https://github.com/mozilla-ai/otari-sdk-rust/commit/549464aea88b42cb0ef1b154e9de13108c785acc))
+
+
+### Bug Fixes
+
+* read the renamed Otari-Attempt-ID response header ([#62](https://github.com/mozilla-ai/otari-sdk-rust/issues/62)) ([34bd64f](https://github.com/mozilla-ai/otari-sdk-rust/commit/34bd64f84275772a99335e59904f60d64e02fbde))
+
 ## [0.3.0](https://github.com/mozilla-ai/otari-sdk-rust/compare/otari-0.2.0...otari-0.3.0) (2026-08-06)
 
 
