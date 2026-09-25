@@ -48,6 +48,10 @@ use models::stream::GatewayStream;
 
 const OTARI_HEADER_NAME: &str = "Otari-Key";
 
+/// Response header naming the single provider attempt that served a request,
+/// as distinct from the whole resolve call that `Otari-Request-ID` names.
+const ATTEMPT_ID_HEADER: &str = "Otari-Attempt-ID";
+
 /// Canonical platform token env var (matches the TS/Python SDKs).
 const OTARI_AI_TOKEN_ENV: &str = "OTARI_AI_TOKEN";
 /// Legacy platform token env var, kept as a back-compatible fallback.
@@ -593,7 +597,7 @@ impl Otari {
 
         let attempt_id = response
             .headers()
-            .get("otari-attempt-id")
+            .get(ATTEMPT_ID_HEADER)
             .and_then(|v| v.to_str().ok())
             .map(String::from);
         let retry_after = response
@@ -761,7 +765,7 @@ impl Otari {
         let status = response.status().as_u16();
         let attempt_id = response
             .headers()
-            .get("otari-attempt-id")
+            .get(ATTEMPT_ID_HEADER)
             .and_then(|v| v.to_str().ok())
             .map(String::from);
         let retry_after = response
@@ -905,7 +909,7 @@ async fn convert_error(response: reqwest::Response) -> OtariError {
     let status = response.status().as_u16();
     let attempt_id = response
         .headers()
-        .get("otari-attempt-id")
+        .get(ATTEMPT_ID_HEADER)
         .and_then(|v| v.to_str().ok())
         .map(String::from);
     let retry_after = response
@@ -1010,7 +1014,7 @@ async fn convert_batch_error(response: reqwest::Response, route: &str) -> OtariE
     if status == 409 || (status == 404 && route.contains("/batches")) {
         let attempt_id = response
             .headers()
-            .get("otari-attempt-id")
+            .get(ATTEMPT_ID_HEADER)
             .and_then(|v| v.to_str().ok())
             .map(String::from);
 
