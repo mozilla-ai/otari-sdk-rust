@@ -330,13 +330,13 @@ async fn error_statuses_map_to_typed_errors() {
 }
 
 #[tokio::test]
-async fn insufficient_funds_maps_with_correlation_id() {
+async fn insufficient_funds_maps_with_attempt_id() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
         .and(path("/api/v1/chat/completions"))
         .respond_with(
             ResponseTemplate::new(402)
-                .insert_header("x-correlation-id", "abc-123")
+                .insert_header("otari-attempt-id", "abc-123")
                 .set_body_json(json!({"detail": "no funds"})),
         )
         .mount(&server)

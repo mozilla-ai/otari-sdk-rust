@@ -578,7 +578,7 @@ impl Otari {
     }
 
     /// Send a pre-built raw request, mapping non-2xx responses through the
-    /// shared error table (`x-correlation-id` / `retry-after` honored).
+    /// shared error table (`otari-attempt-id` / `retry-after` honored).
     ///
     /// Used by the audio endpoints (binary speech, multipart transcription),
     /// which do not fit the generated JSON core but still reuse the same
@@ -591,9 +591,9 @@ impl Otari {
             return Ok(response);
         }
 
-        let correlation_id = response
+        let attempt_id = response
             .headers()
-            .get("x-correlation-id")
+            .get("otari-attempt-id")
             .and_then(|v| v.to_str().ok())
             .map(String::from);
         let retry_after = response
@@ -605,7 +605,7 @@ impl Otari {
         Err(map_response(
             status,
             &text,
-            correlation_id.as_deref(),
+            attempt_id.as_deref(),
             retry_after.as_deref(),
         ))
     }
@@ -743,7 +743,7 @@ impl Otari {
 
     /// POST `body` to the gateway route `route` (a path below [`API_ROOT`]),
     /// deserialize the 2xx response into the typed generated model `R`, and map
-    /// non-2xx responses through the shared error table (`x-correlation-id` /
+    /// non-2xx responses through the shared error table (`otari-attempt-id` /
     /// `retry-after` honored). `R = serde_json::Value` yields the raw response
     /// for endpoints with no usable typed model.
     async fn post_typed<R: serde::de::DeserializeOwned>(
@@ -759,9 +759,9 @@ impl Otari {
             .await?;
 
         let status = response.status().as_u16();
-        let correlation_id = response
+        let attempt_id = response
             .headers()
-            .get("x-correlation-id")
+            .get("otari-attempt-id")
             .and_then(|v| v.to_str().ok())
             .map(String::from);
         let retry_after = response
@@ -775,7 +775,7 @@ impl Otari {
             return Err(crate::core::map_response(
                 status,
                 &text,
-                correlation_id.as_deref(),
+                attempt_id.as_deref(),
                 retry_after.as_deref(),
             ));
         }
@@ -899,13 +899,13 @@ fn resolve_auth(
 
 /// Convert an HTTP error response to a typed `OtariError`.
 ///
-/// Extracts `x-correlation-id` and `retry-after` headers and includes
+/// Extracts `otari-attempt-id` and `retry-after` headers and includes
 /// them in the error message for debugging.
 async fn convert_error(response: reqwest::Response) -> OtariError {
     let status = response.status().as_u16();
-    let correlation_id = response
+    let attempt_id = response
         .headers()
-        .get("x-correlation-id")
+        .get("otari-attempt-id")
         .and_then(|v| v.to_str().ok())
         .map(String::from);
     let retry_after = response
@@ -924,8 +924,8 @@ async fn convert_error(response: reqwest::Response) -> OtariError {
         }
     });
 
-    let detail = match &correlation_id {
-        Some(cid) => format!("{message} (correlation_id={cid})"),
+    let detail = match &attempt_id {
+        Some(id) => format!("{message} (attempt_id={id})"),
         None => message,
     };
 
@@ -1008,9 +1008,9 @@ async fn convert_batch_error(response: reqwest::Response, route: &str) -> OtariE
     // For 409 and batch-404 we need the body *before* delegating, because
     // `convert_error` consumes the response.
     if status == 409 || (status == 404 && route.contains("/batches")) {
-        let correlation_id = response
+        let attempt_id = response
             .headers()
-            .get("x-correlation-id")
+            .get("otari-attempt-id")
             .and_then(|v| v.to_str().ok())
             .map(String::from);
 
@@ -1023,8 +1023,8 @@ async fn convert_batch_error(response: reqwest::Response, route: &str) -> OtariE
             }
         });
 
-        let detail = match &correlation_id {
-            Some(cid) => format!("{message} (correlation_id={cid})"),
+        let detail = match &attempt_id {
+            Some(id) => format!("{message} (attempt_id={id})"),
             None => message,
         };
 

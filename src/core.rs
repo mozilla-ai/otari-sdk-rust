@@ -61,13 +61,13 @@ pub(crate) fn map_error<T>(error: crate::_client::apis::Error<T>) -> OtariError 
     }
 }
 
-/// Map a status + raw body (+ optional correlation-id / retry-after) to a
+/// Map a status + raw body (+ optional attempt-id / retry-after) to a
 /// typed [`OtariError`]. Shared by the generated-core path and the streaming
 /// shim's failed-response path so both auth modes get one mapping table.
 pub(crate) fn map_response(
     status: u16,
     body: &str,
-    correlation_id: Option<&str>,
+    attempt_id: Option<&str>,
     retry_after: Option<&str>,
 ) -> OtariError {
     let message = extract_detail(body).unwrap_or_else(|| {
@@ -78,8 +78,8 @@ pub(crate) fn map_response(
         }
     });
 
-    let detail = match correlation_id {
-        Some(cid) => format!("{message} (correlation_id={cid})"),
+    let detail = match attempt_id {
+        Some(id) => format!("{message} (attempt_id={id})"),
         None => message,
     };
 
@@ -269,8 +269,8 @@ mod tests {
     }
 
     #[test]
-    fn correlation_id_in_message() {
+    fn attempt_id_in_message() {
         let err = map_response(402, r#"{"detail":"no funds"}"#, Some("abc-123"), None);
-        assert!(err.to_string().contains("abc-123"));
+        assert!(err.to_string().contains("attempt_id=abc-123"));
     }
 }
