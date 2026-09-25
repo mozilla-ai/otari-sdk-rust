@@ -2,7 +2,7 @@
 name = "otari"
 version = "0.3.0"
 edition = "2021"
-rust-version = "1.83"
+rust-version = "1.85"
 description = "A unified Rust SDK for interacting with LLMs via the Otari gateway"
 license = "Apache-2.0"
 readme = "README.md"
@@ -29,8 +29,8 @@ uuid = { version = "1", default-features = false, features = ["serde"] }
 
 # HTTP client (multipart is required by the generated core's file uploads and
 # by the hand-written audio transcription upload).
-reqwest = { version = "0.12", features = ["json", "stream", "multipart"] }
-reqwest-eventsource = "0.6"
+reqwest = { version = "0.13", features = ["json", "multipart", "query", "stream"] }
+eventsource-stream = "0.2"
 # Binary response bodies (text-to-speech audio) are returned as `bytes::Bytes`,
 # the same type `reqwest::Response::bytes` yields.
 bytes = "1"

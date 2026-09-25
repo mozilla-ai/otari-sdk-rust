@@ -328,6 +328,128 @@ async fn streaming_returns_all_chunks() {
     assert_eq!(last.finish_reason(), Some("stop"));
 }
 
+/// Serve one chunked SSE frame, then close without the terminating chunk.
+///
+/// The truncated chunked body is what makes the client report a transport
+/// error rather than a clean end of stream.
+async fn sse_then_abort(events: &'static str) -> String {
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+
+    tokio::spawn(async move {
+        let Ok((mut socket, _)) = listener.accept().await else {
+            return;
+        };
+        let mut buf = [0u8; 8192];
+        let _ = socket.read(&mut buf).await;
+        let head = "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\n\
+                    Transfer-Encoding: chunked\r\n\r\n";
+        let _ = socket.write_all(head.as_bytes()).await;
+        let _ = socket
+            .write_all(format!("{:x}\r\n{events}\r\n", events.len()).as_bytes())
+            .await;
+        let _ = socket.flush().await;
+    });
+
+    format!("http://{addr}")
+}
+
+#[tokio::test]
+async fn streaming_connect_failure_does_not_retry() {
+    // A port nothing listens on, so the connection is refused rather than answered.
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let dead = format!("http://127.0.0.1:{}", listener.local_addr().unwrap().port());
+    drop(listener);
+
+    let gw = Otari::from_config(platform_config(&dead)).unwrap();
+
+    // Bounded, so an unlimited reconnect loop fails the test instead of hanging it.
+    let opened = tokio::time::timeout(
+        std::time::Duration::from_secs(3),
+        gw.completion_stream(simple_params()),
+    )
+    .await;
+
+    let Ok(Err(_)) = opened else {
+        panic!("expected a refused connection to fail once, not reconnect");
+    };
+}
+
+#[tokio::test]
+async fn streaming_mid_stream_drop_ends_the_stream() {
+    let base = sse_then_abort(concat!(
+        r#"data: {"id":"c1","choices":[{"index":0,"delta":{"content":"Hi"},"#,
+        r#""finish_reason":null}]}"#,
+        "\n\n"
+    ))
+    .await;
+
+    let gw = Otari::from_config(platform_config(&base)).unwrap();
+
+    // Bounded, so an unlimited reconnect loop fails the test instead of hanging it.
+    let items = tokio::time::timeout(std::time::Duration::from_secs(5), async {
+        let mut stream = gw.completion_stream(simple_params()).await.unwrap();
+        let mut seen = Vec::new();
+        while let Some(item) = stream.next().await {
+            seen.push(item);
+        }
+        seen
+    })
+    .await
+    .expect("stream never terminated; it is still reconnecting");
+
+    assert!(
+        items.iter().any(Result::is_ok),
+        "expected the frame delivered before the drop"
+    );
+    assert!(
+        items.iter().any(Result::is_err),
+        "expected the drop to surface as an error"
+    );
+}
+
+#[tokio::test]
+async fn streaming_rejects_a_non_sse_body() {
+    let server = MockServer::start().await;
+    // A 200 that is not an event stream: a proxy or a misrouted gateway can
+    // answer a streaming request with an ordinary JSON completion.
+    Mock::given(method("POST"))
+        .and(path("/api/v1/chat/completions"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(serde_json::json!({"id": "chatcmpl-1", "choices": []})),
+        )
+        .mount(&server)
+        .await;
+
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
+    let Err(err) = gw.completion_stream(simple_params()).await else {
+        panic!("expected an error, got a stream that would silently yield nothing");
+    };
+    assert!(matches!(err, OtariError::Streaming { .. }));
+}
+
+#[tokio::test]
+async fn streaming_non_2xx_maps_to_typed_error() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/api/v1/chat/completions"))
+        .respond_with(
+            ResponseTemplate::new(401)
+                .set_body_json(serde_json::json!({"error": {"message": "Unauthorized"}})),
+        )
+        .mount(&server)
+        .await;
+
+    let gw = Otari::from_config(platform_config(&server.uri())).unwrap();
+    let Err(err) = gw.completion_stream(simple_params()).await else {
+        panic!("expected a typed error, got a stream");
+    };
+    assert!(matches!(err, OtariError::Authentication { .. }));
+}
+
 #[tokio::test]
 async fn streaming_accumulator_works() {
     let server = MockServer::start().await;

@@ -14,7 +14,7 @@ This SDK is a **thin, hand-written shell over an OpenAPI-generated typed core**.
 - **Hand-written shell** (`src/`): ergonomic API + auth + streaming + typed errors over that core.
   - `core.rs` is the key seam: `map_error()` / `map_response()` convert gateway HTTP responses
     into the typed `OtariError`.
-  - `src/client/models/stream.rs` implements SSE streaming via `reqwest-eventsource` (the
+  - `src/client/models/stream.rs` implements SSE streaming via `eventsource-stream` (the
     generated core cannot stream).
 
 ### Two auth modes (must both keep working)
@@ -51,7 +51,7 @@ mozilla-ai/otari#438.
   - `error.rs`: Unified error types (`OtariError`)
   - `config.rs`: `Config` struct for client configuration
   - `client/`: hand-written `Otari` client shell (auth modes, endpoint methods) over the generated core
-    - `client/models/stream.rs`: SSE streaming via `reqwest-eventsource`
+    - `client/models/stream.rs`: SSE streaming via `eventsource-stream`
   - `_client/`: the generated typed core (OpenAPI output; do not hand-edit)
   - `control_plane.rs`: control-plane API wrappers (keys/users/budgets/pricing/usage)
   - `types/`: Shared data types (messages, completions, tools, streaming chunks, batch, moderation, rerank)
@@ -63,14 +63,14 @@ mozilla-ai/otari#438.
 
 ## Build, Test, and Development Commands
 
-This repo uses `cargo` (Rust 1.83+). For the full command set, see [CONTRIBUTING.md](CONTRIBUTING.md).
+This repo uses `cargo` (Rust 1.85+). For the full command set, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 - Build: `cargo build --all-features`
 - Run all checks: `cargo fmt --all -- --check && cargo clippy --all-features --all-targets -- -D warnings`
 - Unit tests: `cargo test --all-features`
 - Manifest checks: `cargo test --all-features --test endpoint_coverage`
 - Integration tests (need a gateway + keys): `cargo test --all-features -- --ignored`
-- MSRV check (Rust 1.83): `cargo check --all-features --locked`
+- MSRV check (Rust 1.85): `cargo check --all-features --locked`
 - Run example: `cargo run --example gateway_completion`
 - Build docs: `cargo doc --all-features --no-deps --open` (CI runs with `RUSTDOCFLAGS=-D warnings`)
 

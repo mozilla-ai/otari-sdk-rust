@@ -25,7 +25,7 @@ For significant changes, please open an issue **before** starting work:
 
 ### Prerequisites
 
-- **Rust 1.83 or newer** (`rustup update stable`)
+- **Rust 1.85 or newer** (`rustup update stable`)
 - **Git**
 - A running **Otari gateway** instance for integration tests
 
