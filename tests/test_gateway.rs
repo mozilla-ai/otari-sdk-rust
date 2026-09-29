@@ -400,12 +400,17 @@ async fn streaming_mid_stream_drop_ends_the_stream() {
     .await
     .expect("stream never terminated; it is still reconnecting");
 
+    assert_eq!(
+        items.len(),
+        2,
+        "expected the frame and the drop, nothing else"
+    );
     assert!(
-        items.iter().any(Result::is_ok),
+        items[0].is_ok(),
         "expected the frame delivered before the drop"
     );
     assert!(
-        items.iter().any(Result::is_err),
+        items[1].is_err(),
         "expected the drop to surface as an error"
     );
 }
