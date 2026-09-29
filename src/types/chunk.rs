@@ -78,19 +78,6 @@ pub struct ChatCompletionChunk {
 }
 
 impl ChatCompletionChunk {
-    /// Create an empty chunk (used internally for skippable events).
-    pub(crate) fn empty(model: &str) -> Self {
-        Self {
-            id: String::new(),
-            object: "chat.completion.chunk".to_string(),
-            created: 0,
-            model: model.to_string(),
-            choices: vec![],
-            usage: None,
-            system_fingerprint: None,
-        }
-    }
-
     /// Get the content delta from the first choice.
     pub fn content(&self) -> Option<&str> {
         self.choices

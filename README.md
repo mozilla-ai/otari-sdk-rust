@@ -7,7 +7,7 @@
 # Otari Rust Client SDK
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Rust](https://img.shields.io/badge/rust-1.83%2B-orange.svg)](https://www.rust-lang.org)
+[![Rust](https://img.shields.io/badge/rust-1.85%2B-orange.svg)](https://www.rust-lang.org)
 <a href="https://discord.gg/4gf3zXrQUc">
     <img src="https://img.shields.io/static/v1?label=Chat%20on&message=Discord&color=blue&logo=Discord&style=flat-square" alt="Discord">
 </a>
@@ -55,7 +55,7 @@ async fn main() -> otari::Result<()> {
 
 ### Requirements
 
-- Rust 1.83 or newer
+- Rust 1.85 or newer
 - Either a platform token for the hosted gateway, or a running
   [otari](https://github.com/mozilla-ai/otari) instance for self-hosting
 
