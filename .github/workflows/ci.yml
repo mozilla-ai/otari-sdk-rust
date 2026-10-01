@@ -112,6 +112,6 @@ jobs:
           #
           # yoke-derive 0.8.3 uses str::from_utf8 (Rust 1.87).
           cargo update -p yoke-derive --precise 0.8.2
-      - uses: dtolnay/rust-toolchain@1.85
+      - uses: dtolnay/rust-toolchain@1.120
       - uses: Swatinem/rust-cache@v2
       - run: cargo check --all-features --locked
