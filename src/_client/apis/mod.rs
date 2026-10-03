@@ -123,6 +123,7 @@ pub mod bootstrap_api;
 pub mod budgets_api;
 pub mod catalog_api;
 pub mod chat_api;
+pub mod decisions_api;
 pub mod embeddings_api;
 pub mod feedback_api;
 pub mod files_api;
