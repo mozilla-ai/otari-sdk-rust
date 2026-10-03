@@ -82,6 +82,11 @@ GET /api/v1/files                        # not yet wrapped
 GET /api/v1/files/{file_id}              # not yet wrapped
 GET /api/v1/files/{file_id}/content      # not yet wrapped
 DELETE /api/v1/files/{file_id}           # not yet wrapped
+# Decisions: added to the gateway spec, not yet wrapped by any SDK shell. The
+# alias exists so TypeSafe's SDK and llama-server clients work unchanged, so an
+# otari SDK wrapping decisions would wrap the canonical path only.
+POST /api/v1/decisions                   # not yet wrapped
+POST /api/v1/systemone                   # alias of /api/v1/decisions for TypeSafe-compatible clients
 
 # The Playground, which is the dashboard's own chat page and is excluded on a
 # stronger ground than "not yet wrapped": its completion endpoint is authorized
@@ -132,6 +137,7 @@ GET /api/v1/models/discoverable                     # not yet wrapped
 GET /api/v1/models/metadata                         # not yet wrapped
 # Other control-plane extensions of already-covered resources
 GET /api/v1/usage/count                             # not yet wrapped
+GET /api/v1/usage/requests/{request_id}            # not yet wrapped
 POST /api/v1/keys/{key_id}/rotate                   # not yet wrapped
 GET /api/v1/budgets/{budget_id}/reset-logs          # not yet wrapped
 
@@ -340,6 +346,7 @@ PATCH /api/v1/organizations/me/guardrail-definitions/{definition_id}   # dashboa
 DELETE /api/v1/organizations/me/guardrail-definitions/{definition_id}  # dashboard-only
 POST /api/v1/organizations/me/guardrail-definitions/{definition_id}/test  # dashboard-only
 POST /api/v1/organizations/me/member-invitations                # dashboard-only
+POST /api/v1/organizations/me/member-invitations/bulk           # dashboard-only
 DELETE /api/v1/organizations/me/member-invitations/{invitation_id} # dashboard-only
 # The invitee's side of the same flow, and dashboard-only for the same reason
 # the admin's side above is: it acts as a signed-in person deciding about their
