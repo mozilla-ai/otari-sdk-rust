@@ -417,6 +417,11 @@ match completion(model, messages, options).await {
 }
 ```
 
+The SDK never follows a redirect, because the request carries credentials and a
+redirect may name another host. A redirect from the gateway fails with
+`OtariError::Http(e)` where `e.is_redirect()` is true; set the base URL to the
+address the gateway answers on.
+
 ### Tool calling
 
 ```rust

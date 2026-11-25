@@ -24,6 +24,7 @@
 
 use eventsource_stream::Eventsource;
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_TYPE};
+use reqwest::redirect::Policy;
 use reqwest::Client;
 
 use serde::Deserialize;
@@ -47,6 +48,21 @@ use models::response::GatewayResponse;
 use models::stream::GatewayStream;
 
 const OTARI_HEADER_NAME: &str = "Otari-Key";
+
+/// The redirect policy of every HTTP client the SDK builds: refuse.
+///
+/// reqwest drops `Authorization` when a redirect leaves the host, but it keeps
+/// `Otari-Key` and the request body, so following one would hand both to
+/// whatever address the response named. The request fails with an error whose
+/// [`reqwest::Error::is_redirect`] is true.
+fn refuse_redirects() -> Policy {
+    Policy::custom(|attempt| {
+        attempt.error(
+            "the gateway answered with a redirect, which the SDK does not follow; \
+             set the base URL to the address the gateway answers on",
+        )
+    })
+}
 
 /// Response header naming the single provider attempt that served a request,
 /// as distinct from the whole resolve call that `Otari-Request-ID` names.
@@ -182,6 +198,7 @@ impl Otari {
         let client = Client::builder()
             .user_agent(USER_AGENT)
             .default_headers(headers)
+            .redirect(refuse_redirects())
             .build()
             .map_err(|e| OtariError::provider_error(format!("Failed to build HTTP client: {e}")))?;
 
@@ -231,6 +248,7 @@ impl Otari {
         let client = Client::builder()
             .user_agent(USER_AGENT)
             .default_headers(headers)
+            .redirect(refuse_redirects())
             .build()
             .unwrap_or_default();
 
