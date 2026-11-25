@@ -27,7 +27,7 @@ async fn live_create_and_retrieve_batch() {
     .completion_window("24h");
 
     let batch = gw.create_batch(params).await.unwrap();
-    assert!(!batch.id.is_empty());
+    assert_ne!(batch.id, "");
     println!("Created batch: {}", batch.id);
 
     // Retrieve the batch

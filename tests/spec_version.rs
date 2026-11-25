@@ -6,5 +6,5 @@
 
 #[test]
 fn spec_version_is_surfaced() {
-    assert!(!otari::SPEC_VERSION.is_empty());
+    assert_ne!(otari::SPEC_VERSION, "");
 }
