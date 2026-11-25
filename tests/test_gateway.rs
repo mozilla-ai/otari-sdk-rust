@@ -686,9 +686,9 @@ async fn live_gateway_completion() {
     );
 
     let completion = gw.completion(params).await.unwrap();
-    assert!(!completion.choices.is_empty());
+    assert_ne!(completion.choices.len(), 0);
     let content = completion.content().unwrap_or("");
-    assert!(!content.is_empty());
+    assert_ne!(content, "");
     println!("Live response: {content}");
 }
 
@@ -869,7 +869,7 @@ async fn live_gateway_streaming() {
         acc.add(&chunk);
     }
 
-    assert!(!acc.content.is_empty());
+    assert_ne!(acc.content, "");
     println!("Live streamed: {}", acc.content);
 }
 

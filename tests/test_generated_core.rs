@@ -453,13 +453,13 @@ async fn control_plane_sends_admin_bearer() {
 
     // Ergonomic alias delegates to the generated operation with the bearer header.
     let keys = cp.keys().list(None, None).await.unwrap();
-    assert!(keys.is_empty());
+    assert_eq!(keys.len(), 0);
 
     // Escape hatch: the generated functions stay reachable via `config()`.
     let raw = otari::control_plane::apis::keys_api::keys_list_keys(cp.config(), None, None, None)
         .await
         .unwrap();
-    assert!(raw.is_empty());
+    assert_eq!(raw.len(), 0);
 }
 
 /// Mount a 401 `{"detail": "boom"}` for `GET <path>` and return a wired client.

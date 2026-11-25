@@ -35,7 +35,7 @@ fn test_rerank_response_minimal() {
     let json = r#"{"id": "r-1", "results": []}"#;
     let response: RerankResponse = serde_json::from_str(json).unwrap();
     assert_eq!(response.id, "r-1");
-    assert!(response.results.is_empty());
+    assert_eq!(response.results.len(), 0);
     assert!(response.meta.is_none());
     assert!(response.usage.is_none());
 }
