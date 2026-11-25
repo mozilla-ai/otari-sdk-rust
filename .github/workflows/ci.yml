@@ -104,14 +104,12 @@ jobs:
           # The fallback resolver only sees crates that publish a rust-version.
           # A crate that declares none is treated as compatible with every
           # toolchain, so its newest release is picked even when the code needs
-          # a newer compiler. Each line below pins such a crate to the last
-          # release that builds on the MSRV. Drop a line once its crate
-          # declares a rust-version, and re-check the job. A pin whose crate
-          # has left the tree fails this step by name, which is the signal to
-          # remove that line rather than to silence it.
-          #
-          # yoke-derive 0.8.3 uses str::from_utf8 (Rust 1.87).
-          cargo update -p yoke-derive --precise 0.8.2
+          # a newer compiler. Pin such a crate below to the last release that
+          # builds on the MSRV, with `cargo update -p <crate> --precise <version>`.
+          # Drop the pin once the crate declares a rust-version, and re-check
+          # the job. A pin that can no longer be met fails this step by name,
+          # which is the signal to remove it rather than to silence it.
+          # No crate needs a pin today.
       - uses: dtolnay/rust-toolchain@1.85
       - uses: Swatinem/rust-cache@v2
       - run: cargo check --all-features --locked
